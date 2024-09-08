@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Página</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'styles/custom.css' %}">
+</head>
+<body>
+    <!-- Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <!-- Logo -->
+        <a class="navbar-brand" href="{% url 'inicio' %}">
+            <img src="{% static 'images/Logo_Liga_B.png' %}" width="30" height="30" alt="Logo">
+        </a>
+        
+        <!-- Botones de navegación -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold" href="{% url 'torneos' %}">TORNEOS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold" href="{% url 'reglamentos' %}">REGLAMENTOS</a>
+                </li>
+            </ul>
+
+            <!-- Formulario de búsqueda -->
+            <form class="form-inline mx-auto my-2 my-lg-0 w-50">
+                <input class="form-control mr-sm-2 text-white bg-dark border-white w-50" type="search" placeholder="Buscar equipo o jugador" aria-label="Buscar">
+                <button class="btn btn-outline-light my-2 my-sm-0" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+
+            <!-- Contacto -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold" href="{% url 'contacto' %}">CONTACTO</a>
+                </li>
+                {% if request.path == '/' %}
+                    <li class="nav-item">
+                        <!-- Botón para abrir el modal de login -->
+                        <a class="nav-link font-weight-bold" href="#" data-toggle="modal" data-target="#loginModal">LOGIN</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="container mt-4">
+        {% block content %}
+        <!-- El contenido de cada vista se incluirá aquí -->
+        {% endblock %}
+    </div>
+
+    <!-- Modal de Login -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content modal-custom-bg">  <!-- Clase personalizada para el fondo negro -->
+                <div class="modal-header border-0 d-flex justify-content-center position-relative"> <!-- Sin borde en el header -->
+                    <!-- Título del modal -->
+                    <h5 class="modal-title" id="loginModalLabel" ></h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Contenido del modal -->
+                    <div class="text-center">
+                        <!-- Logo del campeonato -->
+                        <img src="{% static 'images/Logo_Liga_B.png' %}" alt="Logo" class="mb-3" width="150">
+                    </div>
+                    <form>
+                        <div class="form-group">
+                            <label for="usuario">Nombre de Usuario</label>
+                            <input type="text" class="form-control input-custom" id="usuario" placeholder="Ingresa tu nombre de usuario">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Contraseña</label>
+                            <input type="password" class="form-control input-custom" id="password" placeholder="Ingresa tu contraseña">
+                        </div>
+                        <button type="submit" class="btn btn-light btn-block text-dark font-weight-bold">INICIAR SESIÓN</button> <!-- Botón blanco con texto negro -->
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

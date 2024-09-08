@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container mt-5"></div>
+        <!-- Logo de la Liga -->
+        <div class="text-center mb-4">
+            <img src="{% static 'images/Logo_Liga_B.png' %}" alt="Liga de Estrellas" width="150">
+        </div>
+
+<!-- Información de la Liga -->
+<div class="container">
+    <div class="row justify-content-center text-center mb-4">
+        <!-- Primer conjunto de 3 elementos en el centro -->
+        <div class="col-md-4 mb-3 d-flex align-items-center justify-content-center">
+            <img src="{% static 'images/Jugadores_inscriptos.png' %}" alt="Jugadores Inscriptos" width="50" class="mr-3">
+            <div class="custom-spacing">
+                <p class="info-num">497</p>
+                <h5 class="info-text">Jugadores<br>Inscriptos</h5>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3 d-flex align-items-center justify-content-center">
+            <img src="{% static 'images/Equipos_inscriptos.png' %}" alt="Total de Equipos" width="50" class="mr-3">
+            <div class="custom-spacing">
+                <p class="info-num">20</p>
+                <h5 class="info-text">Equipos<br>Inscriptos</h5>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3 d-flex align-items-center justify-content-center">
+            <img src="{% static 'images/Goles_convertidos.png' %}" alt="Total de Goles" width="50" class="mr-3">
+            <div class="custom-spacing">
+                <p class="info-num">869</p>
+                <h5 class="info-text">Goles<br>Convertidos</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center text-center">
+        <!-- Segundo conjunto de 2 elementos en el centro -->
+        <div class="col-md-4 mb-3 d-flex align-items-center justify-content-center">
+            <img src="{% static 'images/Equipos_campeones.png' %}" alt="Total de Equipos Campeones" width="50" class="mr-3">
+            <div class="custom-spacing">
+                <p class="info-num">9</p>
+                <h5 class="info-text">Equipos<br>Campeones</h5>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3 d-flex align-items-center justify-content-center">
+            <img src="{% static 'images/Partidos_jugados.png' %}" alt="Total de Partidos Jugados" width="50" class="mr-3">
+            <div class="custom-spacing">
+                <p class="info-num">380</p>
+                <h5 class="info-text">Partidos<br>Jugados</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+        
+
+        <!-- Redes Sociales -->
+        <div class="text-center mt-4">
+            <a href="https://www.facebook.com/LDE.SALTACAPITAL" target="_blank" class="mx-2">
+                <img src="{% static 'images/Facebook.png' %}" alt="Total de Partidos Jugados" width="40">
+            </a>
+            <a href="https://www.instagram.com/liga.estrella/" target="_blank" class="mx-2">
+                <img src="{% static 'images/instagram.png' %}" alt="Total de Partidos Jugados" width="40">
+            </a>
+            <a href="https://wa.me/3876059059" target="_blank" class="mx-2">
+                <img src="{% static 'images/Whatsapp.png' %}" alt="Total de Partidos Jugados" width="40">
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}
+

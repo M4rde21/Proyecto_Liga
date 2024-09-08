@@ -1,0 +1,81 @@
+.navbar-custom {
+    background-color: #000000; /* Negro más oscuro */
+}
+
+.navbar-custom .nav-link,
+.navbar-custom .navbar-brand,
+.navbar-custom .form-control,
+.navbar-custom .btn {
+    color: #ffffff;
+}
+
+.navbar-custom .form-control::placeholder {
+    color: #ffffff;
+}
+
+.navbar-custom .btn-outline-success {
+    border-color: #ffffff;
+}
+
+.navbar-custom .btn-outline-success:hover {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+body{
+    background: black;
+    color: white;
+
+}
+
+/* Estilos específicos para los párrafos en inicio.html */
+.info-text {
+    font-size: 1.1em; /* Tamaño de fuente más grande */
+
+}
+
+/* Estilos específicos para los párrafos en inicio.html */
+.info-num {
+    font-size: 2.0em; /* Tamaño de fuente más grande */
+    font-weight: bold; /* Texto en negrita */
+}
+
+.custom-spacing p {
+    margin-bottom: 0.2rem; /* Ajusta este valor para reducir el espacio */
+}
+
+/* Estilo personalizado para el fondo negro */
+.modal-custom-bg {
+    background-color: #000;  /* Fondo negro */
+    color: #fff;  /* Texto blanco */
+}
+
+/* Input con fondo gris oscuro y texto blanco */
+.input-custom {
+    background-color: #333;  /* Fondo del input gris oscuro */
+    color: #fff;  /* Texto blanco */
+    border: 1px solid #555;  /* Borde gris oscuro */
+}
+
+/* Cambia el placeholder a un color más claro */
+.input-custom::placeholder {
+    color: #bbb;  /* Color del placeholder */
+}
+
+/* Botón blanco con texto negro */
+.btn-light {
+    background-color: #fff;  /* Fondo blanco */
+    color: #000;  /* Texto negro */
+    border: 1px solid #ddd;  /* Borde gris claro */
+}
+
+.btn-light:hover {
+    background-color: #e6e6e6;  /* Fondo gris claro al pasar el ratón */
+}
+
+/* Cambiar el color del botón de cierre */
+.close span {
+    color: #fff;  /* Color blanco */
+}
+
+
