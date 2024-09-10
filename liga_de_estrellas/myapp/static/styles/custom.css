@@ -1,3 +1,13 @@
+body {
+    background-size: cover; /* Ajusta la imagen para que cubra todo el fondo */
+    background-position: center; /* Centra la imagen en el fondo */
+    background-repeat: no-repeat; /* Evita que la imagen se repita */
+    background-attachment: fixed; /* Mantiene la imagen fija mientras se desplaza el contenido */
+    background-color: black; /* Color de fondo de respaldo en caso de que la imagen no se cargue */
+    color: white;
+}
+
+
 .navbar-custom {
     background-color: #000000; /* Negro más oscuro */
 }
@@ -22,22 +32,19 @@
     color: #000000;
 }
 
-body{
-    background: black;
-    color: white;
-
-}
 
 /* Estilos específicos para los párrafos en inicio.html */
 .info-text {
     font-size: 1.1em; /* Tamaño de fuente más grande */
+    color: #ffffff;
 
 }
 
 /* Estilos específicos para los párrafos en inicio.html */
 .info-num {
     font-size: 2.0em; /* Tamaño de fuente más grande */
-    font-weight: bold; /* Texto en negrita */
+    font-weight: bold;
+    color: #ffffff; /* Texto en negrita */
 }
 
 .custom-spacing p {
@@ -56,6 +63,7 @@ body{
     color: #fff;  /* Texto blanco */
     border: 1px solid #555;  /* Borde gris oscuro */
 }
+
 
 /* Cambia el placeholder a un color más claro */
 .input-custom::placeholder {
@@ -77,5 +85,40 @@ body{
 .close span {
     color: #fff;  /* Color blanco */
 }
+
+.card-custom {
+    background-color: #000000; /* Fondo negro */
+    color: #ffffff; /* Texto blanco */
+    border: 2px solid #ffffff; /* Bordes blancos */
+    border-radius: 15px; /* Bordes redondeados */
+}
+
+
+/* Estilo para las cajas estadísticas */
+.stat-box {
+    background-color: #d3d3d3; /* Gris claro para el fondo */
+    color: #000000; /* Texto en negro */
+    padding: 5px 15px;
+    border-radius: 5px;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Clase personalizada para el margen entre las cajas */
+.me-2 {
+    margin-right: 10px; /* Margen derecho de 10px */
+}
+
+/* Espaciado entre las cajas cuando están en una columna */
+.stat-box + .stat-box {
+    margin-top: 10px; /* Espacio vertical entre las cajas */
+}
+
+/* Añadir margen a la derecha de las cajas de estadísticas */
+.stat-box.mt-2 {
+    margin-top: 10px; /* Espacio vertical entre las cajas */
+}
+
 
 

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Caja Izquierda - Más Ancha -->
+        <div class="col-lg-8 mb-4">
+            <div class="d-flex align-items-start" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <!-- Caja Blanca con Logo del Torneo -->
+                <div class="bg-white p-3 rounded d-flex justify-content-center align-items-center" 
+                    style="width: 120px; height: 120px;">
+                    <!-- Logo del Torneo -->
+                    <img src="{% static 'images/Logo_Liga.png' %}" alt="Logo del Torneo" class="img-fluid" style="max-width: 100px;">
+                </div>
+
+                <!-- Contenedor para el texto -->
+                <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
+                    <h5 class="mb-2" style="font-weight: bold;">{{ torneo.nombre_torneo }}</h5>
+                    <p class="mb-0" style="font-size: 1m;">
+                        <strong>Tipo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Caja Derecha - Menos Ancha -->
+        <div class="col-lg-4 mb-4">
+            <div class="card" style="background-color: black; border: 2px solid white; height: 300px;">
+                <!-- Contenido vacío -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incluye Bootstrap JS y dependencias si es necesario -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+{% endblock %}
