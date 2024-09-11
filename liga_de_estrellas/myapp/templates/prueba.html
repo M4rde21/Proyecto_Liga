@@ -1,40 +1,76 @@
-{% extends 'base.html' %}
-{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Jugadores</title>
+    <!-- Incluye Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .dropdown-menu {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
 
-{% block content %}
 <div class="container mt-5">
-    <div class="row">
-        <!-- Caja Izquierda - Más Ancha -->
-        <div class="col-lg-8 mb-4">
-            <div class="d-flex align-items-start" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
-                <!-- Caja Blanca con Logo del Torneo -->
-                <div class="bg-white p-3 rounded d-flex justify-content-center align-items-center" 
-                    style="width: 120px; height: 120px;">
-                    <!-- Logo del Torneo -->
-                    <img src="{% static 'images/Logo_Liga.png' %}" alt="Logo del Torneo" class="img-fluid" style="max-width: 100px;">
-                </div>
-
-                <!-- Contenedor para el texto -->
-                <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
-                    <h5 class="mb-2" style="font-weight: bold;">{{ torneo.nombre_torneo }}</h5>
-                    <p class="mb-0" style="font-size: 1m;">
-                        <strong>Tipo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Caja Derecha - Menos Ancha -->
-        <div class="col-lg-4 mb-4">
-            <div class="card" style="background-color: black; border: 2px solid white; height: 300px;">
-                <!-- Contenido vacío -->
-            </div>
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownJugadoresButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Ver Jugadores
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownJugadoresButton" id="dropdown-jugadores-menu">
+            <!-- Las opciones de jugadores se llenarán con JavaScript -->
         </div>
     </div>
 </div>
 
-<!-- Incluye Bootstrap JS y dependencias si es necesario -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<!-- Incluye jQuery y Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-{% endblock %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var url = 'url_del_endpoint_para_obtener_jugadores'; // Cambia esto por la URL real
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                var dropdownMenu = document.getElementById('dropdown-jugadores-menu');
+
+                // Limpiar el dropdown
+                dropdownMenu.innerHTML = '';
+
+                if (data.jugadores.length > 0) {
+                    // Añadir opciones al dropdown
+                    data.jugadores.forEach(function(jugador) {
+                        var item = document.createElement('a');
+                        item.classList.add('dropdown-item');
+                        item.href = '#'; // Cambia esto si necesitas un enlace a otra página o acción
+                        item.textContent = jugador.nombre; // Suponiendo que el objeto jugador tiene una propiedad 'nombre'
+                        dropdownMenu.appendChild(item);
+                    });
+                } else {
+                    var item = document.createElement('a');
+                    item.classList.add('dropdown-item');
+                    item.href = '#';
+                    item.textContent = 'No hay jugadores disponibles';
+                    dropdownMenu.appendChild(item);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                var dropdownMenu = document.getElementById('dropdown-jugadores-menu');
+                var item = document.createElement('a');
+                item.classList.add('dropdown-item');
+                item.href = '#';
+                item.textContent = 'Error al cargar jugadores';
+                dropdownMenu.appendChild(item);
+            });
+    });
+</script>
+
+</body>
+</html>

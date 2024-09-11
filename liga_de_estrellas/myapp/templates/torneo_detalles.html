@@ -6,7 +6,8 @@
     <div class="row">
         <!-- Caja Izquierda - Más Ancha -->
         <div class="col-lg-8 mb-4">
-            <div class="d-flex align-items-start" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+            <!-- Caja Principal -->
+            <div class="d-flex align-items-start mb-4" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
                 <!-- Caja Blanca con Logo del Torneo -->
                 <div class="bg-white p-3 rounded d-flex justify-content-center align-items-center" 
                     style="width: 120px; height: 120px;">
@@ -21,25 +22,61 @@
                         <strong>Tipo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}
                     </p>
 
-                    <!-- Botón para la Última Temporada -->
-                    <div class="dropdown mt-3">
-                        <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton" aria-expanded="false" style="font-weight: bold; font-size: 0.85em;">
-                            Cargando...
+                    <!-- Contenedor para la navegación entre temporadas -->
+                    <div class="d-flex align-items-center mt-3">
+                        <button class="btn btn-light" id="nextSeasonButton" style="font-weight: bold; font-size: 0.85em;">
+                            <i class="fas fa-chevron-left"></i>
                         </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" id="dropdown-menu-temporadas">
-                            <!-- Opciones de temporadas se llenarán con JavaScript -->
-                        </ul>
+                        <span class="mx-3" id="currentSeason" style="font-weight: bold;">Cargando...</span>
+                        <button class="btn btn-light" id="prevSeasonButton" style="font-weight: bold; font-size: 0.85em;">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Segunda Caja Adaptable Izquierda -->
+            <div class="card mb-4" style="background-color: black; border: 2px solid white; border-radius: 8px;">
+                <h5 class="text-white text-center p-3" style="border-bottom: 2px solid white; margin: 0;">Tabla de <br>Posiciones</h5>
+                <!-- Contenido dinámico -->
+            </div>
+
+            <!-- Tercera Caja Adaptable Izquierda -->
+            <div class="card mb-4" style="background-color: black; border: 2px solid white; border-radius: 8px;">
+                <h5 class="text-white text-center p-3" style="border-bottom: 2px solid white; margin: 0;">Partidos</h5>
+                <!-- Contenido dinámico -->
             </div>
         </div>
 
         <!-- Caja Derecha - Menos Ancha -->
         <div class="col-lg-4 mb-4">
-            <div class="card" style="background-color: black; border: 2px solid white; height: 300px; border-radius: 8px">
-                <!-- Contenido vacío -->
+            <!-- Primera Caja Adaptable Derecha -->
+            <div class="card mb-4" style="background-color: black; border: 2px solid white; border-radius: 8px">
+                <h5 class="text-white text-center p-3" style="border-bottom: 2px solid white; margin: 0;">Partido destacado</h5>
+                <!-- Contenido dinámico -->
             </div>
-        </div>
+
+            <!-- Segunda Caja Adaptable Derecha -->
+            <div class="card mb-4" style="background-color: black; border: 2px solid white; border-radius: 8px">
+                <h5 class="text-white text-center p-3" style="border-bottom: 2px solid white; margin: 0;">Ranking de Equipos</h5>
+                <!-- Contenido dinámico -->
+            </div>
+
+            <!-- Tercera Caja Adaptable Derecha -->
+            <div class="card" style="background-color: black; border: 2px solid white; border-radius: 8px">
+                <h5 class="text-white text-center p-3" style="border-bottom: 2px solid white; margin: 0;">Estadísticas</h5>
+                <div class="card-body text-white">
+                    <p><strong>Equipos Inscritos:</strong> <span id="equipos-inscritos">0</span></p>
+                    <p><strong>Partidos Jugados:</strong> <span id="partidos-jugados">0</span></p>
+                    <p><strong>Partidos Ganados:</strong> <span id="partidos-ganados">0</span></p>
+                    <p><strong>Partidos Empatados:</strong> <span id="partidos-empatados">0</span></p>
+                    <p><strong>Partidos Perdidos:</strong> <span id="partidos-perdidos">0</span></p>
+                    <p><strong>Goles:</strong> <span id="goles">0</span></p>
+                    <p><strong>Tarjetas Amarillas:</strong> <span id="tarjetas-amarillas">0</span></p>
+                    <p><strong>Tarjetas Rojas:</strong> <span id="tarjetas-rojas">0</span></p>
+                </div>
+            </div>
+        </div>               
     </div>
 </div>
 
@@ -47,40 +84,70 @@
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var torneoId = "{{ torneo.id_torneo }}";
-        var url = "{% url 'obtener_temporadas' torneo.id_torneo %}";
+        var currentSeasonId = "{{ temporada.id_temporada }}";  // Asegúrate de que esta variable esté disponible
+        var seasons = []; // Array para almacenar temporadas
+        var currentSeasonIndex = 0;
+        var prevButton = document.getElementById('prevSeasonButton');
+        var nextButton = document.getElementById('nextSeasonButton');
+        var currentSeason = document.getElementById('currentSeason');
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                var dropdownButton = document.getElementById('dropdownMenuButton');
-                var dropdownMenu = document.getElementById('dropdown-menu-temporadas');
+        function loadSeasons() {
+            var url = "{% url 'obtener_temporadas' torneo.id_torneo %}";
 
-                // Limpiar el dropdown
-                dropdownMenu.innerHTML = '';
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    seasons = data.temporadas;
+                    currentSeasonIndex = seasons.findIndex(season => season.id_temporada === parseInt(currentSeasonId));
+                    if (currentSeasonIndex === -1) {
+                        currentSeasonIndex = 0;  // Fallback si el ID no se encuentra
+                    }
+                    updateSeason();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
 
-                if (data.temporadas.length > 0) {
-                    // Mostrar la última temporada en el botón
-                    var ultima = data.temporadas[0];  // La primera en la lista después de ordenar por id_temporada
-                    dropdownButton.textContent = ultima.nombre_temporada;
+        function updateSeason() {
+            if (seasons.length > 0) {
+                var season = seasons[currentSeasonIndex];
+                currentSeason.textContent = season.nombre_temporada;
 
-                    // Añadir opciones al dropdown
-                    data.temporadas.forEach(function(temporada) {
-                        var item = document.createElement('li');
-                        item.classList.add('dropdown-item');
-                        item.textContent = temporada.nombre_temporada + ' (' + new Date(temporada.fecha_inicio).getFullYear() + ')';
-                        dropdownMenu.appendChild(item);
-                    });
-                } else {
-                    dropdownButton.textContent = 'No hay temporadas disponibles';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+                // Habilitar/deshabilitar botones
+                prevButton.disabled = currentSeasonIndex === 0;
+                nextButton.disabled = currentSeasonIndex === seasons.length - 1;
+            } else {
+                currentSeason.textContent = 'No hay temporadas disponibles';
+                prevButton.disabled = true;
+                nextButton.disabled = true;
+            }
+        }
+
+        // Función para manejar el botón de temporada anterior
+        prevButton.addEventListener('click', function() {
+            if (currentSeasonIndex > 0) {
+                currentSeasonIndex--;
+                updateSeason();
+            }
+        });
+
+        // Función para manejar el botón de siguiente temporada
+        nextButton.addEventListener('click', function() {
+            if (currentSeasonIndex < seasons.length - 1) {
+                currentSeasonIndex++;
+                updateSeason();
+            }
+        });
+
+        // Cargar las temporadas al inicio
+        loadSeasons();
     });
 </script>
+
 {% endblock %}
