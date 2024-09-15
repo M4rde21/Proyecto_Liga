@@ -1,0 +1,26 @@
+{% extends 'layouts/base2.html' %}
+
+{% block content %}
+
+
+<h1>TEMPORADAS</h1>
+<ul>
+    {% for temporada in temporadas %}
+
+
+    <li>
+        
+        <a href="{% url 'edit_temporada' temporada.id_temporada %}">
+            <p>Nombre: {{ temporada.nombre_temporada }}</p><br>
+            <p>Torneo: {{ temporada.id_torneo.nombre_torneo }}</p><br>
+            <p>Fecha inicio: {{ temporada.fecha_inicio }}</p><br>
+            <p>Fecha final: {{ temporada.fecha_final }}</p><br>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
+
+
+

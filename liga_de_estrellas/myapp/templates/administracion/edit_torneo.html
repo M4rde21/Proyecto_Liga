@@ -1,0 +1,22 @@
+{% extends 'layouts/base2.html' %}
+
+{% block content %}
+
+
+<h1>{{ torneo.nombre_torneo }}</h1>
+
+{{error}}
+
+<form method="POST" action="{% url 'edit_torneo' torneo.id_torneo %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+
+<form method="POST" action="{% url 'delete_torneo' torneo.id_torneo %}">
+    {% csrf_token %}
+    
+    <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este torneo?');">Delete</button>
+</form>
+
+{% endblock %}

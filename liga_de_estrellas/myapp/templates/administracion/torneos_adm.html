@@ -1,0 +1,26 @@
+{% extends 'layouts/base2.html' %}
+
+{% block content %}
+
+
+<h1>{{ torneo.nombre_torneo }}</h1>
+<ul>
+    {% for torneo in torneos %}
+
+
+    <li>
+       
+        <a href="{% url 'edit_torneo' torneo.id_torneo %}">
+            <strong>Nombre:</strong> {{ torneo.nombre_torneo }}<br>
+            <strong>Categoría:</strong> {{ torneo.id_categoria.nombre_categoria }}<br>
+            <strong>Tipo de Torneo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}<br>
+            <strong>Año:</strong> {{ torneo.año }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
+
+
+

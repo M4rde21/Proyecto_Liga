@@ -1,0 +1,22 @@
+{% extends 'layouts/base2.html' %}
+
+{% block content %}
+
+
+<h1>{{ temporada.nombre_temporada }}</h1>
+
+{{error}}
+
+<form method="POST" action="{% url 'edit_temporada' temporada.id_temporada %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+
+<form method="POST" action="{% url 'delete_temporada' temporada.id_temporada %}">
+    {% csrf_token %}
+    
+    <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta temporada?');">Delete</button>
+</form>
+
+{% endblock %}

@@ -15,7 +15,8 @@ class Categorias(models.Model):
     class Meta:
         managed = False
         db_table = 'categorias'
-
+    def __str__(self):
+        return self.nombre_categoria
 
 class Entrenadores(models.Model):
     id_entrenador = models.AutoField(primary_key=True)
@@ -261,7 +262,8 @@ class TipoTorneos(models.Model):
     class Meta:
         managed = False
         db_table = 'tipo_torneos'
-
+    def __str__(self):
+        return self.nombre_tipo_torneo
 
 class Torneos(models.Model):
     id_torneo = models.AutoField(primary_key=True)
@@ -273,6 +275,8 @@ class Torneos(models.Model):
     class Meta:
         managed = False
         db_table = 'torneos'
+    def __str__(self):
+        return self.nombre_torneo
 
 
 class Traspasos(models.Model):

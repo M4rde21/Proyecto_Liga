@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMINISTRACION</title>
+    
+</head>
+<body>
+    <nav>
+        <div>
+
+        
+            <ul>
+                
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold" href="{% url 'logout' %}">LOGOUT</a>
+                </li>
+
+                <li>
+                    <a href="{% url 'temporadas_adm' %}">Temporadas</a>
+                </li>
+
+                <li>
+                    <a href="{% url 'crear_temporada' %}">Crear Temporada</a>
+                </li>
+
+                <li>
+                    <a href="{% url 'torneos_adm' %}">Torneos</a>
+                </li>
+
+        
+                <li>
+                    <a href="{% url 'crear_torneo' %}">Crear Torneo</a>
+                </li>
+
+                
+                <li>
+
+                </li>
+
+                <li>
+
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    {% block content %}
+        <!-- El contenido de cada vista se incluirá aquí -->
+    {% endblock %}
+    
+
+</body>
+</html>
