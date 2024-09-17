@@ -1,4 +1,5 @@
 body {
+    background-image: url('/static/images/Fondo.jpg');
     background-size: cover; /* Ajusta la imagen para que cubra todo el fondo */
     background-position: center; /* Centra la imagen en el fondo */
     background-repeat: no-repeat; /* Evita que la imagen se repita */

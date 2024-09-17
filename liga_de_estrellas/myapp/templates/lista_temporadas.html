@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Título -->
+    <h1 class="text-white p-3 text-center" style="border-radius: .375rem;">TEMPORADAS DE "{{ torneo.nombre_torneo }}"</h1>
+    
+    <!-- Verifica si hay temporadas disponibles -->
+    {% if temporadas %}
+        <ul class="list-group">
+            {% for temporada in temporadas %}
+                <li class="list-group-item d-flex align-items-center" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                    <!-- Contenedor de la información y botón -->
+                    <div class="d-flex justify-content-between w-100 align-items-center">
+                        <div class="d-flex align-items-center" style="gap: 20px;">
+                            <!-- Contenedor del logo -->
+                            <div class="d-flex justify-content-center align-items-center" style="flex-shrink: 0;">
+                                <div class="bg-white p-2 rounded d-flex justify-content-center align-items-center" style="width: 80px; height: 80px;">
+                                    <!-- Imagen del logo -->
+                                    <img src="{% static 'images/Logo_Liga.png' %}" alt="Logo de {{ temporada.nombre_temporada }}" width="60" height="60" class="img-fluid">
+                                </div>
+                            </div>
+                            <!-- Contenedor de la información de la temporada -->
+                            <div>
+                                <!-- Mostrar el nombre de la temporada en negrita sin "Nombre:" -->
+                                <strong>{{ temporada.nombre_temporada }}</strong><br>
+                                <strong>Fecha de Inicio:</strong> {{ temporada.fecha_inicio }}<br>
+                                <strong>Fecha Final:</strong> {% if temporada.fecha_final %}{{ temporada.fecha_final }}{% else %}No disponible{% endif %}
+                            </div>
+                        </div>
+                        <!-- Botón de ingreso alineado a la derecha con texto en negrita -->
+                        <a href="{% url 'temporada_detalles' temporada.id_temporada %}" class="btn btn-light" style="font-weight: bold;">Ingresar</a>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-white">No hay temporadas disponibles para este torneo.</p>
+    {% endif %}
+</div>
+{% endblock %}

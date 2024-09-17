@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Título -->
+    <h1 class="text-white p-3 text-center" style="border-radius: .375rem;">
+        {{ temporada.nombre_temporada }}
+    </h1>
+    
+    <div class="row">
+        <!-- Caja de la izquierda más ancha -->
+        <div class="col-md-8">
+            <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                <h2>Información de la Temporada</h2>
+                <p><strong>Fecha de Inicio:</strong> {{ temporada.fecha_inicio }}</p>
+                <p><strong>Fecha Final:</strong> {% if temporada.fecha_final %}{{ temporada.fecha_final }}{% else %}No disponible{% endif %}</p>
+                
+                <h3 class="mt-4">Equipos Participantes</h3>
+                {% if equipos_participantes %}
+                    <ul class="list-group">
+                        {% for equipo in equipos_participantes %}
+                            <li class="list-group-item" style="background-color: #000000; color: #ffffff; border: 1px solid #ffffff;">
+                                {{ equipo.nombre_equipo }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No hay equipos participantes en esta temporada.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Caja de la derecha más estrecha -->
+        <div class="col-md-4">
+            <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                <h3 class="mt-4">Jugadores Participantes</h3>
+                {% if jugadores_participantes %}
+                    <ul class="list-group">
+                        {% for jugador in jugadores_participantes %}
+                            <li class="list-group-item" style="background-color: #000000; color: #ffffff; border: 1px solid #ffffff;">
+                                {{ jugador.nombre_jugador }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No hay jugadores participantes en esta temporada.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Página</title>
+    <title>Liga de Estrellas</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{% static 'styles/custom.css' %}">
@@ -64,7 +64,7 @@
             <div class="modal-content modal-custom-bg">  <!-- Clase personalizada para el fondo negro -->
                 <div class="modal-header border-0 d-flex justify-content-center position-relative"> <!-- Sin borde en el header -->
                     <!-- Título del modal -->
-                    <h5 class="modal-title" id="loginModalLabel" ></h5>
+                    <h5 class="modal-title" id="loginModalLabel">Iniciar sesión</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -75,14 +75,26 @@
                         <!-- Logo del campeonato -->
                         <img src="{% static 'images/Logo_Liga_B.png' %}" alt="Logo" class="mb-3" width="150">
                     </div>
-                    <form>
+                    
+                    <!-- Mostrar mensajes de error -->
+                    {% if messages %}
+                        <div class="alert alert-danger">
+                            {% for message in messages %}
+                                <p>{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Formulario de login -->
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
                         <div class="form-group">
-                            <label for="usuario">Nombre de Usuario</label>
-                            <input type="text" class="form-control input-custom" id="usuario" placeholder="Ingresa tu nombre de usuario">
+                            <label for="username">Nombre de Usuario</label>
+                            <input type="text" class="form-control input-custom" id="username" name="username" placeholder="Ingresa tu nombre de usuario" required>
                         </div>
                         <div class="form-group">
                             <label for="password">Contraseña</label>
-                            <input type="password" class="form-control input-custom" id="password" placeholder="Ingresa tu contraseña">
+                            <input type="password" class="form-control input-custom" id="password" name="password" placeholder="Ingresa tu contraseña" required>
                         </div>
                         <button type="submit" class="btn btn-light btn-block text-dark font-weight-bold">INICIAR SESIÓN</button> <!-- Botón blanco con texto negro -->
                     </form>
