@@ -21,27 +21,81 @@
                         <strong>Tipo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}
                     </p>
 
-                    <!-- Botón para la Última Temporada -->
-                    <div class="dropdown mt-3">
-                        <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton" aria-expanded="false" style="font-weight: bold; font-size: 0.85em;">
-                            Cargando...
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" id="dropdown-menu-temporadas">
+                    <!-- Selector de Temporada -->
+                    <div class="mt-3">
+                        <select class="form-select" id="temporadaSelect">
                             <!-- Opciones de temporadas se llenarán con JavaScript -->
-                        </ul>
+                        </select>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Caja Derecha - Menos Ancha -->
-        <div class="col-lg-4 mb-4">
-            <div class="card" style="background-color: black; border: 2px solid white; height: 300px; border-radius: 8px">
-                <!-- Contenido vacío -->
-            </div>
+            <!-- Tabla de Posiciones -->
+            <div class="mt-4">
+                <div class="bg-black text-white p-3 rounded" style="border: 2px solid white; border-radius: 8px;">
+                    <h5 class="text-center">Tabla de Posiciones</h5>
+                    <div id="tablaPosicionesContainer">
+                        <!-- La tabla se llenará con JavaScript -->
+                    </div>
+                </div>
+            </div> 
+            <!-- Caja de Partidos -->
+            <div class="card mt-4" style="background-color: black; border: 2px solid white; border-radius: 8px;">
+                <div class="card-header text-center" style="background-color: black; margin-bottom: 0; padding-bottom: 0;">
+                    <h5 style="margin-bottom: 0;">Partidos</h5>
+                </div>
+            <div class="card-body" style="padding: 10px;">
         </div>
     </div>
 </div>
+
+<!-- Caja Derecha - Menos Ancha -->
+<div class="col-lg-4 mb-4">
+    <!-- Caja Partido Destacado -->
+    <div class="card" style="background-color: black; border: 2px solid white; height: 170px; border-radius: 8px;">
+        <div class="card-header text-center" style="background-color: black; margin-bottom: 0; padding-bottom: 0;">
+            <h5 style="margin-bottom: 0;">Partido Destacado</h5>
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center" style="height: 100%; padding: 10px;">
+            <div id="partidoDestacadoContent" class="d-flex align-items-center justify-content-between" style="width: 100%; flex-direction: row;">
+                <!-- Foto del Equipo 1 -->
+                <div id="equipo1Logo" class="team-logo d-flex justify-content-center align-items-center" style="width: 40%;">
+                    <!-- Se llenará con JavaScript -->
+                </div>
+                <!-- Fecha y Hora del Partido -->
+                <div id="partidoInfo" class="match-info text-center" style="width: 40%; font-size: 0.8em;">
+                    <!-- Se llenará con JavaScript -->
+                </div>
+                <!-- Foto del Equipo 2 -->
+                <div id="equipo2Logo" class="team-logo d-flex justify-content-center align-items-center" style="width: 40%;">
+                    <!-- Se llenará con JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Caja Ranking -->
+<div class="card mt-4" style="background-color: black; border: 2px solid white; border-radius: 8px;">
+    <div class="card-header text-center" style="background-color: black; margin-bottom: 0; padding-bottom: 0;">
+        <h5 style="margin-bottom: 0;">Ranking de Jugadores</h5>
+    </div>
+    <div class="card-body" style="padding: 10px;">
+        <!-- Contenedor para centrar el select -->
+        <div class="d-flex justify-content-center mb-3">
+            <select class="form-select" id="rankingSelect" style="max-width: 200px;">
+                <option value="goles">Goleadores</option>
+                <option value="tarjetas.amarillas">Tarjetas Amarillas</option>
+                <option value="tarjetas.rojas">Tarjetas Rojas</option>
+            </select>
+        </div>
+        <!-- Contenedor para centrar el ranking -->
+        <div id="rankingContent">
+            <!-- Se llenará con JavaScript -->
+        </div>
+    </div>
+</div>
+
+
+
 
 <!-- Incluye Bootstrap JS y dependencias si es necesario -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -51,36 +105,250 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var torneoId = "{{ torneo.id_torneo }}";
-        var url = "{% url 'obtener_temporadas' torneo.id_torneo %}";
+        var urlTemporadas = "{% url 'obtener_temporadas' torneo.id_torneo %}";
+        var temporadaSelect = document.getElementById('temporadaSelect');
+        var rankingSelect = document.getElementById('rankingSelect');
+        var partidoDestacadoContent = document.getElementById('partidoDestacadoContent');
+        var equipo1Logo = document.getElementById('equipo1Logo');
+        var partidoInfo = document.getElementById('partidoInfo');
+        var equipo2Logo = document.getElementById('equipo2Logo');
+        var tablaPosicionesContainer = document.getElementById('tablaPosicionesContainer');
+        var rankingContent = document.getElementById('rankingContent');
 
-        fetch(url)
-            .then(response => response.json())
+        // Cargar temporadas y el partido destacado inicial
+        fetch(urlTemporadas)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la solicitud de temporadas: ' + response.statusText);
+                }
+                return response.json();
+            })
             .then(data => {
-                var dropdownButton = document.getElementById('dropdownMenuButton');
-                var dropdownMenu = document.getElementById('dropdown-menu-temporadas');
+                console.log("Datos Temporadas:", data);
 
-                // Limpiar el dropdown
-                dropdownMenu.innerHTML = '';
+                temporadaSelect.innerHTML = '';
 
-                if (data.temporadas.length > 0) {
-                    // Mostrar la última temporada en el botón
-                    var ultima = data.temporadas[0];  // La primera en la lista después de ordenar por id_temporada
-                    dropdownButton.textContent = ultima.nombre_temporada;
-
-                    // Añadir opciones al dropdown
+                if (data.temporadas && data.temporadas.length > 0) {
                     data.temporadas.forEach(function(temporada) {
-                        var item = document.createElement('li');
-                        item.classList.add('dropdown-item');
-                        item.textContent = temporada.nombre_temporada + ' (' + new Date(temporada.fecha_inicio).getFullYear() + ')';
-                        dropdownMenu.appendChild(item);
+                        var item = document.createElement('option');
+                        item.textContent = temporada.nombre_temporada;
+                        item.value = temporada.id_temporada;
+                        temporadaSelect.appendChild(item);
                     });
+
+                    var ultima = data.temporadas[0];
+                    temporadaSelect.value = ultima.id_temporada;
+
+                    // Cargar el partido destacado, la tabla de posiciones y el ranking para la última temporada
+                    cargarPartidoDestacado(ultima.id_temporada);
+                    cargarTablaPosiciones(ultima.id_temporada);
+                    cargarRanking(ultima.id_temporada, rankingSelect.value);
                 } else {
-                    dropdownButton.textContent = 'No hay temporadas disponibles';
+                    var option = document.createElement('option');
+                    option.textContent = 'No hay temporadas disponibles';
+                    option.disabled = true;
+                    temporadaSelect.appendChild(option);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
             });
+
+        temporadaSelect.addEventListener('change', function() {
+            var idTemporada = this.value;
+            cargarPartidoDestacado(idTemporada);
+            cargarTablaPosiciones(idTemporada);
+            cargarRanking(idTemporada, rankingSelect.value);
+        });
+
+        rankingSelect.addEventListener('change', function() {
+            if (temporadaSelect.value) {
+                cargarRanking(temporadaSelect.value, this.value);
+            }
+        });
+
+        function cargarPartidoDestacado(idTemporada) {
+            var urlPartido = "{% url 'obtener_partido_destacado' 0 %}".replace('0', idTemporada);
+
+            fetch(urlPartido)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la solicitud de partido destacado: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Datos Partido Destacado:", data);
+
+                    if (data.partido_destacado) {
+                        partidoDestacadoContent.style.display = 'flex';
+
+                        var partido = data.partido_destacado;
+                        var fecha = new Date(partido.fecha_partido + 'T' + partido.hora_partido);
+
+                        if (isNaN(fecha)) {
+                            var partesFecha = partido.fecha_partido.split('-');
+                            var partesHora = partido.hora_partido.split(':');
+                            fecha = new Date(partesFecha[0], partesFecha[1] - 1, partesFecha[2], partesHora[0], partesHora[1]);
+                        }
+
+                        function obtenerUltimosDosDigitosAnio(date) {
+                            return date.getFullYear().toString().slice(-2);
+                        }
+
+                        partidoInfo.innerHTML = `
+                            <p class="mb-1" style="font-weight: bold; color: white;">
+                                ${fecha.getDate()}/${fecha.getMonth() + 1}/${obtenerUltimosDosDigitosAnio(fecha)}
+                            </p>
+                            <p class="mb-0" style="color: white;">
+                                ${fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                            </p>
+                        `;
+
+                        equipo1Logo.innerHTML = `<img src="${partido.id_equipo_1__foto_equipo}" alt="Logo del Equipo 1" class="img-fluid" style="max-width: 80px;">`;
+                        equipo2Logo.innerHTML = `<img src="${partido.id_equipo_2__foto_equipo}" alt="Logo del Equipo 2" class="img-fluid" style="max-width: 80px;">`;
+                    } else {
+                        partidoDestacadoContent.style.display = 'flex';
+                        partidoInfo.innerHTML = '<p>No hay partido destacado para esta temporada.</p>';
+                        equipo1Logo.innerHTML = '';
+                        equipo2Logo.innerHTML = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar el partido destacado:', error);
+                });
+        }
+
+        function cargarTablaPosiciones(idTemporada) {
+            var urlTabla = "{% url 'obtener_tabla_posiciones' torneo.id_torneo 0 %}".replace('0', idTemporada);
+
+            fetch(urlTabla)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la solicitud de tabla de posiciones: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Datos Tabla de Posiciones:", data);
+
+                    if (data.tabla_posiciones && data.tabla_posiciones.length > 0) {
+                        var html = `
+                            <table class="table table-dark" style="background-color: black; color: white; width: 100%; border: none;">
+                                <thead>
+                                    <tr>
+                                        <th style="color: white; border: none;">Pos</th>
+                                        <th style="color: white; border: none;">Equipo</th>
+                                        <th class="text-center" style="color: white; border: none;">PTS</th>
+                                        <th class="text-center" style="color: white; border: none;">PJ</th>
+                                        <th class="text-center" style="color: white; border: none;">PG</th>
+                                        <th class="text-center" style="color: white; border: none;">PE</th>
+                                        <th class="text-center" style="color: white; border: none;">PP</th>
+                                        <th class="text-center" style="color: white; border: none;">GF</th>
+                                        <th class="text-center" style="color: white; border: none;">GC</th>
+                                        <th class="text-center" style="color: white; border: none;">DG</th>
+                                        <th class="text-center" style="color: white; border: none;">TA</th>
+                                        <th class="text-center" style="color: white; border: none;">TR</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+
+                        data.tabla_posiciones.forEach(function(posicion, index) {
+                            var equipoUrl = "{% url 'equipo_detalles' id_equipo='0' %}".replace('0', posicion.id_equipo);
+
+                            html += `
+                                <tr>
+                                    <td class="text-center" style="color: white; border: none;">${index + 1}</td>
+                                    <td style="color: white; border: none;">
+                                        <a href="${equipoUrl}" style="color: white; text-decoration: none;">
+                                            <div class="d-flex align-items-center">
+                                                <img src="${posicion.id_equipo__foto_equipo}" alt="Logo del Equipo" class="img-fluid" style="width: 40px; height: 40px; margin-right: 10px;">
+                                                ${posicion.id_equipo__nombre_equipo}
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.puntos}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.partidos_jugados}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.partidos_ganados}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.partidos_empatados}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.partidos_perdidos}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.goles_a_favor}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.goles_en_contra}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.diferencia_goles}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.tarjetas_amarillas}</td>
+                                    <td class="text-center" style="color: white; border: none;">${posicion.tarjetas_rojas}</td>
+                                </tr>
+                            `;
+                        });
+
+                        html += '</tbody></table>';
+                        tablaPosicionesContainer.innerHTML = html;
+                    } else {
+                        tablaPosicionesContainer.innerHTML = '<p>No hay datos disponibles para la tabla de posiciones.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar la tabla de posiciones:', error);
+                });
+        }
+
+        function cargarRanking(idTemporada, tipo) {
+    var urlRanking = "{% url 'obtener_ranking_goles_tarjetas' torneo.id_torneo 0 %}".replace('0', idTemporada) + "?tipo=" + tipo;
+
+    fetch(urlRanking)
+        .then(response => response.json())
+        .then(data => {
+            rankingContent.innerHTML = ''; // Limpia el contenido del ranking
+
+            if (data.ranking && data.ranking.length > 0) {
+                var html = `
+                    <h6 class="text-center" style="color: white;">Ranking de ${tipo === 'goles' ? 'Goles' : tipo === 'tarjetas.amarillas' ? 'Tarjetas Amarillas' : 'Tarjetas Rojas'}</h6>
+                    <table class="table table-dark" style="background-color: black; color: white; width: 100%; border: none;">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="color: white; border: none;">#</th>
+                                <th style="color: white; border: none;">Jugador</th>
+                                <th class="text-center" style="color: white; border: none;">${tipo === 'goles' ? 'Goles' : 'Tarjetas'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                data.ranking.slice(0, 5).forEach(function(item, index) {
+                    var nombreCompleto = `${item.id_jugador__apellido_jugador}, ${item.id_jugador__nombre_jugador}`;
+
+                    html += `
+                        <tr>
+                            <td class="text-center" style="color: white; border: none;">${index + 1}</td>
+                            <td style="color: white; border: none;">
+                                <div class="d-flex align-items-center">
+                                    <img src="${item.id_jugador__foto_jugador}" alt="Foto del Jugador" class="img-fluid" style="width: 40px; height: 40px; margin-right: 10px;">
+                                    <div>
+                                        <div>${nombreCompleto}</div>
+                                        <div class="d-flex align-items-center mt-1">
+                                            <img src="${item.id_equipo__logo_equipo}" alt="Logo del Equipo" class="img-fluid" style="width: 20px; height: 20px; margin-right: 5px;">
+                                            ${item.id_equipo__nombre_equipo}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center" style="color: white; border: none;">${item.total}</td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                rankingContent.innerHTML = html;
+            } else {
+                rankingContent.innerHTML = '<p>No hay datos de ranking disponibles para esta temporada.</p>';
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
     });
 </script>
+
+
+
 {% endblock %}

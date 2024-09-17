@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Caja Izquierda - Más Ancha -->
+        <div class="col-lg-8 mb-4">
+            <div class="d-flex align-items-start" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <!-- Caja Blanca con Logo del Equipo -->
+                <div class="bg-white p-3 rounded d-flex justify-content-center align-items-center" 
+                    style="width: 120px; height: 120px;">
+                    <!-- Logo del Equipo -->
+                    <img src="{{ equipo.foto_equipo.url }}" alt="Logo del Equipo" class="img-fluid" style="max-width: 100px;">
+                </div>
+
+                <!-- Contenedor para el texto -->
+                <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
+                    <h5 class="mb-2" style="font-weight: bold;">{{ equipo.nombre_equipo }}</h5>
+                    <p class="mb-1" style="font-size: 0.9em;">
+                        <strong>Entrenador:</strong> {{ equipo.entrenador.nombre_entrenador }}
+                    </p>
+                    <div class="d-flex align-items-center">
+                        <img src="{{ equipo.entrenador.foto }}" alt="Foto del Entrenador" class="img-entrenador" style="width: 40px; height: 40px;">
+                        <p class="nombre-entrenador ms-2">{{ equipo.entrenador.nombre_entrenador }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caja de Tabla de Posiciones -->
+            <div class="d-flex align-items-start mt-4" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
+                    <h5 class="text-center mb-2" style="font-weight: bold;">Clasificaciones</h5>
+                    <table class="table table-dark" style="background-color: black; color: white;">
+                        <thead>
+                            <tr>
+                                <th>POS</th>
+                                <th>EQUIPO</th>
+                                <th>PTS</th>
+                                <th>PJ</th>
+                                <th>PG</th>
+                                <th>PE</th>
+                                <th>PP</th>
+                                <th>GF</th>
+                                <th>GC</th>
+                                <th>+/-</th>
+                                <th>TA</th>
+                                <th>TR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for posicion in posiciones %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ posicion.id_equipo.foto_equipo.url }}" alt="Logo del Equipo" class="img-fluid" style="width: 40px; height: 40px; margin-right: 10px;">
+                                        {{ posicion.id_equipo.nombre_equipo }}
+                                    </div>
+                                </td>
+                                <td>{{ posicion.puntos }}</td>
+                                <td>{{ posicion.partidos_jugados }}</td>
+                                <td>{{ posicion.partidos_ganados }}</td>
+                                <td>{{ posicion.partidos_empatados }}</td>
+                                <td>{{ posicion.partidos_perdidos }}</td>
+                                <td>{{ posicion.goles_a_favor }}</td>
+                                <td>{{ posicion.goles_en_contra }}</td>
+                                <td>{{ posicion.diferencia_goles }}</td>
+                                <td>{{ posicion.tarjetas_amarillas }}</td>
+                                <td>{{ posicion.tarjetas_rojas }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Caja del Plantel -->
+            <div class="d-flex align-items-start mt-4" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
+                    <h5 class="text-center mb-2" style="font-weight: bold;">Plantel</h5>
+                    <p class="mb-1" style="font-size: 0.9em;">
+                        <!-- Contenido de la caja del plantel -->
+                    </p>
+                </div>
+            </div>
+
+            <!-- Nueva caja debajo de Plantel -->
+            <div class="d-flex align-items-start mt-4" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
+                    <h5 class="text-center mb-2" style="font-weight: bold;">Información</h5>
+                    <p class="mb-1" style="font-size: 0.9em;">
+                        <!-- Contenido de la caja de información -->
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Caja Derecha - Menos Ancha -->
+        <div class="col-lg-4 mb-4 text-center">
+            <!-- Caja Siguiente Partido -->
+            <div class="card" style="background-color: black; border: 2px solid white; height: 180px; border-radius: 8px; margin-bottom: 20px;">
+                <h5 class="text-center text-white">Siguiente Partido</h5>
+                <div class="d-flex justify-content-center align-items-center mt-3">
+                    <img src="{{ siguiente_partido.equipo_1.foto }}" alt="Equipo 1" width="50" height="50" style="margin: 0 10px;">
+                    <div class="mx-auto text-center">
+                        <p class="card-text text-white">{{ siguiente_partido.fecha }}</p>
+                        <p class="card-text text-white">{{ siguiente_partido.hora }}</p>
+                    </div>
+                    <img src="{{ siguiente_partido.equipo_2.foto }}" alt="Equipo 2" width="50" height="50" style="margin: 0 10px;">
+                </div>
+            </div>
+
+            <!-- Caja Historial de Partidos -->
+            <div class="d-flex align-items-start text-center" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <div class="bg-black text-white p-3 ms-3 rounded text-center" style="flex: 1;">
+                    <h5>Historial de Partidos</h5>
+                    <div style="margin-top: 20px;">
+                        {% for partido in historial_partidos %}
+                        <div class="d-flex justify-content-center mb-3">
+                            <img src="{{ partido.equipo_1.foto }}" alt="Equipo 1" width="50" height="50">
+                            <div class="mx-3 text-center">
+                                <p>{{ partido.fecha }}</p>
+                                <p>{{ partido.hora }}</p>
+                            </div>
+                            <img src="{{ partido.equipo_2.foto }}" alt="Equipo 2" width="50" height="50">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caja Estadísticas -->
+            <div class="d-flex align-items-start mt-4 text-center" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <div class="bg-black text-white p-3 ms-3 rounded text-center" style="flex: 1;">
+                    <h5 class="mb-2">Estadísticas</h5>
+                    <p class="mb-1" style="font-size: 0.9em;">
+                        <!-- Contenido de la caja de estadísticas -->
+                    </p>
+                </div>
+            </div>
+
+            <!-- Caja de Rankings -->
+            <div class="d-flex align-items-start mt-4 text-center" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <div class="bg-black text-white p-3 ms-3 rounded text-center" style="flex: 1;">
+                    <h5 class="mb-2">Ranking de Jugadores</h5>
+                    <p class="mb-1" style="font-size: 0.9em;">
+                        <!-- Contenido de la caja de rankings -->
+                    </p>
+                </div>
+            </div>
+
+            <!-- Caja de Premios -->
+            <div class="d-flex align-items-start mt-4 text-center" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
+                <div class="bg-black text-white p-3 ms-3 rounded text-center" style="flex: 1;">
+                    <h5 class="mb-2">Premios</h5>
+                    <p class="mb-1" style="font-size: 0.9em;">
+                        <!-- Contenido de la caja -->
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
