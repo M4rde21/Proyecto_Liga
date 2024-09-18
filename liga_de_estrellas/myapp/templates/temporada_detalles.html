@@ -1,50 +1,188 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block content %}
 <div class="container mt-5">
-    <!-- Título -->
-    <h1 class="text-white p-3 text-center" style="border-radius: .375rem;">
-        {{ temporada.nombre_temporada }}
-    </h1>
-    
     <div class="row">
-        <!-- Caja de la izquierda más ancha -->
+        <!-- Columna de la izquierda con tres cajas -->
         <div class="col-md-8">
-            <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                <h2>Información de la Temporada</h2>
-                <p><strong>Fecha de Inicio:</strong> {{ temporada.fecha_inicio }}</p>
-                <p><strong>Fecha Final:</strong> {% if temporada.fecha_final %}{{ temporada.fecha_final }}{% else %}No disponible{% endif %}</p>
-                
-                <h3 class="mt-4">Equipos Participantes</h3>
-                {% if equipos_participantes %}
-                    <ul class="list-group">
-                        {% for equipo in equipos_participantes %}
-                            <li class="list-group-item" style="background-color: #000000; color: #ffffff; border: 1px solid #ffffff;">
-                                {{ equipo.nombre_equipo }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No hay equipos participantes en esta temporada.</p>
-                {% endif %}
+            <div class="row">
+                <!-- Información del Torneo y Temporada -->
+                <div class="col-md-12 mb-3">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                        <div class="d-flex align-items-center">
+                            <!-- Información del torneo y botones de navegación -->
+                            <div class="d-flex flex-grow-1 align-items-center justify-content-between">
+                                <!-- Botón de temporada anterior -->
+                                {% if temporada_anterior %}
+                                    <a href="{% url 'temporada_detalles' id_temporada=temporada_anterior.id_temporada %}" class="btn btn-light">
+                                        <i class="fa fa-chevron-left"></i>
+                                    </a>
+                                {% else %}
+                                    <span class="btn btn-light disabled">
+                                        <i class="fa fa-chevron-left"></i>
+                                    </span>
+                                {% endif %}
+                                
+                                <!-- Información del torneo -->
+                                <div class="text-center flex-grow-1">
+                                    <h2><strong>{{ torneo.nombre_torneo }}</strong></h2>
+                                    <p><strong>Tipo de Torneo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}</p>
+                                    <p><strong style="text-transform: uppercase; font-size: 1.5rem;">{{ temporada.nombre_temporada }}</strong></p>
+                                </div>
+                                
+                                <!-- Botón de temporada siguiente -->
+                                {% if temporada_siguiente %}
+                                    <a href="{% url 'temporada_detalles' id_temporada=temporada_siguiente.id_temporada %}" class="btn btn-light">
+                                        <i class="fa fa-chevron-right"></i>
+                                    </a>
+                                {% else %}
+                                    <span class="btn btn-light disabled">
+                                        <i class="fa fa-chevron-right"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Posiciones -->
+                <div class="col-md-12 mb-3">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                        <h3 class="text-center">TABLA DE POSICIONES</h3>
+                        {% if tabla_posiciones %}
+                            <div class="table-responsive">
+                                <table class="table custom-table">
+                                    <thead>
+                                        <tr class="text-white">
+                                            <th>POS</th>
+                                            <th>EQUIPO</th>
+                                            <th class="text-center">PTS</th>
+                                            <th class="text-center">PJ</th>
+                                            <th class="text-center">PG</th>
+                                            <th class="text-center">PE</th>
+                                            <th class="text-center">PP</th>
+                                            <th class="text-center">GF</th>
+                                            <th class="text-center">GC</th>
+                                            <th class="text-center">DG</th>
+                                            <th class="text-center">TA</th>
+                                            <th class="text-center">TR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for posicion in tabla_posiciones %}
+                                            <tr class="text-white">
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>{{ posicion.id_equipo.nombre_equipo }}</td>
+                                                <td class="text-center">{{ posicion.puntos }}</td>
+                                                <td class="text-center">{{ posicion.partidos_jugados }}</td>
+                                                <td class="text-center">{{ posicion.partidos_ganados }}</td>
+                                                <td class="text-center">{{ posicion.partidos_empatados }}</td>
+                                                <td class="text-center">{{ posicion.partidos_perdidos }}</td>
+                                                <td class="text-center">{{ posicion.goles_a_favor }}</td>
+                                                <td class="text-center">{{ posicion.goles_en_contra }}</td>
+                                                <td class="text-center">{{ posicion.diferencia_goles }}</td>
+                                                <td class="text-center">{{ posicion.tarjetas_amarillas }}</td>
+                                                <td class="text-center">{{ posicion.tarjetas_rojas }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>No hay datos de tabla de posiciones disponibles para esta temporada.</p>
+                        {% endif %}
+                        
+                        <!-- Texto adicional debajo de la tabla -->
+                        <div class="mt-3">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>POS</strong> Posición</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>PG</strong> Partidos Ganados</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>GF</strong> Goles a Favor</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>TA</strong> Tarjetas Amarillas</p>
+                                </div>
+                            </div>
+                            <!-- Nueva fila con más aclaraciones -->
+                            <div class="row text-center mt-2">
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>PTS</strong> Puntos</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>PE</strong> Partidos Empatados</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>GC</strong> Goles en Contra</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>TR</strong> Tarjetas Rojas</p>
+                                </div>
+                            </div>
+                            <!-- Nueva fila con más aclaraciones -->
+                            <div class="row text-center mt-2">
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>PJ</strong> Partidos Jugados</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>PP</strong> Partidos Perdidos</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p style="font-size: 0.75rem;"><strong>DF</strong> Diferencia de Goles</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tercera caja -->
+                <div class="col-md-12">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                        <h3>Más información</h3>
+                        <p>Aquí podrías agregar cualquier otro contenido adicional sobre la temporada.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Caja de la derecha más estrecha -->
+        <!-- Columna de la derecha con cuatro cajas -->
         <div class="col-md-4">
-            <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                <h3 class="mt-4">Jugadores Participantes</h3>
-                {% if jugadores_participantes %}
-                    <ul class="list-group">
-                        {% for jugador in jugadores_participantes %}
-                            <li class="list-group-item" style="background-color: #000000; color: #ffffff; border: 1px solid #ffffff;">
-                                {{ jugador.nombre_jugador }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No hay jugadores participantes en esta temporada.</p>
-                {% endif %}
+            <div class="row">
+                <!-- Primera caja -->
+                <div class="col-md-12 mb-3">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                        <h3>Partido Destacado</h3>
+                        <p>Acá va el partido destacado que seleccione el Administrador del Torneo</p>
+                    </div>
+                </div>
+
+                <!-- Segunda caja -->
+                <div class="col-md-12 mb-3">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                        <h3>Ranking de jugadores</h3>
+                        <p>Contenido adicional 1.</p>
+                    </div>
+                </div>
+
+                <!-- Tercera caja -->
+                <div class="col-md-12 mb-3">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                        <h3>Caja Adicional 2</h3>
+                        <p>Contenido adicional 2.</p>
+                    </div>
+                </div>
+
+                <!-- Cuarta caja -->
+                <div class="col-md-12">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
+                        <h3>Caja Adicional 3</h3>
+                        <p>Contenido adicional 3.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

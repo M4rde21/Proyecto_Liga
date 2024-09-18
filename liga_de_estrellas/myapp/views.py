@@ -2,9 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Sum
+from django.db.models import Sum, F, Case, When, IntegerField, Q
 from django.http import HttpResponse, JsonResponse
-from .models import Jugadores, Equipos, Planillas, PremiosEquipos, Partidos, Torneos, Temporadas, Categorias, TipoTorneos, TemporadasXTorneosXEquiposXJugadores
+from .models import Jugadores, Equipos, Planillas, PremiosEquipos, Partidos, Torneos, Temporadas, Categorias, TipoTorneos, TemporadasXTorneosXEquiposXJugadores, TablaDePosiciones, Tarjetas
 
 # Create your views here.
 def home(request):
@@ -98,24 +98,147 @@ def lista_temporadas(request, id_torneo):
     return render(request, 'lista_temporadas.html', {'torneo': torneo, 'temporadas': temporadas})
 
 
+
 def temporada_detalles(request, id_temporada):
-    # Obtén el objeto de la temporada basado en el id
     temporada = get_object_or_404(Temporadas, id_temporada=id_temporada)
-    # Obtén el objeto del torneo relacionado con esta temporada
     torneo = temporada.id_torneo
-    
-    # Obtener los equipos y jugadores participando en la temporada
-    participantes = TemporadasXTorneosXEquiposXJugadores.objects.filter(id_temporada=temporada)
-    equipos_participantes = Equipos.objects.filter(id_equipo__in=participantes.values_list('id_equipo', flat=True))
-    jugadores_participantes = Jugadores.objects.filter(id_jugador__in=participantes.values_list('id_jugador', flat=True))
-    
-    # Pasa los datos a la plantilla
+
+    # Obtener la temporada anterior y siguiente
+    temporadas = Temporadas.objects.filter(id_torneo=torneo).order_by('fecha_inicio')
+    temporada_anterior = temporadas.filter(fecha_inicio__lt=temporada.fecha_inicio).last()
+    temporada_siguiente = temporadas.filter(fecha_inicio__gt=temporada.fecha_inicio).first()
+
+    # Inicializar la tabla de posiciones
+    tabla_posiciones = TablaDePosiciones.objects.filter(id_temporada=temporada).order_by('-puntos', '-diferencia_goles')
+
+    # Crear un diccionario para almacenar estadísticas de cada equipo
+    estadisticas_equipo = {}
+
+    # Actualizar estadísticas para cada equipo
+    for posicion in tabla_posiciones:
+        equipo_id = posicion.id_equipo.id_equipo
+
+        # Goles a favor
+        goles_a_favor = Partidos.objects.filter(
+            id_temporada=temporada,
+            id_equipo_1=posicion.id_equipo
+        ).aggregate(total_goles=Sum('resultados__goles_equipo_1'))['total_goles'] or 0
+        
+        goles_a_favor += Partidos.objects.filter(
+            id_temporada=temporada,
+            id_equipo_2=posicion.id_equipo
+        ).aggregate(total_goles=Sum('resultados__goles_equipo_2'))['total_goles'] or 0
+
+        # Goles en contra
+        goles_en_contra = Partidos.objects.filter(
+            id_temporada=temporada,
+            id_equipo_1=posicion.id_equipo
+        ).aggregate(total_goles=Sum('resultados__goles_equipo_2'))['total_goles'] or 0
+        
+        goles_en_contra += Partidos.objects.filter(
+            id_temporada=temporada,
+            id_equipo_2=posicion.id_equipo
+        ).aggregate(total_goles=Sum('resultados__goles_equipo_1'))['total_goles'] or 0
+
+        # Partidos ganados
+        partidos_ganados = Partidos.objects.filter(
+            id_temporada=temporada
+        ).annotate(
+            equipo_1_ganador=Case(
+                When(resultados__goles_equipo_1__gt=F('resultados__goles_equipo_2'), then=1),
+                default=0,
+                output_field=IntegerField()
+            ),
+            equipo_2_ganador=Case(
+                When(resultados__goles_equipo_2__gt=F('resultados__goles_equipo_1'), then=1),
+                default=0,
+                output_field=IntegerField()
+            )
+        ).filter(
+            Q(id_equipo_1=posicion.id_equipo, equipo_1_ganador=1) |
+            Q(id_equipo_2=posicion.id_equipo, equipo_2_ganador=1)
+        ).count()
+
+        # Partidos perdidos
+        partidos_perdidos = Partidos.objects.filter(
+            id_temporada=temporada
+        ).annotate(
+            equipo_1_perdedor=Case(
+                When(resultados__goles_equipo_1__lt=F('resultados__goles_equipo_2'), then=1),
+                default=0,
+                output_field=IntegerField()
+            ),
+            equipo_2_perdedor=Case(
+                When(resultados__goles_equipo_2__lt=F('resultados__goles_equipo_1'), then=1),
+                default=0,
+                output_field=IntegerField()
+            )
+        ).filter(
+            Q(id_equipo_1=posicion.id_equipo, equipo_1_perdedor=1) |
+            Q(id_equipo_2=posicion.id_equipo, equipo_2_perdedor=1)
+        ).count()
+
+        # Partidos empatados
+        partidos_empatados = Partidos.objects.filter(
+            id_temporada=temporada
+        ).annotate(
+            empate=Case(
+                When(resultados__goles_equipo_1=F('resultados__goles_equipo_2'), then=1),
+                default=0,
+                output_field=IntegerField()
+            )
+        ).filter(
+            Q(id_equipo_1=posicion.id_equipo, empate=1) |
+            Q(id_equipo_2=posicion.id_equipo, empate=1)
+        ).count()
+
+        # Tarjetas amarillas
+        jugadores = Jugadores.objects.filter(
+            id_jugador__in=TemporadasXTorneosXEquiposXJugadores.objects.filter(
+                id_temporada=temporada,
+                id_equipo=posicion.id_equipo
+            ).values_list('id_jugador', flat=True)
+        )
+        
+        tarjetas_amarillas = Tarjetas.objects.filter(
+            id_jugador__in=jugadores,
+            tipo_tarjeta='amarilla'
+        ).count()
+
+        # Tarjetas rojas
+        tarjetas_rojas = Tarjetas.objects.filter(
+            id_jugador__in=jugadores,
+            tipo_tarjeta='roja'
+        ).count()
+
+        # Diferencia de goles
+        diferencia_goles = goles_a_favor - goles_en_contra
+
+        # Puntos
+        puntos = partidos_ganados * 3 + partidos_empatados * 1
+
+        # Actualiza los campos en la tabla de posiciones
+        posicion.goles_a_favor = goles_a_favor
+        posicion.goles_en_contra = goles_en_contra
+        posicion.diferencia_goles = diferencia_goles
+        posicion.partidos_ganados = partidos_ganados
+        posicion.partidos_perdidos = partidos_perdidos
+        posicion.partidos_empatados = partidos_empatados
+        posicion.puntos = puntos
+        posicion.tarjetas_amarillas = tarjetas_amarillas
+        posicion.tarjetas_rojas = tarjetas_rojas
+        posicion.save()
+
     return render(request, 'temporada_detalles.html', {
         'temporada': temporada,
         'torneo': torneo,
-        'equipos_participantes': equipos_participantes,
-        'jugadores_participantes': jugadores_participantes
+        'tabla_posiciones': tabla_posiciones,
+        'temporada_anterior': temporada_anterior,
+        'temporada_siguiente': temporada_siguiente,
     })
+
+    
+
 
 def reglamentos(request):
     return render(request, 'reglamentos.html')
