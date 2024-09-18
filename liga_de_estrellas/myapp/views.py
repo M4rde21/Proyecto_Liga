@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Sum, F, Case, When, IntegerField, Q, Count
 from django.http import HttpResponse, JsonResponse
-from .models import Jugadores, Equipos, Planillas, PremiosEquipos, Partidos, Torneos, Temporadas, Categorias, TipoTorneos, TemporadasXTorneosXEquiposXJugadores, TablaDePosiciones, Tarjetas
+from .models import Jugadores, Equipos, Planillas, PremiosEquipos, Partidos, Torneos, Temporadas, Categorias, TipoTorneos, TemporadasXTorneosXEquiposXJugadores, TablaDePosiciones, Tarjetas, Figuras
 
 # Create your views here.
 def home(request):
@@ -262,6 +262,16 @@ def temporada_detalles(request, id_temporada):
     ).annotate(
         total_tarjetas_rojas=Count('id_tarjeta')
     ).order_by('-total_tarjetas_rojas')[:5])
+    
+    # Obtener el ranking de los 5 jugadores más veces elegidos como "figura" en la temporada actual
+    ranking_figuras = (Figuras.objects.filter(
+        id_partido__id_temporada=temporada
+    ).values(
+        'id_jugador__apellido_jugador',
+        'id_jugador__nombre_jugador'
+    ).annotate(
+        total_figuras=Count('id_figura')
+    ).order_by('-total_figuras')[:5])
 
     # Renderizar la plantilla con los datos necesarios
     return render(request, 'temporada_detalles.html', {
@@ -273,6 +283,7 @@ def temporada_detalles(request, id_temporada):
         'ranking_jugadores': ranking_jugadores,
         'ranking_tarjetas_amarillas': ranking_tarjetas_amarillas,
         'ranking_tarjetas_rojas': ranking_tarjetas_rojas,
+        'ranking_figuras': ranking_figuras,
     })
 
 def reglamentos(request):

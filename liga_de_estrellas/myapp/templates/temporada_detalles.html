@@ -202,7 +202,35 @@
                                     <p>No hay datos de ranking de jugadores disponibles para esta temporada.</p>
                                 {% endif %}
                             </div>
-                
+
+                            <!-- Sección de Máximos Figuras -->
+                            <div id="figuras-section" class="ranking-section d-none">
+                                {% if ranking_figuras %}
+                                    <div class="table-responsive">
+                                        <table class="table custom-table">
+                                            <thead>
+                                                <tr class="text-white">
+                                                    <th class="text-center" style="width: 5%;">POS</th>
+                                                    <th style="width: 50%;">JUGADOR</th>
+                                                    <th class="text-center" style="width: 20%;">TOTAL</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for figura in ranking_figuras %}
+                                                    <tr class="text-white">
+                                                        <td class="text-center">{{ forloop.counter }}</td>
+                                                        <td>{{ figura.id_jugador__apellido_jugador }} {{ figura.id_jugador__nombre_jugador }}</td>
+                                                        <td class="text-center">{{ figura.total_figuras }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p>No hay datos de ranking de figuras disponibles para esta temporada.</p>
+                                {% endif %}
+                            </div>
+                            
                             <!-- Sección de Tarjetas Amarillas -->
                             <div id="tarjetas-amarillas-section" class="ranking-section d-none">
                                 {% if ranking_tarjetas_amarillas %}
@@ -285,58 +313,72 @@
 <!-- Incluye el JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const btnIzquierda = document.getElementById('btn-izquierda');
-        const btnDerecha = document.getElementById('btn-derecha');
-        const rankingSubtitle = document.getElementById('ranking-subtitle');
-        const goleadoresSection = document.getElementById('goleadores-section');
-        const tarjetasAmarillasSection = document.getElementById('tarjetas-amarillas-section');
-        const tarjetasRojasSection = document.getElementById('tarjetas-rojas-section');
+    const btnIzquierda = document.getElementById('btn-izquierda');
+    const btnDerecha = document.getElementById('btn-derecha');
+    const rankingSubtitle = document.getElementById('ranking-subtitle');
+    const goleadoresSection = document.getElementById('goleadores-section');
+    const figurasSection = document.getElementById('figuras-section');
+    const tarjetasAmarillasSection = document.getElementById('tarjetas-amarillas-section');
+    const tarjetasRojasSection = document.getElementById('tarjetas-rojas-section');
 
-        let currentSection = 'goleadores';
+    let currentSection = 'goleadores';
 
-        function updateSections() {
-            if (currentSection === 'goleadores') {
-                goleadoresSection.classList.remove('d-none');
-                tarjetasAmarillasSection.classList.add('d-none');
-                tarjetasRojasSection.classList.add('d-none');
-                rankingSubtitle.textContent = 'GOLEADORES';
-            } else if (currentSection === 'tarjetas-amarillas') {
-                goleadoresSection.classList.add('d-none');
-                tarjetasAmarillasSection.classList.remove('d-none');
-                tarjetasRojasSection.classList.add('d-none');
-                rankingSubtitle.textContent = 'TARJETAS AMARILLAS';
-            } else if (currentSection === 'tarjetas-rojas') {
-                goleadoresSection.classList.add('d-none');
-                tarjetasAmarillasSection.classList.add('d-none');
-                tarjetasRojasSection.classList.remove('d-none');
-                rankingSubtitle.textContent = 'TARJETAS ROJAS';
-            }
+    function updateSections() {
+        if (currentSection === 'goleadores') {
+            goleadoresSection.classList.remove('d-none');
+            figurasSection.classList.add('d-none');
+            tarjetasAmarillasSection.classList.add('d-none');
+            tarjetasRojasSection.classList.add('d-none');
+            rankingSubtitle.textContent = 'GOLEADORES';
+        } else if (currentSection === 'figuras') {
+            goleadoresSection.classList.add('d-none');
+            figurasSection.classList.remove('d-none');
+            tarjetasAmarillasSection.classList.add('d-none');
+            tarjetasRojasSection.classList.add('d-none');
+            rankingSubtitle.textContent = 'JUGADORES FIGURAS';
+        } else if (currentSection === 'tarjetas-amarillas') {
+            goleadoresSection.classList.add('d-none');
+            figurasSection.classList.add('d-none');
+            tarjetasAmarillasSection.classList.remove('d-none');
+            tarjetasRojasSection.classList.add('d-none');
+            rankingSubtitle.textContent = 'TARJETAS AMARILLAS';
+        } else if (currentSection === 'tarjetas-rojas') {
+            goleadoresSection.classList.add('d-none');
+            figurasSection.classList.add('d-none');
+            tarjetasAmarillasSection.classList.add('d-none');
+            tarjetasRojasSection.classList.remove('d-none');
+            rankingSubtitle.textContent = 'TARJETAS ROJAS';
         }
+    }
 
-        btnIzquierda.addEventListener('click', function() {
-            if (currentSection === 'goleadores') {
-                currentSection = 'tarjetas-rojas';
-            } else if (currentSection === 'tarjetas-amarillas') {
-                currentSection = 'goleadores';
-            } else if (currentSection === 'tarjetas-rojas') {
-                currentSection = 'tarjetas-amarillas';
-            }
-            updateSections();
-        });
-
-        btnDerecha.addEventListener('click', function() {
-            if (currentSection === 'goleadores') {
-                currentSection = 'tarjetas-amarillas';
-            } else if (currentSection === 'tarjetas-amarillas') {
-                currentSection = 'tarjetas-rojas';
-            } else if (currentSection === 'tarjetas-rojas') {
-                currentSection = 'goleadores';
-            }
-            updateSections();
-        });
-
-        // Inicializar la vista correcta al cargar la página
+    btnIzquierda.addEventListener('click', function() {
+        if (currentSection === 'goleadores') {
+            currentSection = 'tarjetas-rojas';
+        } else if (currentSection === 'figuras') {
+            currentSection = 'goleadores';
+        } else if (currentSection === 'tarjetas-amarillas') {
+            currentSection = 'figuras';
+        } else if (currentSection === 'tarjetas-rojas') {
+            currentSection = 'tarjetas-amarillas';
+        }
         updateSections();
     });
+
+    btnDerecha.addEventListener('click', function() {
+        if (currentSection === 'goleadores') {
+            currentSection = 'figuras';
+        } else if (currentSection === 'figuras') {
+            currentSection = 'tarjetas-amarillas';
+        } else if (currentSection === 'tarjetas-amarillas') {
+            currentSection = 'tarjetas-rojas';
+        } else if (currentSection === 'tarjetas-rojas') {
+            currentSection = 'goleadores';
+        }
+        updateSections();
+    });
+
+    // Inicializar la vista correcta al cargar la página
+    updateSections();
+});
 </script>
 {% endblock %}
