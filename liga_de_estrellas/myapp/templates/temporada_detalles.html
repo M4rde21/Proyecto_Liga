@@ -10,9 +10,7 @@
                 <div class="col-md-12 mb-3">
                     <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
                         <div class="d-flex align-items-center">
-                            <!-- Información del torneo y botones de navegación -->
                             <div class="d-flex flex-grow-1 align-items-center justify-content-between">
-                                <!-- Botón de temporada anterior -->
                                 {% if temporada_anterior %}
                                     <a href="{% url 'temporada_detalles' id_temporada=temporada_anterior.id_temporada %}" class="btn btn-light">
                                         <i class="fa fa-chevron-left"></i>
@@ -23,14 +21,12 @@
                                     </span>
                                 {% endif %}
                                 
-                                <!-- Información del torneo -->
                                 <div class="text-center flex-grow-1">
                                     <h2><strong>{{ torneo.nombre_torneo }}</strong></h2>
                                     <p><strong>Tipo de Torneo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}</p>
                                     <p><strong style="text-transform: uppercase; font-size: 1.5rem;">{{ temporada.nombre_temporada }}</strong></p>
                                 </div>
                                 
-                                <!-- Botón de temporada siguiente -->
                                 {% if temporada_siguiente %}
                                     <a href="{% url 'temporada_detalles' id_temporada=temporada_siguiente.id_temporada %}" class="btn btn-light">
                                         <i class="fa fa-chevron-right"></i>
@@ -54,18 +50,18 @@
                                 <table class="table custom-table">
                                     <thead>
                                         <tr class="text-white">
-                                            <th>POS</th>
-                                            <th>EQUIPO</th>
-                                            <th class="text-center">PTS</th>
-                                            <th class="text-center">PJ</th>
-                                            <th class="text-center">PG</th>
-                                            <th class="text-center">PE</th>
-                                            <th class="text-center">PP</th>
-                                            <th class="text-center">GF</th>
-                                            <th class="text-center">GC</th>
-                                            <th class="text-center">DG</th>
-                                            <th class="text-center">TA</th>
-                                            <th class="text-center">TR</th>
+                                            <th class="text-center" style="width: 5%;">POS</th>
+                                            <th style="width: 30%;">EQUIPO</th>
+                                            <th class="text-center" style="width: 10%;">PTS</th>
+                                            <th class="text-center" style="width: 10%;">PJ</th>
+                                            <th class="text-center" style="width: 10%;">PG</th>
+                                            <th class="text-center" style="width: 10%;">PE</th>
+                                            <th class="text-center" style="width: 10%;">PP</th>
+                                            <th class="text-center" style="width: 10%;">GF</th>
+                                            <th class="text-center" style="width: 10%;">GC</th>
+                                            <th class="text-center" style="width: 10%;">DG</th>
+                                            <th class="text-center" style="width: 10%;">TA</th>
+                                            <th class="text-center" style="width: 10%;">TR</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -108,7 +104,6 @@
                                     <p style="font-size: 0.75rem;"><strong>TA</strong> Tarjetas Amarillas</p>
                                 </div>
                             </div>
-                            <!-- Nueva fila con más aclaraciones -->
                             <div class="row text-center mt-2">
                                 <div class="col-md-3">
                                     <p style="font-size: 0.75rem;"><strong>PTS</strong> Puntos</p>
@@ -123,7 +118,6 @@
                                     <p style="font-size: 0.75rem;"><strong>TR</strong> Tarjetas Rojas</p>
                                 </div>
                             </div>
-                            <!-- Nueva fila con más aclaraciones -->
                             <div class="row text-center mt-2">
                                 <div class="col-md-3">
                                     <p style="font-size: 0.75rem;"><strong>PJ</strong> Partidos Jugados</p>
@@ -163,28 +157,186 @@
                 <!-- Segunda caja -->
                 <div class="col-md-12 mb-3">
                     <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                        <h3>Ranking de jugadores</h3>
-                        <p>Contenido adicional 1.</p>
+                        <!-- Contenedor para el título -->
+                        <h3 class="text-center">Ranking de Jugadores</h3>
+                
+                        <!-- Contenedor flexible para botones de navegación y subtítulo -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <button id="btn-izquierda" class="btn btn-light">
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                
+                            <h6 class="text-center flex-grow-1 mb-0" id="ranking-subtitle">GOLEADORES</h6>
+                
+                            <button id="btn-derecha" class="btn btn-light">
+                                <i class="fa fa-chevron-right"></i>
+                            </button>
+                        </div>
+                
+                        <!-- Sección de Ranking de Jugadores -->
+                        <div id="ranking-section">
+                            <!-- Sección de Goleadores -->
+                            <div id="goleadores-section" class="ranking-section">
+                                {% if ranking_jugadores %}
+                                    <div class="table-responsive">
+                                        <table class="table custom-table">
+                                            <thead>
+                                                <tr class="text-white">
+                                                    <th class="text-center" style="width: 5%;">POS</th>
+                                                    <th style="width: 50%;">JUGADOR</th>
+                                                    <th class="text-center" style="width: 20%;">TOTAL</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for jugador in ranking_jugadores %}
+                                                    <tr class="text-white">
+                                                        <td class="text-center">{{ forloop.counter }}</td>
+                                                        <td>{{ jugador.id_jugador__apellido_jugador }} {{ jugador.id_jugador__nombre_jugador }}</td>
+                                                        <td class="text-center">{{ jugador.total_goles }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p>No hay datos de ranking de jugadores disponibles para esta temporada.</p>
+                                {% endif %}
+                            </div>
+                
+                            <!-- Sección de Tarjetas Amarillas -->
+                            <div id="tarjetas-amarillas-section" class="ranking-section d-none">
+                                {% if ranking_tarjetas_amarillas %}
+                                    <div class="table-responsive">
+                                        <table class="table custom-table">
+                                            <thead>
+                                                <tr class="text-white">
+                                                    <th class="text-center" style="width: 5%;">POS</th>
+                                                    <th style="width: 50%;">JUGADOR</th>
+                                                    <th class="text-center" style="width: 20%;">TOTAL</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for jugador in ranking_tarjetas_amarillas %}
+                                                    <tr class="text-white">
+                                                        <td class="text-center">{{ forloop.counter }}</td>
+                                                        <td>{{ jugador.id_jugador__apellido_jugador }} {{ jugador.id_jugador__nombre_jugador }}</td>
+                                                        <td class="text-center">{{ jugador.total_tarjetas_amarillas }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p>No hay datos de ranking de tarjetas amarillas disponibles para esta temporada.</p>
+                                {% endif %}
+                            </div>
+                
+                            <!-- Sección de Tarjetas Rojas -->
+                            <div id="tarjetas-rojas-section" class="ranking-section d-none">
+                                {% if ranking_tarjetas_rojas %}
+                                    <div class="table-responsive">
+                                        <table class="table custom-table">
+                                            <thead>
+                                                <tr class="text-white">
+                                                    <th class="text-center" style="width: 5%;">POS</th>
+                                                    <th style="width: 50%;">JUGADOR</th>
+                                                    <th class="text-center" style="width: 20%;">TOTAL</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for jugador in ranking_tarjetas_rojas %}
+                                                    <tr class="text-white">
+                                                        <td class="text-center">{{ forloop.counter }}</td>
+                                                        <td>{{ jugador.id_jugador__apellido_jugador }} {{ jugador.id_jugador__nombre_jugador }}</td>
+                                                        <td class="text-center">{{ jugador.total_tarjetas_rojas }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p>No hay datos de ranking de tarjetas rojas disponibles para esta temporada.</p>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Tercera caja -->
                 <div class="col-md-12 mb-3">
                     <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                        <h3>Caja Adicional 2</h3>
-                        <p>Contenido adicional 2.</p>
+                        <h3>Estadísticas Adicionales</h3>
+                        <p>Estadísticas y datos adicionales que pueden ser de interés.</p>
                     </div>
                 </div>
 
                 <!-- Cuarta caja -->
                 <div class="col-md-12">
                     <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                        <h3>Caja Adicional 3</h3>
-                        <p>Contenido adicional 3.</p>
+                        <h3>Historial del Torneo</h3>
+                        <p>Información histórica y relevante del torneo.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Incluye el JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnIzquierda = document.getElementById('btn-izquierda');
+        const btnDerecha = document.getElementById('btn-derecha');
+        const rankingSubtitle = document.getElementById('ranking-subtitle');
+        const goleadoresSection = document.getElementById('goleadores-section');
+        const tarjetasAmarillasSection = document.getElementById('tarjetas-amarillas-section');
+        const tarjetasRojasSection = document.getElementById('tarjetas-rojas-section');
+
+        let currentSection = 'goleadores';
+
+        function updateSections() {
+            if (currentSection === 'goleadores') {
+                goleadoresSection.classList.remove('d-none');
+                tarjetasAmarillasSection.classList.add('d-none');
+                tarjetasRojasSection.classList.add('d-none');
+                rankingSubtitle.textContent = 'GOLEADORES';
+            } else if (currentSection === 'tarjetas-amarillas') {
+                goleadoresSection.classList.add('d-none');
+                tarjetasAmarillasSection.classList.remove('d-none');
+                tarjetasRojasSection.classList.add('d-none');
+                rankingSubtitle.textContent = 'TARJETAS AMARILLAS';
+            } else if (currentSection === 'tarjetas-rojas') {
+                goleadoresSection.classList.add('d-none');
+                tarjetasAmarillasSection.classList.add('d-none');
+                tarjetasRojasSection.classList.remove('d-none');
+                rankingSubtitle.textContent = 'TARJETAS ROJAS';
+            }
+        }
+
+        btnIzquierda.addEventListener('click', function() {
+            if (currentSection === 'goleadores') {
+                currentSection = 'tarjetas-rojas';
+            } else if (currentSection === 'tarjetas-amarillas') {
+                currentSection = 'goleadores';
+            } else if (currentSection === 'tarjetas-rojas') {
+                currentSection = 'tarjetas-amarillas';
+            }
+            updateSections();
+        });
+
+        btnDerecha.addEventListener('click', function() {
+            if (currentSection === 'goleadores') {
+                currentSection = 'tarjetas-amarillas';
+            } else if (currentSection === 'tarjetas-amarillas') {
+                currentSection = 'tarjetas-rojas';
+            } else if (currentSection === 'tarjetas-rojas') {
+                currentSection = 'goleadores';
+            }
+            updateSections();
+        });
+
+        // Inicializar la vista correcta al cargar la página
+        updateSections();
+    });
+</script>
 {% endblock %}

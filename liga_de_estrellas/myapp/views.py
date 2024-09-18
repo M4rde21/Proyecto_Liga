@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Sum, F, Case, When, IntegerField, Q
+from django.db.models import Sum, F, Case, When, IntegerField, Q, Count
 from django.http import HttpResponse, JsonResponse
 from .models import Jugadores, Equipos, Planillas, PremiosEquipos, Partidos, Torneos, Temporadas, Categorias, TipoTorneos, TemporadasXTorneosXEquiposXJugadores, TablaDePosiciones, Tarjetas
 
@@ -100,25 +100,26 @@ def lista_temporadas(request, id_torneo):
 
 
 def temporada_detalles(request, id_temporada):
+    # Obtener la temporada actual
     temporada = get_object_or_404(Temporadas, id_temporada=id_temporada)
     torneo = temporada.id_torneo
 
-    # Obtener la temporada anterior y siguiente
+    # Obtener la temporada anterior y siguiente en relación a la temporada actual
     temporadas = Temporadas.objects.filter(id_torneo=torneo).order_by('fecha_inicio')
     temporada_anterior = temporadas.filter(fecha_inicio__lt=temporada.fecha_inicio).last()
     temporada_siguiente = temporadas.filter(fecha_inicio__gt=temporada.fecha_inicio).first()
 
-    # Inicializar la tabla de posiciones
+    # Obtener la tabla de posiciones para la temporada actual
     tabla_posiciones = TablaDePosiciones.objects.filter(id_temporada=temporada).order_by('-puntos', '-diferencia_goles')
 
-    # Crear un diccionario para almacenar estadísticas de cada equipo
+    # Inicializar el diccionario para almacenar estadísticas de cada equipo
     estadisticas_equipo = {}
 
-    # Actualizar estadísticas para cada equipo
+    # Actualizar estadísticas para cada equipo en la tabla de posiciones
     for posicion in tabla_posiciones:
         equipo_id = posicion.id_equipo.id_equipo
 
-        # Goles a favor
+        # Calcular los goles a favor para el equipo
         goles_a_favor = Partidos.objects.filter(
             id_temporada=temporada,
             id_equipo_1=posicion.id_equipo
@@ -129,7 +130,7 @@ def temporada_detalles(request, id_temporada):
             id_equipo_2=posicion.id_equipo
         ).aggregate(total_goles=Sum('resultados__goles_equipo_2'))['total_goles'] or 0
 
-        # Goles en contra
+        # Calcular los goles en contra para el equipo
         goles_en_contra = Partidos.objects.filter(
             id_temporada=temporada,
             id_equipo_1=posicion.id_equipo
@@ -140,7 +141,7 @@ def temporada_detalles(request, id_temporada):
             id_equipo_2=posicion.id_equipo
         ).aggregate(total_goles=Sum('resultados__goles_equipo_1'))['total_goles'] or 0
 
-        # Partidos ganados
+        # Calcular los partidos ganados para el equipo
         partidos_ganados = Partidos.objects.filter(
             id_temporada=temporada
         ).annotate(
@@ -159,7 +160,7 @@ def temporada_detalles(request, id_temporada):
             Q(id_equipo_2=posicion.id_equipo, equipo_2_ganador=1)
         ).count()
 
-        # Partidos perdidos
+        # Calcular los partidos perdidos para el equipo
         partidos_perdidos = Partidos.objects.filter(
             id_temporada=temporada
         ).annotate(
@@ -178,7 +179,7 @@ def temporada_detalles(request, id_temporada):
             Q(id_equipo_2=posicion.id_equipo, equipo_2_perdedor=1)
         ).count()
 
-        # Partidos empatados
+        # Calcular los partidos empatados para el equipo
         partidos_empatados = Partidos.objects.filter(
             id_temporada=temporada
         ).annotate(
@@ -192,7 +193,7 @@ def temporada_detalles(request, id_temporada):
             Q(id_equipo_2=posicion.id_equipo, empate=1)
         ).count()
 
-        # Tarjetas amarillas
+        # Calcular las tarjetas amarillas para los jugadores del equipo
         jugadores = Jugadores.objects.filter(
             id_jugador__in=TemporadasXTorneosXEquiposXJugadores.objects.filter(
                 id_temporada=temporada,
@@ -205,19 +206,19 @@ def temporada_detalles(request, id_temporada):
             tipo_tarjeta='amarilla'
         ).count()
 
-        # Tarjetas rojas
+        # Calcular las tarjetas rojas para los jugadores del equipo
         tarjetas_rojas = Tarjetas.objects.filter(
             id_jugador__in=jugadores,
             tipo_tarjeta='roja'
         ).count()
 
-        # Diferencia de goles
+        # Calcular la diferencia de goles
         diferencia_goles = goles_a_favor - goles_en_contra
 
-        # Puntos
+        # Calcular los puntos
         puntos = partidos_ganados * 3 + partidos_empatados * 1
 
-        # Actualiza los campos en la tabla de posiciones
+        # Actualizar los campos en la tabla de posiciones
         posicion.goles_a_favor = goles_a_favor
         posicion.goles_en_contra = goles_en_contra
         posicion.diferencia_goles = diferencia_goles
@@ -229,16 +230,50 @@ def temporada_detalles(request, id_temporada):
         posicion.tarjetas_rojas = tarjetas_rojas
         posicion.save()
 
+    # Obtener el ranking de los 5 jugadores con más goles en la temporada actual
+    ranking_jugadores = (Planillas.objects.filter(
+        id_partido__id_temporada=temporada
+    ).values(
+        'id_jugador__apellido_jugador',
+        'id_jugador__nombre_jugador'
+    ).annotate(
+        total_goles=Sum('goles')
+    ).filter(total_goles__gt=0)  # Filtrar jugadores con goles
+    .order_by('-total_goles')[:5])  # Limitar a los primeros 5 jugadores si hay más
+
+    # Obtener el ranking de los 5 jugadores con más tarjetas amarillas en la temporada actual
+    ranking_tarjetas_amarillas = (Tarjetas.objects.filter(
+        id_partido__id_temporada=temporada
+    ).filter(tipo_tarjeta='amarilla')
+    .values(
+        'id_jugador__apellido_jugador',
+        'id_jugador__nombre_jugador'
+    ).annotate(
+        total_tarjetas_amarillas=Count('id_tarjeta')
+    ).order_by('-total_tarjetas_amarillas')[:5])
+
+    # Obtener el ranking de los 5 jugadores con más tarjetas rojas en la temporada actual
+    ranking_tarjetas_rojas = (Tarjetas.objects.filter(
+        id_partido__id_temporada=temporada
+    ).filter(tipo_tarjeta='roja')
+    .values(
+        'id_jugador__apellido_jugador',
+        'id_jugador__nombre_jugador'
+    ).annotate(
+        total_tarjetas_rojas=Count('id_tarjeta')
+    ).order_by('-total_tarjetas_rojas')[:5])
+
+    # Renderizar la plantilla con los datos necesarios
     return render(request, 'temporada_detalles.html', {
         'temporada': temporada,
         'torneo': torneo,
         'tabla_posiciones': tabla_posiciones,
         'temporada_anterior': temporada_anterior,
         'temporada_siguiente': temporada_siguiente,
+        'ranking_jugadores': ranking_jugadores,
+        'ranking_tarjetas_amarillas': ranking_tarjetas_amarillas,
+        'ranking_tarjetas_rojas': ranking_tarjetas_rojas,
     })
-
-    
-
 
 def reglamentos(request):
     return render(request, 'reglamentos.html')
