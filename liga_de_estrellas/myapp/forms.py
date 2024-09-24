@@ -1,5 +1,5 @@
 from django import forms
-from .models import Torneos, Temporadas
+from .models import Torneos, Temporadas,Categorias,TipoTorneos
 
 
 
@@ -15,3 +15,14 @@ class TemporadasForm(forms.ModelForm):
     class Meta:
         model = Temporadas
         fields = ['nombre_temporada', 'id_torneo', 'fecha_inicio', 'fecha_final']
+
+
+class CategoriasForm(forms.ModelForm):
+    class Meta:
+        model = Categorias
+        fields = ['nombre_categoria']
+
+class TipoTorneoForm(forms.ModelForm):
+    class Meta:
+        model = TipoTorneos
+        fields = ['nombre_tipo_torneo']

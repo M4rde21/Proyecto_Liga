@@ -1,0 +1,23 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+
+<h1>{{ categoria.nombre_categoria }}</h1>
+
+{{error}}
+
+<form method="POST" action="{% url 'edit_categoria' categoria.id_categoria %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+
+<form method="POST" action="{% url 'delete_categoria' categoria.id_categoria %}">
+    {% csrf_token %}
+    
+    <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta categoria?');">Delete</button>
+</form>
+
+
+{% endblock %}

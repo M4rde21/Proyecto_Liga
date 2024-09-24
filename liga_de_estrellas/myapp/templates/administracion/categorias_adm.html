@@ -1,0 +1,24 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+
+<h1>CATEGORIAS</h1>
+<ul>
+    {% for categoria in categorias %}
+
+
+    <li>
+        
+        <a href="{% url 'edit_categoria' categoria.id_categoria %}">
+            <p>Nombre: {{ categoria.nombre_categoria }}</p><br>
+            
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
+
+
+

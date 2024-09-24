@@ -20,4 +20,13 @@ urlpatterns = [
     path('temporadas_adm/crear_temporada/', views.crear_temporada, name='crear_temporada'),
     path('temporadas_adm/<int:id_temporada>/', views.edit_temporada, name='edit_temporada'),
     path('temporadas_adm/<int:id_temporada>/delete', views.delete_temporada, name='delete_temporada'),
+    path('categorias_adm/', views.categorias_adm, name='categorias_adm'),
+    path('crear_categoria/', views.crear_categoria, name='crear_categoria'),
+    path('categorias_adm/<int:id_categoria>/', views.edit_categoria, name='edit_categoria'),
+    path('categorias_adm/<int:id_categoria>/delete', views.delete_categoria, name='delete_categoria'),
+    path('tipotorneos_adm/', views.tipotorneos_adm, name='tipotorneos_adm'),
+    path('crear_tipotorneo/', views.crear_tipotorneo, name='crear_tipotorneo'),
+    path('tipotorneos_adm/<int:id_tipo_torneo>/', views.edit_tipotorneo, name='edit_tipotorneo'),
+    path('tipotorneos_adm/<int:id_tipo_torneo>/delete', views.delete_tipotorneo, name='delete_tipotorneo'),
+
 ]

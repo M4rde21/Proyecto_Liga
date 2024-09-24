@@ -1,0 +1,24 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+
+<h1>TIPOS DE TORNEOS</h1>
+<ul>
+    {% for tipotorneo in tipotorneos %}
+
+
+    <li>
+        
+        <a href="{% url 'edit_tipotorneo' tipotorneo.id_tipo_torneo %}">
+            <p>Nombre: {{ tipotorneo.nombre_tipo_torneo }}</p><br>
+            
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
+
+
+
