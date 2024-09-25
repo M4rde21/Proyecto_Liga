@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
+
 <div class="container mt-5">
     <div class="row">
         <!-- Columna de la izquierda con tres cajas -->
@@ -45,23 +46,37 @@
                 <div class="col-md-12 mb-3">
                     <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
                         <h3 class="text-center">TABLA DE POSICIONES</h3>
-                        {% if tabla_posiciones %}
+                            {% if tabla_posiciones %}
                             <div class="table-responsive">
-                                <table class="table custom-table">
+                                <style>
+                                    .table-custom th, .table-custom td {
+                                        font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                        white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                        overflow: hidden; /* Oculta el desbordamiento del texto */
+                                        text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                    }
+                                    .table-custom th:nth-child(2), .table-custom td:nth-child(2) {
+                                        width: 20%; /* Ajusta el ancho de la columna EQUIPO */
+                                    }
+                                    .table-custom th:nth-child(n+3), .table-custom td:nth-child(n+3) {
+                                        width: 6%; /* Ajusta el ancho de las columnas desde PTS hasta TR */
+                                    }
+                                </style>
+                                <table class="table table-sm table-custom">
                                     <thead>
                                         <tr class="text-white">
                                             <th class="text-center" style="width: 5%;">POS</th>
-                                            <th style="width: 30%;">EQUIPO</th>
-                                            <th class="text-center" style="width: 10%;">PTS</th>
-                                            <th class="text-center" style="width: 10%;">PJ</th>
-                                            <th class="text-center" style="width: 10%;">PG</th>
-                                            <th class="text-center" style="width: 10%;">PE</th>
-                                            <th class="text-center" style="width: 10%;">PP</th>
-                                            <th class="text-center" style="width: 10%;">GF</th>
-                                            <th class="text-center" style="width: 10%;">GC</th>
-                                            <th class="text-center" style="width: 10%;">DG</th>
-                                            <th class="text-center" style="width: 10%;">TA</th>
-                                            <th class="text-center" style="width: 10%;">TR</th>
+                                            <th style="width: 20%;">EQUIPO</th>
+                                            <th class="text-center">PTS</th>
+                                            <th class="text-center">PJ</th>
+                                            <th class="text-center">PG</th>
+                                            <th class="text-center">PE</th>
+                                            <th class="text-center">PP</th>
+                                            <th class="text-center">GF</th>
+                                            <th class="text-center">GC</th>
+                                            <th class="text-center">DG</th>
+                                            <th class="text-center">TA</th>
+                                            <th class="text-center">TR</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -85,7 +100,9 @@
                                 </table>
                             </div>
                         {% else %}
-                            <p>No hay datos de tabla de posiciones disponibles para esta temporada.</p>
+                            <div style="text-align: center;">
+                                <p>No hay datos de tabla de posiciones disponibles para esta temporada.</p>
+                            </div>
                         {% endif %}
                         
                         <!-- Texto adicional debajo de la tabla -->
@@ -134,10 +151,62 @@
                 </div>
 
                 <!-- Tercera caja -->
-                <div class="col-md-12">
-                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                        <h3>Más información</h3>
-                        <p>Aquí podrías agregar cualquier otro contenido adicional sobre la temporada.</p>
+                <div class="col-md-12 d-flex justify-content-center">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff; width: 100%;">
+                        <h3 class="text-center">Partidos</h3>
+
+
+                        <!-- Estilo específico para la caja de partidos -->
+                        <style>
+                            .partidos .list-group-item {
+                                font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                overflow: hidden; /* Oculta el desbordamiento del texto */
+                                text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                            }
+                            
+                        </style>
+
+                        <!-- Contenedor flexible para botones de navegación y subtítulo -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <button id="prevFecha" class="btn btn-light">
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                        
+                            <h6 class="text-center flex-grow-1 mb-0" id="fechaSeleccionada">Fecha</h6>
+                        
+                            <button id="nextFecha" class="btn btn-light">
+                                <i class="fa fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    
+                        <!-- Lista de partidos -->
+                        <div class="partidos">
+                            {% if fechas_y_partidos %}
+                                <ul class="list-group text-center" id="listaPartidos">
+                                    {% for fecha, partidos in fechas_y_partidos %}
+                                        <li class="list-group-item fecha-item" style="background-color: #000000; color: #ffffff;" data-fecha="{{ fecha.nombre_fecha }}">
+                                            <ul class="list-group mt-2">
+                                                {% for partido in partidos %}
+                                                    <li class="list-group-item" style="background-color: #333333; color: #ffffff;">
+                                                        <div class="row">
+                                                            <div class="col-md-2">{{ partido.fecha_partido|date:"d/m/Y" }}</div>
+                                                            <div class="col-md-2">{{ partido.hora_partido|time:"H:i" }}</div>
+                                                            <div class="col-md-2 d-flex justify-content-end">{{ partido.id_equipo_1.nombre_equipo }}</div>
+                                                            <div class="col-md-2 text-center">{{ partido.resultado }}</div>
+                                                            <div class="col-md-2 d-flex justify-content-start">{{ partido.id_equipo_2.nombre_equipo }}</div>
+
+                                                        </div>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-center">No hay partidos disponibles esta temporada.</p>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -147,10 +216,10 @@
         <div class="col-md-4">
             <div class="row">
                 <!-- Primera caja -->
-                <div class="col-md-12 mb-3">
-                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                        <h3>Partido Destacado</h3>
-                        <p>Acá va el partido destacado que seleccione el Administrador del Torneo</p>
+                <div class="col-md-12 mb-3 d-flex justify-content-center">
+                    <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff; width: 100%;">
+                        <h3 class="text-center">Partido Destacado</h3>
+                        <p class="text-center">Acá va el partido destacado que seleccione el Administrador del Torneo</p>
                     </div>
                 </div>
 
@@ -179,7 +248,15 @@
                             <div id="goleadores-section" class="ranking-section">
                                 {% if ranking_jugadores %}
                                     <div class="table-responsive">
-                                        <table class="table custom-table">
+                                        <style>
+                                            .table-goleadores th, .table-goleadores td {
+                                                font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                                white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                                overflow: hidden; /* Oculta el desbordamiento del texto */
+                                                text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                            }
+                                        </style>
+                                        <table class="table table-goleadores">
                                             <thead>
                                                 <tr class="text-white">
                                                     <th class="text-center" style="width: 5%;">POS</th>
@@ -191,7 +268,11 @@
                                                 {% for jugador in ranking_jugadores %}
                                                     <tr class="text-white">
                                                         <td class="text-center">{{ forloop.counter }}</td>
-                                                        <td>{{ jugador.id_jugador__apellido_jugador }} {{ jugador.id_jugador__nombre_jugador }}</td>
+                                                        <td>
+                                                            {{ jugador.id_jugador__apellido_jugador }}, {{ jugador.id_jugador__nombre_jugador }}
+                                                            <br>
+                                                            <small>{{ jugador.id_jugador__temporadasxtorneosxequiposxjugadores__id_equipo__nombre_equipo }}</small>
+                                                        </td>
                                                         <td class="text-center">{{ jugador.total_goles }}</td>
                                                     </tr>
                                                 {% endfor %}
@@ -199,15 +280,25 @@
                                         </table>
                                     </div>
                                 {% else %}
-                                    <p>No hay datos de ranking de jugadores disponibles para esta temporada.</p>
+                                    <div class="text-center">
+                                        <p>No hay datos de ranking de goleadores disponibles para esta temporada.</p>
+                                    </div>
                                 {% endif %}
                             </div>
-
+                        
                             <!-- Sección de Máximos Figuras -->
                             <div id="figuras-section" class="ranking-section d-none">
                                 {% if ranking_figuras %}
                                     <div class="table-responsive">
-                                        <table class="table custom-table">
+                                        <style>
+                                            .table-figuras th, .table-figuras td {
+                                                font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                                white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                                overflow: hidden; /* Oculta el desbordamiento del texto */
+                                                text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                            }
+                                        </style>
+                                        <table class="table table-figuras">
                                             <thead>
                                                 <tr class="text-white">
                                                     <th class="text-center" style="width: 5%;">POS</th>
@@ -219,7 +310,11 @@
                                                 {% for figura in ranking_figuras %}
                                                     <tr class="text-white">
                                                         <td class="text-center">{{ forloop.counter }}</td>
-                                                        <td>{{ figura.id_jugador__apellido_jugador }} {{ figura.id_jugador__nombre_jugador }}</td>
+                                                        <td>
+                                                            {{ figura.id_jugador__apellido_jugador }}, {{ figura.id_jugador__nombre_jugador }}
+                                                            <br>
+                                                            <small>{{ figura.id_jugador__temporadasxtorneosxequiposxjugadores__id_equipo__nombre_equipo }}</small>
+                                                        </td>
                                                         <td class="text-center">{{ figura.total_figuras }}</td>
                                                     </tr>
                                                 {% endfor %}
@@ -227,7 +322,9 @@
                                         </table>
                                     </div>
                                 {% else %}
-                                    <p>No hay datos de ranking de figuras disponibles para esta temporada.</p>
+                                    <div class="text-center">
+                                        <p>No hay datos de ranking de figuras disponibles para esta temporada.</p>
+                                    </div>
                                 {% endif %}
                             </div>
                             
@@ -235,7 +332,15 @@
                             <div id="tarjetas-amarillas-section" class="ranking-section d-none">
                                 {% if ranking_tarjetas_amarillas %}
                                     <div class="table-responsive">
-                                        <table class="table custom-table">
+                                        <style>
+                                            .table-tarjetas-amarillas th, .table-tarjetas-amarillas td {
+                                                font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                                white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                                overflow: hidden; /* Oculta el desbordamiento del texto */
+                                                text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                            }
+                                        </style>
+                                        <table class="table table-tarjetas-amarillas">
                                             <thead>
                                                 <tr class="text-white">
                                                     <th class="text-center" style="width: 5%;">POS</th>
@@ -247,7 +352,11 @@
                                                 {% for jugador in ranking_tarjetas_amarillas %}
                                                     <tr class="text-white">
                                                         <td class="text-center">{{ forloop.counter }}</td>
-                                                        <td>{{ jugador.id_jugador__apellido_jugador }} {{ jugador.id_jugador__nombre_jugador }}</td>
+                                                        <td>
+                                                            {{ jugador.id_jugador__apellido_jugador }}, {{ jugador.id_jugador__nombre_jugador }}
+                                                            <br>
+                                                            <small>{{ jugador.id_jugador__temporadasxtorneosxequiposxjugadores__id_equipo__nombre_equipo }}</small>
+                                                        </td>
                                                         <td class="text-center">{{ jugador.total_tarjetas_amarillas }}</td>
                                                     </tr>
                                                 {% endfor %}
@@ -255,15 +364,25 @@
                                         </table>
                                     </div>
                                 {% else %}
-                                    <p>No hay datos de ranking de tarjetas amarillas disponibles para esta temporada.</p>
+                                    <div class="text-center">
+                                        <p>No hay datos de ranking de tarjetas amarillas disponibles para esta temporada.</p>
+                                    </div>
                                 {% endif %}
                             </div>
-                
+                        
                             <!-- Sección de Tarjetas Rojas -->
                             <div id="tarjetas-rojas-section" class="ranking-section d-none">
                                 {% if ranking_tarjetas_rojas %}
                                     <div class="table-responsive">
-                                        <table class="table custom-table">
+                                        <style>
+                                            .table-tarjetas-rojas th, .table-tarjetas-rojas td {
+                                                font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                                white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                                overflow: hidden; /* Oculta el desbordamiento del texto */
+                                                text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                            }
+                                        </style>
+                                        <table class="table table-tarjetas-rojas">
                                             <thead>
                                                 <tr class="text-white">
                                                     <th class="text-center" style="width: 5%;">POS</th>
@@ -275,7 +394,11 @@
                                                 {% for jugador in ranking_tarjetas_rojas %}
                                                     <tr class="text-white">
                                                         <td class="text-center">{{ forloop.counter }}</td>
-                                                        <td>{{ jugador.id_jugador__apellido_jugador }} {{ jugador.id_jugador__nombre_jugador }}</td>
+                                                        <td>
+                                                            {{ jugador.id_jugador__apellido_jugador }}, {{ jugador.id_jugador__nombre_jugador }}
+                                                            <br>
+                                                            <small>{{ jugador.id_jugador__temporadasxtorneosxequiposxjugadores__id_equipo__nombre_equipo }}</small>
+                                                        </td>
                                                         <td class="text-center">{{ jugador.total_tarjetas_rojas }}</td>
                                                     </tr>
                                                 {% endfor %}
@@ -283,7 +406,9 @@
                                         </table>
                                     </div>
                                 {% else %}
-                                    <p>No hay datos de ranking de tarjetas rojas disponibles para esta temporada.</p>
+                                    <div class="text-center">
+                                        <p>No hay datos de ranking de tarjetas rojas disponibles para esta temporada.</p>
+                                    </div>
                                 {% endif %}
                             </div>
                         </div>
@@ -293,16 +418,100 @@
                 <!-- Tercera caja -->
                 <div class="col-md-12 mb-3">
                     <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                        <h3>Estadísticas Adicionales</h3>
-                        <p>Estadísticas y datos adicionales que pueden ser de interés.</p>
+                        <h3 class="text-center mb-3">Ranking de Equipos</h3>
+                
+                        <!-- Subtítulo de Valla Menos Vencida -->
+                        <h6 class="text-center mb-3">VALLA MENOS VENCIDA</h6>
+                
+                        <!-- Tabla de ranking de equipos con menos goles recibidos -->
+                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                            <style>
+                                .table-custom th, .table-custom td {
+                                    font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                    white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                    overflow: hidden; /* Oculta el desbordamiento del texto */
+                                    text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                }
+                                .table-responsive::-webkit-scrollbar {
+                                    display: none;
+                                }
+                                .table-responsive {
+                                    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+                                    scrollbar-width: none;  /* Firefox */
+                                }
+                            </style>
+                            {% if ranking_equipos_menos_goles %}
+                                <table class="table table-custom">
+                                    <thead>
+                                        <tr class="text-white">
+                                            <th class="text-center" style="width: 5%;">POS</th>
+                                            <th style="width: 50%;">EQUIPO</th>
+                                            <th class="text-center" style="width: 20%;">GOLES RECIBIDOS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for equipo, goles in ranking_equipos_menos_goles %}
+                                            <tr class="text-white">
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>{{ equipo }}</td>
+                                                <td class="text-center">{{ goles }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="text-center">
+                                    <p>No hay datos de ranking de equipos disponibles para esta temporada.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        
                     </div>
                 </div>
 
                 <!-- Cuarta caja -->
                 <div class="col-md-12">
                     <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff;">
-                        <h3>Historial del Torneo</h3>
-                        <p>Información histórica y relevante del torneo.</p>
+                        <h3 class="text-center">Estadísticas</h3>
+
+                        <!-- Estilo caja de estadísticas -->
+                        <style>
+                            .estadisticas {
+                                font-size: 16px; /* Ajusta el tamaño de la fuente */
+                                white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                overflow: hidden; /* Oculta el desbordamiento del texto */
+                                text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                            }
+                        </style>
+                        
+                        <!-- Contenedor de las filas -->
+                        <div class="row justify-content-center estadisticas">
+                            <!-- Fila 1 -->
+                            <div class="col-md-6">Equipos Participantes</div>
+                            <div class="col-md-4 text-center">{{ equipos_participantes|length }}</div>
+                            <!-- Fila 2 -->
+                            <div class="col-md-6">Partidos Jugados</div>
+                            <div class="col-md-4 text-center">{{ total_partidos_jugados }}</div>
+                            <!-- Fila 3 -->
+                            <div class="col-md-6">Partidos ganados</div>
+                            <div class="col-md-4 text-center">{{ total_partidos_ganados }}</div>
+                            <!-- Fila 4 -->
+                            <div class="col-md-6">Partidos empatados</div>
+                            <div class="col-md-4 text-center">{{ total_partidos_empatados }}</div>
+                            <!-- Fila 5 -->
+                            <div class="col-md-6">Partidos perdidos</div>
+                            <div class="col-md-4 text-center">{{ total_partidos_perdidos }}</div>
+                            <!-- Fila 6 -->
+                            <div class="col-md-6">Goles</div>
+                            <div class="col-md-4 text-center">{{ total_goles }}</div>
+                            <!-- Fila 7 -->
+                            <div class="col-md-6">Tarjetas Amarillas</div>
+                            <div class="col-md-4 text-center">{{ total_tarjetas_amarillas }}</div>
+                            <!-- Fila 8 -->
+                            <div class="col-md-6">Tarjetas Rojas</div>
+                            <div class="col-md-4 text-center">{{ total_tarjetas_rojas }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -380,5 +589,44 @@
     // Inicializar la vista correcta al cargar la página
     updateSections();
 });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fechas = document.querySelectorAll('.fecha-item');
+        const fechaSeleccionada = document.getElementById('fechaSeleccionada');
+        const prevFecha = document.getElementById('prevFecha');
+        const nextFecha = document.getElementById('nextFecha');
+        const listaPartidos = document.getElementById('listaPartidos');
+        let currentIndex = 0;
+
+        function mostrarPartidos(index) {
+            const partidos = fechas[index].querySelector('ul').innerHTML;
+            listaPartidos.innerHTML = partidos;
+            fechaSeleccionada.textContent = fechas[index].getAttribute('data-fecha');
+        }
+
+        prevFecha.addEventListener('click', function() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                mostrarPartidos(currentIndex);
+            }
+        });
+
+        nextFecha.addEventListener('click', function() {
+            if (currentIndex < fechas.length - 1) {
+                currentIndex++;
+                mostrarPartidos(currentIndex);
+            }
+        });
+
+        // Mostrar los partidos de la fecha a mostrar al cargar la página
+        const fechaAMostrar = "{{ fecha_a_mostrar.nombre_fecha }}";
+        fechas.forEach((fecha, index) => {
+            if (fecha.getAttribute('data-fecha') === fechaAMostrar) {
+                currentIndex = index;
+            }
+        });
+        mostrarPartidos(currentIndex);
+    });
 </script>
 {% endblock %}
