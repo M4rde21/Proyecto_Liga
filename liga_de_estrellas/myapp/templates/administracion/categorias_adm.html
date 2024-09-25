@@ -2,23 +2,30 @@
 
 {% block content %}
 
-
 <h1>CATEGORIAS</h1>
+
+
+<form action="{% url 'crear_categoria' %}" method="get" style="display:inline;">
+    <button type="submit">Crear nueva categoría</button>
+</form>
+
 <ul>
     {% for categoria in categorias %}
-
-
     <li>
+        <p>Nombre: {{ categoria.nombre_categoria }}</p>
+
         
-        <a href="{% url 'edit_categoria' categoria.id_categoria %}">
-            <p>Nombre: {{ categoria.nombre_categoria }}</p><br>
-            
-        </a>
+        <form action="{% url 'edit_categoria' categoria.id_categoria %}" method="get" style="display:inline;">
+            <button type="submit">Modificar </button>
+        </form>
+
+        
+        <form action="{% url 'delete_categoria' categoria.id_categoria %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta categoria?');" >Eliminar </button>
+        </form>
     </li>
     {% endfor %}
 </ul>
 
 {% endblock %}
-
-
-

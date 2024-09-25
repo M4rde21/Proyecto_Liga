@@ -2,25 +2,33 @@
 
 {% block content %}
 
+<h1>Torneos</h1>
 
-<h1>{{ torneo.nombre_torneo }}</h1>
+
+<form action="{% url 'crear_torneo' %}" method="get" style="display:inline;">
+    <button type="submit">Crear nuevo torneo</button>
+</form>
+
 <ul>
     {% for torneo in torneos %}
-
-
     <li>
-       
-        <a href="{% url 'edit_torneo' torneo.id_torneo %}">
-            <strong>Nombre:</strong> {{ torneo.nombre_torneo }}<br>
-            <strong>Categoría:</strong> {{ torneo.id_categoria.nombre_categoria }}<br>
-            <strong>Tipo de Torneo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}<br>
-            <strong>Año:</strong> {{ torneo.año }}
-        </a>
+        <p><strong>Nombre:</strong> {{ torneo.nombre_torneo }}</p>
+        <p><strong>Categoría:</strong> {{ torneo.id_categoria.nombre_categoria }}</p>
+        <p><strong>Tipo de Torneo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}</p>
+        <p><strong>Año:</strong> {{ torneo.año }}</p>
+
+        
+        <form action="{% url 'edit_torneo' torneo.id_torneo %}" method="get" style="display:inline;">
+            <button type="submit">Modificar</button>
+        </form>
+
+        
+        <form action="{% url 'delete_torneo' torneo.id_torneo %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este torneo?');" >Eliminar</button>
+        </form>
     </li>
     {% endfor %}
 </ul>
 
 {% endblock %}
-
-
-

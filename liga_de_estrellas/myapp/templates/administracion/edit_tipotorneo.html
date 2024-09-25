@@ -13,10 +13,8 @@
     <button type="submit">Update</button>
 </form>
 
-<form method="POST" action="{% url 'delete_tipotorneo' tipotorneo.id_tipo_torneo %}">
-    {% csrf_token %}
-    
-    <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este tipo de torneo?');">Delete</button>
+<form action="{% url 'tipotorneos_adm' %}" method="get" style="display:inline;">
+    <button type="submit" >Volver atrás</button>
 </form>
 
 

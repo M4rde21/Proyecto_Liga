@@ -9,7 +9,9 @@
         {{ form.as_p }}
         <button type="submit">Guardar</button>
     </form>
-
+    <form action="{% url 'categorias_adm' %}" method="get" style="display:inline;">
+        <button type="submit" >Volver atrás</button>
+    </form>
 
 {% endblock %}
 

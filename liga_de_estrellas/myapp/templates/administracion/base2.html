@@ -14,31 +14,20 @@
             <ul>
                 
                 <li class="nav-item">
-                    <a class="nav-link font-weight-bold" href="{% url 'logout' %}">LOGOUT</a>
+                    <a href="{% url 'logout' %}">LOGOUT</a>
                 </li>
 
                 <li>
                     <a href="{% url 'temporadas_adm' %}">Temporadas</a>
                 </li>
 
-                <li>
-                    <a href="{% url 'crear_temporada' %}">Crear Temporada</a>
-                </li>
+                
 
                 <li>
                     <a href="{% url 'torneos_adm' %}">Torneos</a>
                 </li>
 
         
-                <li>
-                    <a href="{% url 'crear_torneo' %}">Crear Torneo</a>
-                </li>
-
-                
-                <li>
-                    <a href="{% url 'crear_categoria' %}">Crear Categoria</a>
-                </li>
-
                 <li>
                     <a href="{% url 'categorias_adm' %}">Categorias</a>
                 </li>
@@ -47,9 +36,7 @@
                     <a href="{% url 'tipotorneos_adm' %}">Tipo de Torneo</a>
                 </li>
 
-                <li>
-                    <a href="{% url 'crear_tipotorneo' %}">Crear Tipo de Torneo</a>
-                </li>
+                
 
 
 
@@ -59,7 +46,7 @@
     </nav>
 
     {% block content %}
-        <!-- El contenido de cada vista se incluirá aquí -->
+        
     {% endblock %}
     
 

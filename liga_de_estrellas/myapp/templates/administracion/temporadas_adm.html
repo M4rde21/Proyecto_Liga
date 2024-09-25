@@ -2,25 +2,33 @@
 
 {% block content %}
 
-
 <h1>TEMPORADAS</h1>
+
+
+<form action="{% url 'crear_temporada' %}" method="get" style="display:inline;">
+    <button type="submit" >Crear nueva temporada</button>
+</form>
+
 <ul>
     {% for temporada in temporadas %}
-
-
     <li>
+        <p>Nombre: {{ temporada.nombre_temporada }}</p>
+        <p>Torneo: {{ temporada.id_torneo.nombre_torneo }}</p>
+        <p>Fecha inicio: {{ temporada.fecha_inicio }}</p>
+        <p>Fecha final: {{ temporada.fecha_final }}</p>
+
+       
+        <form action="{% url 'edit_temporada' temporada.id_temporada %}" method="get" style="display:inline;">
+            <button type="submit" >Modificar </button>
+        </form>
+
         
-        <a href="{% url 'edit_temporada' temporada.id_temporada %}">
-            <p>Nombre: {{ temporada.nombre_temporada }}</p><br>
-            <p>Torneo: {{ temporada.id_torneo.nombre_torneo }}</p><br>
-            <p>Fecha inicio: {{ temporada.fecha_inicio }}</p><br>
-            <p>Fecha final: {{ temporada.fecha_final }}</p><br>
-        </a>
+        <form action="{% url 'delete_temporada' temporada.id_temporada %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta temporada?');" >Eliminar </button>
+        </form>
     </li>
     {% endfor %}
 </ul>
 
 {% endblock %}
-
-
-

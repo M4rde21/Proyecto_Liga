@@ -130,7 +130,7 @@ def crear_temporada(request):
         form = TemporadasForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('torneos_adm')  # Cambia esto por la vista a la que quieres redirigir después de guardar
+            return redirect('temporadas_adm')  # Cambia esto por la vista a la que quieres redirigir después de guardar
     else:
         form = TemporadasForm()
     
