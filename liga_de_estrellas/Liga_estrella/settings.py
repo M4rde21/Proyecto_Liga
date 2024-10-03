@@ -63,6 +63,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
             ],
         },
     },
@@ -77,7 +78,7 @@ WSGI_APPLICATION = 'Liga_estrella.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  
-        'NAME': 'liga_estrellas',
+        'NAME': 'liga_estrellas_original',
         'USER': 'root',
         'PASSWORD': 'carlos',
         'HOST': 'localhost',  
@@ -123,6 +124,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Default primary key field type
@@ -130,5 +134,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = 'torneos'
+LOGIN_REDIRECT_URL = 'resumen'
 LOGOUT_REDIRECT_URL = 'inicio'

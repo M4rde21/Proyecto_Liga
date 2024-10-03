@@ -1,0 +1,51 @@
+{% extends 'administration/baseadm.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Delegados</h1>
+    <a href="{% url 'entrenador_crear' %}">
+        <button>NUEVO DELEGADO</button>
+    </a>
+    <table>
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>DNI</th>
+                <th>Fecha de Nacimiento</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entrenador in entrenadores %}
+            <tr>
+                <td>
+                    {% if entrenador.foto_entrenador %}
+                        <img src="{{ entrenador.foto_entrenador.url }}" alt="Foto de {{ entrenador.nombre_entrenador }}" style="width: 50px; height: auto;">
+                    {% else %}
+                        <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width: 50px; height: auto;">
+                    {% endif %}
+                </td>
+                <td>{{ entrenador.nombre_entrenador }}</td>
+                <td>{{ entrenador.apellido_entrenador }}</td>
+                <td>{{ entrenador.dni_entrenador }}</td>
+                <td>{{ entrenador.fecha_nac_entrenador }}</td>
+                <td>
+                    <a href="{% url 'entrenador_editar' entrenador.id %}">
+                        <button>Editar</button>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+{% endblock %}

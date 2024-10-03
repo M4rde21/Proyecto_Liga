@@ -42,9 +42,14 @@
                     <a class="nav-link font-weight-bold" href="{% url 'contacto' %}">CONTACTO</a>
                 </li>
                 {% if request.user.is_authenticated %}
-                    <li><a href="{% url 'exit' %}">SALIR</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold" href="{% url 'exit' %}">SALIR</a>
+                    </li>
                 {% else %}
-                    <li><a href="{% url 'login' %}">INGRESAR</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold" href="{% url 'login' %}">INGRESAR</a>
+                    </li>
+                
                 {% endif %}     
             </ul>
         </div>
