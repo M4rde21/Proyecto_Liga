@@ -8,6 +8,17 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{% static 'styles/custom.css' %}">
+    <style>
+        /* Estilo del modal */
+        .modal-content {
+            border: 1px solid white; /* Borde blanco */
+        }
+        .btn-custom {
+            background-color: white; /* Color de fondo blanco */
+            color: black; /* Color del texto negro */
+            border-radius: 20px; /* Bordes redondeados */
+        }
+    </style>
 </head>
 <body>
     <!-- Navegación -->
@@ -21,7 +32,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link font-weight-bold" href="{% url 'mostrar_torneos' %}">TORNEOS</a>
+                    <a class="nav-link font-weight-bold" href="{% url 'torneos' %}">TORNEOS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link font-weight-bold" href="{% url 'reglamentos' %}">REGLAMENTOS</a>
@@ -41,11 +52,15 @@
                 <li class="nav-item">
                     <a class="nav-link font-weight-bold" href="{% url 'contacto' %}">CONTACTO</a>
                 </li>
-                {% if request.path == '/' %}
-                    <li class="nav-item">
-                        <!-- Botón para abrir el modal de login -->
-                        <a class="nav-link font-weight-bold" href="#" data-toggle="modal" data-target="#loginModal">LOGIN</a>
-                    </li>
+                
+                {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold" href="{% url 'logout' %}">LOGOUT</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold" href="{% url 'login' %}">LOGIN</a> <!-- Cambiado a un enlace directo al login -->
+                </li>
                 {% endif %}
             </ul>
         </div>
@@ -58,41 +73,10 @@
         {% endblock %}
     </div>
 
-    <!-- Modal de Login -->
-    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content modal-custom-bg">  <!-- Clase personalizada para el fondo negro -->
-                <div class="modal-header border-0 d-flex justify-content-center position-relative"> <!-- Sin borde en el header -->
-                    <!-- Título del modal -->
-                    <h5 class="modal-title" id="loginModalLabel" ></h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- Contenido del modal -->
-                    <div class="text-center">
-                        <!-- Logo del campeonato -->
-                        <img src="{% static 'images/Logo_Liga_B.png' %}" alt="Logo" class="mb-3" width="150">
-                    </div>
-                    <form>
-                        <div class="form-group">
-                            <label for="usuario">Nombre de Usuario</label>
-                            <input type="text" class="form-control input-custom" id="usuario" placeholder="Ingresa tu nombre de usuario">
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Contraseña</label>
-                            <input type="password" class="form-control input-custom" id="password" placeholder="Ingresa tu contraseña">
-                        </div>
-                        <button type="submit" class="btn btn-light btn-block text-dark font-weight-bold">INICIAR SESIÓN</button> <!-- Botón blanco con texto negro -->
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

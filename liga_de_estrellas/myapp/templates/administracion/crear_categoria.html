@@ -1,0 +1,43 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <!-- Contenedor con fondo negro y borde blanco -->
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 70%; border: 2px solid white; border-radius: 10px;">
+
+        <!-- Título centrado -->
+        <div class="text-center mb-4">
+            <h1>Crear Categoría</h1>
+        </div>
+
+        <!-- Formulario para crear categoría -->
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <!-- Botón Guardar con estilo -->
+            <div class="text-center">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> <!-- Ícono de guardar -->
+                    Guardar
+                </button>
+            </div>
+        </form>
+
+        <!-- Botón Volver atrás con estilo -->
+        <div class="text-center mt-3">
+            <form action="{% url 'categorias_adm' %}" method="get" style="display:inline;">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> <!-- Ícono de volver -->
+                    Volver atrás
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Asegúrate de tener los íconos de Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+{% endblock %}

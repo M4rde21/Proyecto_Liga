@@ -1,188 +1,24 @@
-from django.shortcuts import render
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Sum, Count, Q
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from .models import Jugadores, Equipos, Planillas, PremiosEquipos, Partidos, Torneos, Temporadas, Categorias, TipoTorneos, TablaDePosiciones, TemporadasXTorneosXEquiposXJugadores, Tarjetas
-from django.urls import reverse
+from .models import Equipos, Torneos, Temporadas, Categorias,TipoTorneos
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login,logout, authenticate
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm
+from django.views import View
+
 
 # Create your views here.
 def home(request):
     return HttpResponse('La Mejor Liga del Condado')
 
-def registro_inicio(request):
-    cantidad_jugadores = Jugadores.objects.count()
-    cantidad_equipos = Equipos.objects.count()
-    total_goles = Planillas.objects.aggregate(total_goles=Sum('goles'))['total_goles'] or 0
-    cantidad_equipos_campeones = PremiosEquipos.objects.filter(id_premio_grupal=1).count()
-    partidos_jugados = Partidos.objects.count()
-    return render(request, 'inicio.html', {
-        'cantidad_jugadores': cantidad_jugadores,
-        'cantidad_equipos': cantidad_equipos,
-        'total_goles': total_goles,
-        'cantidad_equipos_campeones': cantidad_equipos_campeones,
-        'partidos_jugados': partidos_jugados,
-    })
-    
-def mostrar_torneos(request):
-    # Obtener todos los torneos
+def inicio(request):
+    return render(request, 'inicio.html')
+
+def torneos(request):
     torneos = Torneos.objects.all()
-
-    # Crear una lista para almacenar los datos formateados de los torneos
-    torneos_datos = []
-
-    # Recorrer cada torneo y obtener los datos necesarios
-    for torneo in torneos:
-        # Obtener la categoría y el tipo de torneo
-        categoria = torneo.id_categoria.nombre_categoria if torneo.id_categoria else 'Sin categoría'
-        tipo_torneo = torneo.id_tipo_torneo.nombre_tipo_torneo if torneo.id_tipo_torneo else 'Sin tipo'
-        
-        # Obtener el número de ediciones y temporadas
-        ediciones = Temporadas.objects.filter(id_torneo=torneo).count()
-        
-        # Obtener los equipos y jugadores relacionados con este torneo mediante el modelo intermedio
-        equipos_jugadores = TemporadasXTorneosXEquiposXJugadores.objects.filter(id_torneo=torneo)
-        equipos = equipos_jugadores.values('id_equipo').distinct().count()  # Número de equipos únicos
-        jugadores = equipos_jugadores.values('id_jugador').distinct().count()  # Número de jugadores únicos
-        
-        # Obtener el número de partidos para este torneo
-        partidos = Partidos.objects.filter(id_torneo=torneo).count()
-
-        # Añadir los datos del torneo a la lista
-        torneos_datos.append({
-            'id_torneo': torneo.id_torneo,
-            'nombre_torneo': torneo.nombre_torneo,
-            'categoria': categoria,
-            'tipo_torneo': tipo_torneo,
-            'año': torneo.año,
-            'ediciones': ediciones,
-            'partidos': partidos,  # Número de partidos asociados al torneo
-            'equipos': equipos,  # Número de equipos
-            'jugadores': jugadores,  # Número de jugadores
-        })
-    
-    # Pasar los datos a la plantilla
-    return render(request, 'torneos.html', {'torneos': torneos_datos})
-
-def torneo_detalles(request, id_torneo):
-    # Obtener el torneo específico
-    torneo = get_object_or_404(Torneos, id_torneo=id_torneo)
-    
-    # Obtener las temporadas asociadas al torneo
-    temporadas = Temporadas.objects.filter(id_torneo=torneo)
-    
-    # Obtener los partidos del torneo
-    partidos = Partidos.objects.filter(id_torneo=torneo)
-    
-    # Opcional: Obtener los equipos que participaron en los partidos del torneo
-    equipos = Equipos.objects.filter(
-        id_equipo__in=partidos.values_list('id_equipo_1', flat=True)
-    ).union(
-        Equipos.objects.filter(id_equipo__in=partidos.values_list('id_equipo_2', flat=True))
-    )
-    
-    # Contexto con la información del torneo, temporadas, partidos y equipos
-    context = {
-        'torneo': torneo,
-        'temporadas': temporadas,
-        'partidos': partidos,
-        'equipos': equipos
-    }
-    
-    return render(request, 'torneo_detalles.html', context)
-
-
-def obtener_temporadas(request, id_torneo):
-    torneo = get_object_or_404(Torneos, id_torneo=id_torneo)
-    temporadas = Temporadas.objects.filter(id_torneo=torneo).order_by('-id_temporada')
-    temporadas_data = list(temporadas.values('id_temporada', 'nombre_temporada', 'fecha_inicio'))
-    return JsonResponse({'temporadas': temporadas_data})
-
-def obtener_partido_destacado(request, id_torneo):
-    # Intentar obtener el partido destacado
-    partido_destacado = Partidos.objects.filter(
-        id_torneo=id_torneo,
-        destacado=1
-    ).first()
-    
-    if not partido_destacado:
-        # Si no hay partido destacado, obtener el último partido jugado
-        partido_destacado = Partidos.objects.filter(
-            id_torneo=id_torneo
-        ).order_by('-fecha_partido', '-hora_partido').first()
-    
-    if partido_destacado:
-        partido_data = {
-            'id_partido': partido_destacado.id_partido,
-            'id_equipo_1': partido_destacado.id_equipo_1.id_equipo,
-            'id_equipo_2': partido_destacado.id_equipo_2.id_equipo,
-            'fecha_partido': partido_destacado.fecha_partido,
-            'hora_partido': partido_destacado.hora_partido
-        }
-        return JsonResponse({'partido_destacado': partido_data})
-    else:
-        return JsonResponse({'partido_destacado': None})
-    
-def obtener_tabla_posiciones(request, id_torneo, id_temporada):
-    try:
-        # Filtrar la tabla de posiciones según la temporada proporcionada y ordenar por puntos de forma descendente
-        tabla = TablaDePosiciones.objects.filter(id_temporada=id_temporada).select_related('id_equipo').order_by('-puntos')
-
-        # Convertir los datos a un formato JSON, incluyendo tarjetas amarillas y rojas
-        data = list(tabla.values(
-            'id_equipo',
-            'id_equipo__nombre_equipo', 'id_equipo__foto_equipo',  # Foto del equipo incluida
-            'partidos_jugados', 'partidos_ganados', 'partidos_empatados', 'partidos_perdidos',
-            'goles_a_favor', 'goles_en_contra', 'diferencia_goles', 'puntos',
-            'tarjetas_amarillas', 'tarjetas_rojas'  # Agregar campos de tarjetas
-        ))
-
-        # Devolver los datos en formato JSON
-        return JsonResponse({'tabla_posiciones': data})
-
-    except Exception as e:
-        # Devolver un error en caso de que ocurra algún problema
-        return JsonResponse({'error': str(e)}, status=500)
-    
-def obtener_ranking_goles_tarjetas(request, id_torneo, id_temporada):
-    tipo = request.GET.get('tipo', 'goles')
-    
-    if tipo == 'goles':
-        ranking = (Planillas.objects
-            .filter(id_partido__id_temporada=id_temporada)
-            .values('id_jugador__apellido_jugador', 'id_jugador__nombre_jugador', 'id_jugador__foto_jugador' , 'id_equipo__nombre_equipo', 'id_equipo__logo_equipo')
-            .annotate(total=Sum('goles'))
-            .order_by('-total')
-            .values('id_jugador__nombre_jugador', 'id_jugador__apellido_jugador', 'id_jugador__foto_jugador', 'total' , 'id_equipo__nombre_equipo',  'id_equipo__logo_equipo'))
-    
-    elif tipo == 'tarjetas.amarillas':
-        ranking = (Tarjetas.objects
-            .filter(id_partido__id_temporada=id_temporada, tipo_tarjeta='amarilla')
-            .values('id_jugador__nombre_jugador', 'id_jugador__apellido_jugador', 'id_jugador__foto_jugador')
-            .annotate(total=Count('id_tarjeta'))
-            .order_by('-total')
-            .values('id_jugador__nombre_jugador', 'id_jugador__apellido_jugador', 'id_jugador__foto_jugador', 'total'))
-    
-    elif tipo == 'tarjetas.rojas':
-        ranking = (Tarjetas.objects
-            .filter(id_partido__id_temporada=id_temporada, tipo_tarjeta='roja')
-            .values('id_jugador__nombre_jugador', 'id_jugador__apellido_jugador', 'id_jugador__foto_jugador')
-            .annotate(total=Count('id_tarjeta'))
-            .order_by('-total')
-            .values('id_jugador__nombre_jugador', 'id_jugador__apellido_jugador', 'id_jugador__foto_jugador', 'total'))
-    
-    else:
-        ranking = []
-
-    return JsonResponse({'ranking': list(ranking)})
-
-def equipo_detalles(request, id_equipo):
-    # Cambiamos el campo a id_equipo
-    equipo = get_object_or_404(Equipos, id_equipo=id_equipo)
-
-    context = {
-        'equipo': equipo,
-    }
-    return render(request, 'equipo_detalles.html', context)
+    return render(request, 'torneos.html', {'torneos': torneos})
 
 def reglamentos(request):
     return render(request, 'reglamentos.html')
@@ -190,9 +26,237 @@ def reglamentos(request):
 def contacto(request):
     return render(request, 'contacto.html')
 
+def resumen_adm(request):
+    return render(request, 'administracion/resumen_adm.html')
+
+def usuario(request):
+    if request.method == 'GET':
+        return render(request, 'inicio.html', {
+        'form' : UserCreationForm,
+        'error' : 'ya existe el ususario capo'
+    })
+    else:
+        if request.POST['password1'] == request.POST['password2']:
+            try:
+                
+                #register user
+                user = User.objects.create_user(username=request.POST['username'], password=request.POST['password1'])
+                user.save()
+                login(request, user)
+                return redirect('menu_adm')
+            except IntegrityError:
+                return render(request, 'inicio.html', {
+                    'form' : UserCreationForm,
+                    'error' : 'ya existe el ususario capo'
+                })
+        return render(request, 'inicio.html', {
+                    'form' : UserCreationForm,
+                    'error' : 'contraseña equivocada capo'
+                })
+
+
+
 def login_view(request):
-    return render(request, 'login.html')
+    if request.method == 'GET':
+        return render(request, 'login.html', {
+            'form' : AuthenticationForm
+        } )
+    else:
+        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
+        if user is None:
+            return render(request, 'login.html', {
+            'form' : AuthenticationForm,
+            'error' : 'unsername or password is incorret capo. aguante boca adema'
+            } )
+        else:
+            login(request, user)
+            return redirect('resumen_adm')
+        
+def signout(request):
+    logout(request)
+    return redirect('inicio')
+
+def lista_equipos(request):
+    # Obtén todos los registros de la tabla 'equipos'
+    equipos = Equipos.objects.all()
+    
+    # Pasa los registros al contexto de la plantilla
+    return render(request, 'equipos/lista_equipos.html', {'equipos': equipos})
 
 
-def equipos(request):
-    return render(request, 'equipos.html')
+def crear_torneo(request):
+    if request.method == 'POST':
+        form = TorneoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('torneos_adm')  
+    else:
+        form = TorneoForm()
+    return render(request, 'administracion/crear_torneo.html', {'form': form})
+
+def torneos_adm(request):
+    torneos = Torneos.objects.all()
+    return render(request, 'administracion/torneos_adm.html', {
+        'torneos': torneos
+    })
+
+def edit_torneo(request, id_torneo):
+    if request.method == 'GET':
+        torneo = get_object_or_404(Torneos, pk=id_torneo)
+        form=TorneoForm(instance=torneo)
+        return render(request, 'administracion/edit_torneo.html', {
+        'torneo': torneo,
+        'form' : form
+        })
+    else:
+        try:
+            torneo=get_object_or_404(Torneos, pk=id_torneo)
+            form=TorneoForm(request.POST, instance=torneo)
+            form.save()
+            return redirect('torneos_adm')
+        except ValueError:
+            return render(request, 'administracion/torneos_adm.html', {
+                'torneo': torneo,
+                'form' : form,
+                'error' : "Error al actualizar datos"
+            })
+        
+def delete_torneo(request, id_torneo):
+    torneo=get_object_or_404(Torneos, pk=id_torneo)
+    if request.method == 'POST':
+        torneo.delete()
+        return redirect('torneos_adm')
+    
+
+def crear_temporada(request):
+    if request.method == 'POST':
+        form = TemporadasForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('temporadas_adm')  # Cambia esto por la vista a la que quieres redirigir después de guardar
+    else:
+        form = TemporadasForm()
+    
+    return render(request, 'administracion/crear_temporada.html', {'form': form})
+    
+
+def temporadas_adm(request):
+    temporadas = Temporadas.objects.all()
+    return render(request, 'administracion/temporadas_adm.html', {
+        'temporadas': temporadas
+    })
+def edit_temporada(request, id_temporada):
+    if request.method == 'GET':
+        temporada = get_object_or_404(Temporadas, pk=id_temporada)
+        form=TemporadasForm(instance=temporada)
+        return render(request, 'administracion/edit_temporada.html', {
+        'temporada': temporada,
+        'form' : form
+        })
+    else:
+        try:
+            temporada=get_object_or_404(Temporadas, pk=id_temporada)
+            form=TemporadasForm(request.POST, instance=temporada)
+            form.save()
+            return redirect('temporadas_adm')
+        except ValueError:
+            return render(request, 'administracion/temporadas_adm.html', {
+            'temporada': temporada,
+            'form' : form,
+            'error' : "Error al actualizar datos"
+            })
+        
+def delete_temporada(request, id_temporada):
+    temporada=get_object_or_404(Temporadas, pk=id_temporada)
+    if request.method == 'POST':
+        temporada.delete()
+        return redirect('temporadas_adm')
+    
+def categorias_adm(request):
+    categorias = Categorias.objects.all()
+    return render(request, 'administracion/categorias_adm.html', {
+        'categorias': categorias
+    })
+
+def crear_categoria(request):
+    if request.method == 'POST':
+        form = CategoriasForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('categorias_adm')  
+    else:
+        form = CategoriasForm()
+    return render(request, 'administracion/crear_categoria.html', {'form': form})
+
+def edit_categoria(request, id_categoria):
+    if request.method == 'GET':
+        categoria = get_object_or_404(Categorias, pk=id_categoria)
+        form=CategoriasForm(instance=categoria)
+        return render(request, 'administracion/edit_categoria.html', {
+        'categoria': categoria,
+        'form' : form
+        })
+    else:
+        try:
+            categoria=get_object_or_404(Categorias, pk=id_categoria)
+            form=CategoriasForm(request.POST, instance=categoria)
+            form.save()
+            return redirect('categorias_adm')
+        except ValueError:
+            return render(request, 'administracion/categorias_adm.html', {
+                'categoria': categoria,
+                'form' : form,
+                'error' : "Error al actualizar datos"
+            })
+        
+
+def delete_categoria(request, id_categoria):
+    categoria=get_object_or_404(Categorias, pk=id_categoria)
+    if request.method == 'POST':
+        categoria.delete()
+        return redirect('categorias_adm')
+    
+
+def tipotorneos_adm(request):
+    tipotorneos = TipoTorneos.objects.all()
+    return render(request, 'administracion/tipotorneo_adm.html', {
+        'tipotorneos': tipotorneos
+    })
+
+def crear_tipotorneo(request):
+    if request.method == 'POST':
+        form = TipoTorneoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('tipotorneos_adm')  
+    else:
+        form = TipoTorneoForm()
+    return render(request, 'administracion/crear_tipotorneo.html', {'form': form})
+
+def edit_tipotorneo(request, id_tipo_torneo):
+    if request.method == 'GET':
+        tipotorneo = get_object_or_404(TipoTorneos, pk=id_tipo_torneo)
+        form=TipoTorneoForm(instance=tipotorneo)
+        return render(request, 'administracion/edit_tipotorneo.html', {
+        'tipotorneo': tipotorneo,
+        'form' : form
+        })
+    else:
+        try:
+            tipotorneo=get_object_or_404(TipoTorneos, pk=id_tipo_torneo)
+            form=TipoTorneoForm(request.POST, instance=tipotorneo)
+            form.save()
+            return redirect('tipotorneos_adm')
+        except ValueError:
+            return render(request, 'administracion/tipotorneos_adm.html', {
+                'tipotorneo': tipotorneo,
+                'form' : form,
+                'error' : "Error al actualizar datos"
+            })
+        
+
+def delete_tipotorneo(request, id_tipo_torneo):
+    tipotorneo=get_object_or_404(TipoTorneos, pk=id_tipo_torneo)
+    if request.method == 'POST':
+        tipotorneo.delete()
+        return redirect('tipotorneos_adm')

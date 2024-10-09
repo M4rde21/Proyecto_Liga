@@ -1,0 +1,134 @@
+{% load static %} <!-- Cargar el tag de archivos estáticos -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMINISTRACION</title>
+    <!-- Enlace a Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Enlace a Font Awesome para los iconos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            height: 100vh; /* Ocupa toda la altura de la ventana */
+            margin: 0; /* Sin márgenes */
+            background-color: black;
+            background-image: url("{% static 'images/fondo.jpg' %}"); /* Cambia la ruta a tu imagen */
+            background-size: cover; /* Asegura que la imagen cubra todo el fondo */
+            background-position: center; /* Centra la imagen */
+            background-repeat: no-repeat; /* Evita que la imagen se repita */
+            background-attachment: fixed; /* Hace que el fondo sea fijo */
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .custom-nav {
+            position: fixed; /* Mantiene la barra fija en la pantalla */
+            top: 0;
+            left: 0; /* Fija la barra a la izquierda */
+            height: 100%; /* Asegura que el nav ocupe toda la altura */
+            width: 20%; /* Ocupa el 20% del ancho */
+            background-color: rgba(0, 0, 0, 0.8); /* Fondo negro semi-transparente */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Asegura que los elementos estén alineados al inicio */
+            align-items: center; /* Centra horizontalmente los elementos */
+            z-index: 1000; /* Para que esté encima del contenido al hacer scroll */
+        }
+
+        .custom-nav img {
+            max-width: 250px; /* Asegura que la imagen no exceda el ancho */
+            height: 150px; /* Mantiene la proporción de la imagen */
+            margin: 0 auto; /* Centra la imagen horizontalmente */
+            margin-top: 30px;
+        }
+
+        .custom-nav h4 {
+            color: white; /* Título en blanco */
+            margin-top: 10px;
+        }
+
+        .custom-nav a {
+            color: white; /* Color del texto en blanco */
+            display: flex;
+            align-items: center; /* Alinea el icono con el texto */
+        }
+
+        .custom-nav a .fas {
+            margin-right: 10px; /* Espacio entre el icono y el texto */
+        }
+
+        .flex-grow-1 {
+            flex-grow: 1; /* Espacio flexible para el contenido entre la imagen y el botón */
+        }
+
+        .logout {
+            margin-top: auto; /* Empuja el botón de logout hacia abajo */
+        }
+
+        .content {
+            margin-left: 20%; /* Deja espacio para la barra de navegación fija */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="d-flex">
+        <nav class="custom-nav"> <!-- Barra de navegación fija a la izquierda -->
+            <img src="{% static 'images/Logo_Liga_B.png' %}" alt="Imagen" class="img-fluid"> <!-- Cambia la ruta a tu imagen -->
+            <h4>Menú</h4> <!-- Título añadido -->
+
+            <div class="flex-grow-1 p-3"> <!-- Espacio flexible -->
+                <ul class="list-unstyled">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'resumen_adm' %}">
+                            <i class="fas fa-info-circle"></i> Resumen <!-- Ícono añadido -->
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'temporadas_adm' %}">
+                            <i class="fas fa-calendar-alt"></i> Temporadas <!-- Ícono añadido -->
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'torneos_adm' %}">
+                            <i class="fas fa-trophy"></i> Torneos <!-- Ícono añadido -->
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'categorias_adm' %}">
+                            <i class="fas fa-list"></i> Categorias <!-- Ícono añadido -->
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'tipotorneos_adm' %}">
+                            <i class="fas fa-clipboard-list"></i> Tipo de Torneo <!-- Ícono añadido -->
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="logout p-3"> <!-- Contenedor para el botón de logout -->
+                <a class="nav-link" href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> LOGOUT <!-- Ícono de logout añadido -->
+                </a>
+            </div>
+        </nav>
+
+        <div class="content flex-grow-1"> <!-- Área de contenido -->
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Enlace a Bootstrap JS y dependencias (opcional) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
