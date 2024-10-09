@@ -145,7 +145,7 @@ class Figura(models.Model):
     class Meta:
         db_table = 'figuras'
         
-        
+
 class Planilla(models.Model):
     id_partido = models.ForeignKey(Partido, on_delete=models.CASCADE, db_column='id_partido', blank=True, null=True)
     id_equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo', blank=True, null=True)
