@@ -1,11 +1,11 @@
-{% extends 'administration/baseadm.html' %}
+{% extends 'administracion/baseadm.html' %}
 {% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modificar equipo</title>
+    <title>Editar Jugador</title>
 </head>
 <body>
     {{error}}
@@ -14,7 +14,7 @@
         {{form.as_p}}
         <button>GUARDAR</button>
     </form>
-    <a href="{% url 'equipos' %}">
+    <a href="{% url 'jugadores' %}">
         <button>CANCELAR</button>
     </a>
 </body>

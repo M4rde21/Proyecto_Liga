@@ -13,15 +13,15 @@ def login(request):
     return render(request, 'login.html')
 
 def resumen(request):
-    return render(request, 'administration/resumen.html')
+    return render(request, 'administracion/resumen.html')
 
 def lista_jugadores(request):
     jugadores = Jugador.objects.all()
-    return render(request, 'administration/jugadores.html', {'jugadores': jugadores})
+    return render(request, 'administracion/jugadores.html', {'jugadores': jugadores})
 
 def crear_jugador(request):
     if request.method == 'GET':
-        return render(request, 'administration/crear_jugador.html', {
+        return render(request, 'administracion/crear_jugador.html', {
             'form': CrearJugadorForm()
         })
     else:
@@ -31,12 +31,12 @@ def crear_jugador(request):
                 form.save()
                 return redirect('jugadores')
             except ValidationError as e:
-                return render(request, 'administration/crear_jugador.html', {
+                return render(request, 'administracion/crear_jugador.html', {
                     'form': form,
                     'error': f'Error en los datos: {e}'
                 })
         else:
-            return render(request, 'administration/crear_jugador.html', {
+            return render(request, 'administracion/crear_jugador.html', {
                 'form': form,
                 'error': 'Por favor introduce datos válidos.'
             })
@@ -47,7 +47,7 @@ def editar_jugador(request, id_jugador):
     
     if request.method == 'GET':
         form = CrearJugadorForm(instance=jugador)
-        return render(request, 'administration/editar_jugador.html', {'form': form, 'jugador': jugador})
+        return render(request, 'administracion/editar_jugador.html', {'form': form, 'jugador': jugador})
     
     else:
         form = CrearJugadorForm(request.POST, request.FILES, instance=jugador)
@@ -56,7 +56,7 @@ def editar_jugador(request, id_jugador):
             form.save() 
             return redirect('jugadores') 
         else:
-            return render(request, 'administration/editar_jugador.html', {
+            return render(request, 'administracion/editar_jugador.html', {
                 'form': form,
                 'jugador': jugador,
                 'error': 'Por favor introduce datos válidos.'
@@ -72,11 +72,11 @@ def eliminar_jugador(request, id_jugador):
 
 def equipos_lista(request):
     equipos = Equipo.objects.all()
-    return render(request, 'administration/equipos.html', {'equipos': equipos})
+    return render(request, 'administracion/equipos.html', {'equipos': equipos})
 
 def equipo_crear(request):
     if request.method == 'GET':
-        return render(request, 'administration/equipo_crear.html', {
+        return render(request, 'administracion/equipo_crear.html', {
             'form': CrearEquipoForm
         })
     else:
@@ -86,12 +86,12 @@ def equipo_crear(request):
                 form.save()
                 return redirect('equipos')
             except ValidationError as e:
-                return render(request, 'administration/equipo_crear.html', {
+                return render(request, 'administracion/equipo_crear.html', {
                     'form': form,
                     'error': f'Error en los datos: {e}'
                 })
         else:
-            return render(request, 'administration/equipo_crear.html', {
+            return render(request, 'administracion/equipo_crear.html', {
                 'form': form,
                 'error': 'Por favor introduce datos válidos.'
             })
@@ -101,7 +101,7 @@ def equipo_editar(request, id_equipo):
     
     if request.method == 'GET':
         form = CrearEquipoForm(instance=equipo)
-        return render(request, 'administration/equipo_editar.html' ,{'form': form, 'equipo': equipo})
+        return render(request, 'administracion/equipo_editar.html' ,{'form': form, 'equipo': equipo})
     
     else:
         form = CrearEquipoForm(request.POST, request.FILES, instance=equipo)
@@ -110,7 +110,7 @@ def equipo_editar(request, id_equipo):
             form.save() 
             return redirect('equipos') 
         else:
-            return render(request, 'administration/equipo_editar.html', {
+            return render(request, 'administracion/equipo_editar.html', {
                 'form': form,
                 'equipo': equipo,
                 'error': 'Por favor introduce datos válidos.'
@@ -118,11 +118,11 @@ def equipo_editar(request, id_equipo):
 
 def entrenadores_lista(request):
     entrenadores = Entrenador.objects.all()
-    return render(request, 'administration/entrenadores.html', {'entrenadores': entrenadores})
+    return render(request, 'administracion/entrenadores.html', {'entrenadores': entrenadores})
 
 def entrenador_crear(request):
     if request.method == 'GET':
-        return render(request, 'administration/entrenador_crear.html', {
+        return render(request, 'administracion/entrenador_crear.html', {
             'form': CrearEntrenadorForm
         })
     else:
@@ -132,12 +132,12 @@ def entrenador_crear(request):
                 form.save()
                 return redirect('entrenadores')
             except ValidationError as e:
-                return render(request, 'administration/entrenador_crear.html', {
+                return render(request, 'administracion/entrenador_crear.html', {
                     'form': form,
                     'error': f'Error en los datos: {e}'
                 })
         else:
-            return render(request, 'administration/entrenador_crear.html', {
+            return render(request, 'administracion/entrenador_crear.html', {
                 'form': form,
                 'error': 'Por favor introduce datos válidos.'
             })
@@ -147,7 +147,7 @@ def entrenador_editar(request, id_entrenador):
     
     if request.method == 'GET':
         form = CrearEntrenadorForm(instance=entrenador)
-        return render(request, 'administration/entrenador_editar.html', {'form': form, 'entrenador': entrenador})
+        return render(request, 'administracion/entrenador_editar.html', {'form': form, 'entrenador': entrenador})
     
     else:
         form = CrearEntrenadorForm(request.POST, request.FILES, instance=entrenador)
@@ -156,7 +156,7 @@ def entrenador_editar(request, id_entrenador):
             form.save() 
             return redirect('entrenadores') 
         else:
-            return render(request, 'administration/entrenador_editar.html', {
+            return render(request, 'administracion/entrenador_editar.html', {
                 'form': form,
                 'entrenador': entrenador,
                 'error': 'Por favor introduce datos válidos.'
