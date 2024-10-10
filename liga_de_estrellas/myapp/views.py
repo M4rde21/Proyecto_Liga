@@ -1,18 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo
+from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm
+from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm
 from django.views import View
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+
+
 
 # Create your views here.
-def home(request):
-    return HttpResponse('La Mejor Liga del Condado')
-
 def inicio(request):
     return render(request, 'usuario/inicio.html')
 
@@ -39,9 +39,56 @@ def signout(request):
 def lista_equipos(request):
     # Obtén todos los registros de la tabla 'equipos'
     equipos = Equipo.objects.all()
+
+def resumen(request):
+    return render(request, 'administracion/resumen.html')
+
+def lista_jugadores(request):
+    jugadores = Jugador.objects.all()
+    return render(request, 'administracion/jugadores.html', {'jugadores': jugadores})
+
+def crear_jugador(request):
+    if request.method == 'GET':
+        return render(request, 'administracion/crear_jugador.html', {
+            'form': CrearJugadorForm()
+        })
+    else:
+        form = CrearJugadorForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                form.save()
+                return redirect('jugadores')
+            except ValidationError as e:
+                return render(request, 'administracion/crear_jugador.html', {
+                    'form': form,
+                    'error': f'Error en los datos: {e}'
+                })
+        else:
+            return render(request, 'administracion/crear_jugador.html', {
+                'form': form,
+                'error': 'Por favor introduce datos válidos.'
+            })
     
-    # Pasa los registros al contexto de la plantilla
-    return render(request, 'equipos/lista_equipos.html', {'equipos': equipos})
+
+def editar_jugador(request, id_jugador):
+    jugador = get_object_or_404(Jugador, pk=id_jugador)
+    
+    if request.method == 'GET':
+        form = CrearJugadorForm(instance=jugador)
+        return render(request, 'administracion/editar_jugador.html', {'form': form, 'jugador': jugador})
+    
+    else:
+        form = CrearJugadorForm(request.POST, request.FILES, instance=jugador)
+        
+        if form.is_valid():
+            form.save() 
+            return redirect('jugadores') 
+        else:
+            return render(request, 'administracion/editar_jugador.html', {
+                'form': form,
+                'jugador': jugador,
+                'error': 'Por favor introduce datos válidos.'
+            })
 
 
 def crear_torneo(request):
@@ -220,3 +267,105 @@ def delete_tipotorneo(request, id_tipo_torneo):
     if request.method == 'POST':
         tipotorneo.delete()
         return redirect('tipotorneos_adm')
+def eliminar_jugador(request, id_jugador):
+    jugador = get_object_or_404(Jugador, pk=id_jugador)
+    if request.method == 'POST':
+        jugador.delete()
+        return redirect('jugadores')
+        
+
+def equipos_lista(request):
+    equipos = Equipo.objects.all()
+    return render(request, 'administracion/equipos.html', {'equipos': equipos})
+
+def equipo_crear(request):
+    if request.method == 'GET':
+        return render(request, 'administracion/equipo_crear.html', {
+            'form': CrearEquipoForm
+        })
+    else:
+        form = CrearEquipoForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                form.save()
+                return redirect('equipos')
+            except ValidationError as e:
+                return render(request, 'administracion/equipo_crear.html', {
+                    'form': form,
+                    'error': f'Error en los datos: {e}'
+                })
+        else:
+            return render(request, 'administracion/equipo_crear.html', {
+                'form': form,
+                'error': 'Por favor introduce datos válidos.'
+            })
+            
+def equipo_editar(request, id_equipo):
+    equipo = get_object_or_404(Equipo, pk=id_equipo)
+    
+    if request.method == 'GET':
+        form = CrearEquipoForm(instance=equipo)
+        return render(request, 'administracion/equipo_editar.html' ,{'form': form, 'equipo': equipo})
+    
+    else:
+        form = CrearEquipoForm(request.POST, request.FILES, instance=equipo)
+        
+        if form.is_valid():
+            form.save() 
+            return redirect('equipos') 
+        else:
+            return render(request, 'administracion/equipo_editar.html', {
+                'form': form,
+                'equipo': equipo,
+                'error': 'Por favor introduce datos válidos.'
+            })
+
+def entrenadores_lista(request):
+    entrenadores = Entrenador.objects.all()
+    return render(request, 'administracion/entrenadores.html', {'entrenadores': entrenadores})
+
+def entrenador_crear(request):
+    if request.method == 'GET':
+        return render(request, 'administracion/entrenador_crear.html', {
+            'form': CrearEntrenadorForm
+        })
+    else:
+        form = CrearEntrenadorForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                form.save()
+                return redirect('entrenadores')
+            except ValidationError as e:
+                return render(request, 'administracion/entrenador_crear.html', {
+                    'form': form,
+                    'error': f'Error en los datos: {e}'
+                })
+        else:
+            return render(request, 'administracion/entrenador_crear.html', {
+                'form': form,
+                'error': 'Por favor introduce datos válidos.'
+            })
+
+def entrenador_editar(request, id_entrenador):
+    entrenador = get_object_or_404(Entrenador, pk=id_entrenador)
+    
+    if request.method == 'GET':
+        form = CrearEntrenadorForm(instance=entrenador)
+        return render(request, 'administracion/entrenador_editar.html', {'form': form, 'entrenador': entrenador})
+    
+    else:
+        form = CrearEntrenadorForm(request.POST, request.FILES, instance=entrenador)
+        
+        if form.is_valid():
+            form.save() 
+            return redirect('entrenadores') 
+        else:
+            return render(request, 'administracion/entrenador_editar.html', {
+                'form': form,
+                'entrenador': entrenador,
+                'error': 'Por favor introduce datos válidos.'
+            })
+
+
+
+

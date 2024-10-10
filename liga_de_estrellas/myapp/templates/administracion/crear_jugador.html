@@ -1,0 +1,22 @@
+{% extends 'administracion/baseadm.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear jugador</title>
+</head>
+<body>
+    {{error}}
+    <form action="/jugadores/crear/" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button>CONFIRMAR</button>
+    </form>
+    <a href="{% url 'jugadores' %}">
+        <button>VOLVER</button>
+    </a>
+</body>
+</html>
+{% endblock %}

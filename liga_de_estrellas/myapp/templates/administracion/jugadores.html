@@ -1,0 +1,58 @@
+{% extends 'administracion/baseadm.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jugadores</title>
+</head>
+<body>
+    <h1>JUGADORES</h1>
+    <a href="{% url 'crear_jugador' %}">
+        <button>CREAR JUGADOR</button>
+    </a>
+    <table>
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>DNI</th>
+                <th>Fecha de Nacimiento</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for jugador in jugadores %}
+            <tr>
+                <td>
+                    {% if jugador.foto_jugador %}
+                        <img src="{{ jugador.foto_jugador.url }}" alt="Foto de {{ jugador.nombre_jugador }}" style="width: 50px; height: auto;">
+                    {% else %}
+                        <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width: 50px; height: auto;">
+                    {% endif %}
+                </td>
+                <td>{{ jugador.nombre_jugador }}</td>
+                <td>{{ jugador.apellido_jugador }}</td>
+                <td>{{ jugador.dni_jugador }}</td>
+                <td>{{ jugador.fecha_nac_jugador }}</td>
+                <td>
+                    <a href="{% url 'editar_jugador' jugador.id %}">
+                        <button>Editar</button>
+                    </a>
+                </td>
+                <td>
+                    <form action="{% url 'eliminar_jugador' jugador.id %}" method="POST">
+                        {% csrf_token %}
+                        <button>Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
+{% endblock %}

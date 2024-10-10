@@ -1,0 +1,45 @@
+{% extends 'administracion/baseadm.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipos</title>
+</head>
+<body>
+    <h1>EQUIPOS</h1>
+    <a href="{% url 'equipo_crear' %}">
+        <button>NUEVO EQUIPO</button>
+    </a>
+    <table>
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Nombre</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for equipo in equipos %}
+            <tr>
+                <td>
+                    {% if equipo.logo_equipo %}
+                        <img src="{{ equipo.logo_equipo.url }}" alt="Foto de {{ equipo.nombre_equipo}}" style="width: 50px; height: auto;">
+                    {% else %}
+                        <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Foto no disponible" style="width: 50px; height: auto;">
+                    {% endif %}
+                </td>
+                <td>{{ equipo.nombre_equipo }}</td>
+                <td>
+                    <a href="{% url 'equipo_editar' equipo.id %}">
+                        <button>Editar</button>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+</body>
+</html>
+{% endblock %}
