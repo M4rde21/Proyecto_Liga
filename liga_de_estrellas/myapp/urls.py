@@ -1,17 +1,16 @@
 # myapp/urls.py
 from django.urls import path
 from . import views
-
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     
     path('', views.inicio, name='inicio'),
     path('torneos/', views.torneos, name='torneos'),
     path('login/', views.login_view, name='login'),
-    path('logout/', views.signout, name='logout'),
     path('reglamentos/', views.reglamentos, name='reglamentos'),
     path('contacto/', views.contacto, name='contacto'),
-    path('usuario/', views.usuario, name='usuario'),
     path('torneos_adm/', views.torneos_adm, name='torneos_adm'),
     path('torneos_adm/crear_torneo/', views.crear_torneo, name='crear_torneo'),
     path('torneos_adm/<int:id_torneo>/', views.edit_torneo, name='edit_torneo'),
@@ -28,5 +27,6 @@ urlpatterns = [
     path('crear_tipotorneo/', views.crear_tipotorneo, name='crear_tipotorneo'),
     path('tipotorneos_adm/<int:id_tipo_torneo>/', views.edit_tipotorneo, name='edit_tipotorneo'),
     path('tipotorneos_adm/<int:id_tipo_torneo>/delete', views.delete_tipotorneo, name='delete_tipotorneo'),
+    path('accounts/logout/', views.signout, name='logout'),
 
 ]

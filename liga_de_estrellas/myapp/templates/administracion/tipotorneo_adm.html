@@ -15,12 +15,12 @@
         <p>Nombre: {{ tipotorneo.nombre_tipo_torneo }}</p>
 
          
-        <form action="{% url 'edit_tipotorneo' tipotorneo.id_tipo_torneo %}" method="get" style="display:inline;">
+        <form action="{% url 'edit_tipotorneo' tipotorneo.id %}" method="get" style="display:inline;">
             <button type="submit">Modificar </button>
         </form>
 
         
-        <form action="{% url 'delete_tipotorneo' tipotorneo.id_tipo_torneo %}" method="post" style="display:inline;">
+        <form action="{% url 'delete_tipotorneo' tipotorneo.id %}" method="post" style="display:inline;">
             {% csrf_token %}
             <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este tipo de torneo?');" >Eliminar </button>
         </form>

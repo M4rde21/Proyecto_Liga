@@ -18,12 +18,12 @@
         <p><strong>Año:</strong> {{ torneo.año }}</p>
 
         
-        <form action="{% url 'edit_torneo' torneo.id_torneo %}" method="get" style="display:inline;">
+        <form action="{% url 'edit_torneo' torneo.id %}" method="get" style="display:inline;">
             <button type="submit">Modificar</button>
         </form>
 
         
-        <form action="{% url 'delete_torneo' torneo.id_torneo %}" method="post" style="display:inline;">
+        <form action="{% url 'delete_torneo' torneo.id %}" method="post" style="display:inline;">
             {% csrf_token %}
             <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este torneo?');" >Eliminar</button>
         </form>

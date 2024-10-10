@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Equipos,Categorias,TipoTorneos
+from .models import Equipo,Categoria,TipoTorneo
 
 # Register your models here.
-admin.site.register(Equipos)
-admin.site.register(Categorias)
-admin.site.register(TipoTorneos)
+admin.site.register(Equipo)
+admin.site.register(Categoria)
+admin.site.register(TipoTorneo)

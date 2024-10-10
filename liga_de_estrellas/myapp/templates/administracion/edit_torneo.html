@@ -7,7 +7,7 @@
 
 {{error}}
 
-<form method="POST" action="{% url 'edit_torneo' torneo.id_torneo %}">
+<form method="POST" action="{% url 'edit_torneo' torneo.id %}">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Update</button>
