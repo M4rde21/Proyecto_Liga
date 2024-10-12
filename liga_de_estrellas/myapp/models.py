@@ -7,12 +7,17 @@ class Categoria(models.Model):
     def __str__(self):
         return self.nombre_categoria
 
+    
+
 class Entrenador(models.Model):
     nombre_entrenador = models.CharField(max_length=100)
     apellido_entrenador = models.CharField(max_length=100)
     dni_entrenador = models.CharField(unique=True, max_length=20)
     fecha_nac_entrenador = models.DateField()
     foto_entrenador = models.ImageField(upload_to="fotos_jugador/", blank=True, null=True)
+
+    def __str__(self):
+        return self.nombre_entrenador + ' ' + self.apellido_entrenador
     
 class Equipo(models.Model):
     nombre_equipo = models.CharField(max_length=100)
@@ -47,6 +52,10 @@ class PremiosIndividual(models.Model):
 class TipoTorneo(models.Model):
     nombre_tipo_torneo = models.CharField(max_length=100)
     
+    def __str__(self):
+        return self.nombre_tipo_torneo
+
+
 class EquipoXEntrenador(models.Model):
     id_equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo', blank=True, null=True)
     id_entrenador = models.ForeignKey(Entrenador, on_delete=models.CASCADE, db_column='id_entrenador', blank=True, null=True)
@@ -65,7 +74,9 @@ class Torneo(models.Model):
     class Meta:
         db_table = 'torneos'
         
-        
+    def __str__(self):
+        return self.nombre_torneo
+
 class Traspaso(models.Model):
     id_jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE, db_column='id_jugador', blank=True, null=True)
     id_equipo_actual = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo_actual', blank=True, null=True)
@@ -210,4 +221,3 @@ class TemporadaXTorneoXEquipoXJugador(models.Model):
 
     class Meta:
         db_table = 'temporadas_x_torneos_x_equipos_x_jugadores'
-

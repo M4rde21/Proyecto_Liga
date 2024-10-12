@@ -1,5 +1,15 @@
-{% extends 'base.html' %}
+{% extends 'usuario/base.html' %}
 
 {% block content %}
-<h1>Acá van los torneos creados xD</h1>
+<h1>Lista de Torneos</h1>
+<ul>
+    {% for torneo in torneos %}
+    <li>
+        <strong>Nombre:</strong> {{ torneo.nombre_torneo }}<br>
+        <strong>Categoría:</strong> {{ torneo.id_categoria.nombre_categoria }}<br>
+        <strong>Tipo de Torneo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo }}<br>
+        <strong>Año:</strong> {{ torneo.año }}
+    </li>
+    {% endfor %}
+</ul>
 {% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+
+<h1>{{ temporada.nombre_temporada }}</h1>
+
+{{error}}
+
+<form method="POST" action="{% url 'edit_temporada' temporada.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+<form action="{% url 'temporadas_adm' %}" method="get" style="display:inline;">
+    <button type="submit" >Volver atrás</button>
+</form>
+
+
+{% endblock %}

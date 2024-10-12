@@ -1,16 +1,25 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.core.exceptions import ValidationError
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
 from django.http import HttpResponse, JsonResponse
-from .forms import CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm
-from .models import Jugador, Equipo, Entrenador
+from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm
+from django.views import View
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+
+
+
 # Create your views here.
 def inicio(request):
     return render(request, 'usuario/inicio.html')
 
-def login(request):
+
+def login_view(request):
     return render(request, 'login.html')
+
 
 def resumen(request):
     return render(request, 'administracion/resumen.html')
@@ -62,12 +71,189 @@ def editar_jugador(request, id_jugador):
                 'error': 'Por favor introduce datos válidos.'
             })
 
-
 def eliminar_jugador(request, id_jugador):
     jugador = get_object_or_404(Jugador, pk=id_jugador)
     if request.method == 'POST':
         jugador.delete()
         return redirect('jugadores')
+
+
+def crear_torneo(request):
+    if request.method == 'POST':
+        form = TorneoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('torneos_adm')  
+    else:
+        form = TorneoForm()
+    return render(request, 'administracion/crear_torneo.html', {'form': form})
+
+def torneos_adm(request):
+    torneos = Torneo.objects.all()
+    return render(request, 'administracion/torneos_adm.html', {
+        'torneos': torneos
+    })
+
+def edit_torneo(request, id_torneo):
+    if request.method == 'GET':
+        torneo = get_object_or_404(Torneo, pk=id_torneo)
+        form=TorneoForm(instance=torneo)
+        return render(request, 'administracion/edit_torneo.html', {
+        'torneo': torneo,
+        'form' : form
+        })
+    else:
+        try:
+            torneo=get_object_or_404(Torneo, pk=id_torneo)
+            form=TorneoForm(request.POST, instance=torneo)
+            form.save()
+            return redirect('torneos_adm')
+        except ValueError:
+            return render(request, 'administracion/torneos_adm.html', {
+                'torneo': torneo,
+                'form' : form,
+                'error' : "Error al actualizar datos"
+            })
+        
+def delete_torneo(request, id_torneo):
+    torneo=get_object_or_404(Torneo, pk=id_torneo)
+    if request.method == 'POST':
+        torneo.delete()
+        return redirect('torneos_adm')
+    
+
+def crear_temporada(request):
+    if request.method == 'POST':
+        form = TemporadasForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('temporadas_adm')
+    else:
+        form = TemporadasForm()
+    
+    return render(request, 'administracion/crear_temporada.html', {'form': form})
+    
+
+def temporadas_adm(request):
+    temporadas = Temporada.objects.all()
+    return render(request, 'administracion/temporadas_adm.html', {
+        'temporadas': temporadas
+    })
+def edit_temporada(request, id_temporada):
+    if request.method == 'GET':
+        temporada = get_object_or_404(Temporada, pk=id_temporada)
+        form=TemporadasForm(instance=temporada)
+        return render(request, 'administracion/edit_temporada.html', {
+        'temporada': temporada,
+        'form' : form
+        })
+    else:
+        try:
+            temporada=get_object_or_404(Temporada, pk=id_temporada)
+            form=TemporadasForm(request.POST, instance=temporada)
+            form.save()
+            return redirect('temporadas_adm')
+        except ValueError:
+            return render(request, 'administracion/temporadas_adm.html', {
+            'temporada': temporada,
+            'form' : form,
+            'error' : "Error al actualizar datos"
+            })
+        
+def delete_temporada(request, id_temporada):
+    temporada=get_object_or_404(Temporada, pk=id_temporada)
+    if request.method == 'POST':
+        temporada.delete()
+        return redirect('temporadas_adm')
+    
+def categorias_adm(request):
+    categorias = Categoria.objects.all()
+    return render(request, 'administracion/categorias_adm.html', {
+        'categorias': categorias
+    })
+
+def crear_categoria(request):
+    if request.method == 'POST':
+        form = CategoriasForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('categorias_adm')  
+    else:
+        form = CategoriasForm()
+    return render(request, 'administracion/crear_categoria.html', {'form': form})
+
+def edit_categoria(request, id_categoria):
+    if request.method == 'GET':
+        categoria = get_object_or_404(Categoria, pk=id_categoria)
+        form=CategoriasForm(instance=categoria)
+        return render(request, 'administracion/edit_categoria.html', {
+        'categoria': categoria,
+        'form' : form
+        })
+    else:
+        try:
+            categoria=get_object_or_404(Categoria, pk=id_categoria)
+            form=CategoriasForm(request.POST, instance=categoria)
+            form.save()
+            return redirect('categorias_adm')
+        except ValueError:
+            return render(request, 'administracion/categorias_adm.html', {
+                'categoria': categoria,
+                'form' : form,
+                'error' : "Error al actualizar datos"
+            })
+        
+
+def delete_categoria(request, id_categoria):
+    categoria=get_object_or_404(Categoria, pk=id_categoria)
+    if request.method == 'POST':
+        categoria.delete()
+        return redirect('categorias_adm')
+    
+
+def tipotorneos_adm(request):
+    tipotorneos = TipoTorneo.objects.all()
+    return render(request, 'administracion/tipotorneo_adm.html', {
+        'tipotorneos': tipotorneos
+    })
+
+def crear_tipotorneo(request):
+    if request.method == 'POST':
+        form = TipoTorneoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('tipotorneos_adm')  
+    else:
+        form = TipoTorneoForm()
+    return render(request, 'administracion/crear_tipotorneo.html', {'form': form})
+
+def edit_tipotorneo(request, id_tipo_torneo):
+    if request.method == 'GET':
+        tipotorneo = get_object_or_404(TipoTorneo, pk=id_tipo_torneo)
+        form=TipoTorneoForm(instance=tipotorneo)
+        return render(request, 'administracion/edit_tipotorneo.html', {
+        'tipotorneo': tipotorneo,
+        'form' : form
+        })
+    else:
+        try:
+            tipotorneo=get_object_or_404(TipoTorneo, pk=id_tipo_torneo)
+            form=TipoTorneoForm(request.POST, instance=tipotorneo)
+            form.save()
+            return redirect('tipotorneos_adm')
+        except ValueError:
+            return render(request, 'administracion/tipotorneos_adm.html', {
+                'tipotorneo': tipotorneo,
+                'form' : form,
+                'error' : "Error al actualizar datos"
+            })
+        
+
+def delete_tipotorneo(request, id_tipo_torneo):
+    tipotorneo=get_object_or_404(TipoTorneo, pk=id_tipo_torneo)
+    if request.method == 'POST':
+        tipotorneo.delete()
+        return redirect('tipotorneos_adm')
         
 
 def equipos_lista(request):
@@ -162,12 +348,14 @@ def entrenador_editar(request, id_entrenador):
                 'error': 'Por favor introduce datos válidos.'
             })
 
-def exit(request):
+
+def signout(request):
     logout(request)
     return redirect('inicio')
 
 def torneos(request):
-    return render(request, 'usuario/torneos.html')
+    torneos = Torneo.objects.all()
+    return render(request, 'usuario/torneos.html', {'torneos': torneos})
 
 def reglamentos(request):
     return render(request, 'usuario/reglamentos.html')

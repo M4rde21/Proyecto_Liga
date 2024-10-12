@@ -28,6 +28,10 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+LOGIN_REDIRECT_URL = 'resumen'
+LOGOUT_REDIRECT_URL = 'inicio'
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -86,6 +90,9 @@ DATABASES = {
     }
 }
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 
 # Password validation
@@ -134,5 +141,3 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = 'resumen'
-LOGOUT_REDIRECT_URL = 'inicio'

@@ -1,0 +1,21 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+
+<h1>{{ tipotorneo.nombre_tipo_torneo }}</h1>
+
+{{error}}
+
+<form method="POST" action="{% url 'edit_tipotorneo' tipotorneo.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+
+<form action="{% url 'tipotorneos_adm' %}" method="get" style="display:inline;">
+    <button type="submit" >Volver atrás</button>
+</form>
+
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+<h1>Crear Temporada</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Guardar</button>
+    </form>
+    <form action="{% url 'temporadas_adm' %}" method="get" style="display:inline;">
+        <button type="submit" >Volver atrás</button>
+    </form>
+
+{% endblock %}
