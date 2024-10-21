@@ -1,22 +1,16 @@
 {% extends 'administracion/base2.html' %}
 
 {% block content %}
-<!-- Asegúrate de tener Font Awesome en tu proyecto para usar íconos -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 <div class="container mt-5">
-    <!-- Contenedor con fondo negro y borde blanco -->
     <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
-
-        <!-- Título y botón centrados -->
         <div class="text-center mb-4">
             <h1>TORNEOS</h1>
-            <form action="{% url 'crear_torneo' %}" method="get">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-plus"></i> <!-- Ícono de agregar -->
-                    CREAR TORNEO
-                </button>
-            </form>
+            <!-- Botón que abre el modal para crear un nuevo torneo -->
+            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#crearTorneoModal">
+                <i class="fas fa-plus"></i> CREAR TORNEO
+            </button>
         </div>
 
         <!-- Tabla de torneos -->
@@ -38,21 +32,74 @@
                     <td>{{ torneo.id_categoria.nombre_categoria }}</td>
                     <td>{{ torneo.año }}</td>
                     <td>
-                        <!-- Botones Modificar y Eliminar con íconos -->
-                        <form action="{% url 'edit_torneo' torneo.id_torneo %}" method="get" style="display:inline;">
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="fas fa-edit"></i> <!-- Ícono de editar -->
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editarTorneoModal{{ torneo.id }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+<!-- Modal para editar el torneo -->
+<div class="modal fade" id="editarTorneoModal{{ torneo.id }}" tabindex="-1" role="dialog" aria-labelledby="editarTorneoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
+            
+            <div class="modal-header text-center">
+                <h5 class="modal-title w-100" id="editarTorneoModalLabel" style="color: white;">Editar Torneo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar" style="color: white;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body d-flex justify-content-center align-items-center" style="color: white;">
+                <form method="post" action="{% url 'edit_torneo' torneo.id %}" class="w-100" style="max-width: 400px;">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ torneo.form_editar.as_p }} <!-- Acceso directo al formulario desde el objeto torneo -->
+                    </div>
+                    <button type="submit" class="btn btn-warning btn-block">
+                        <i class="fas fa-edit"></i> Actualizar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-                        <!-- Botón para abrir el modal de eliminación -->
-                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#confirmDeleteModal{{ torneo.id_torneo }}">
-                            <i class="fas fa-trash-alt"></i> <!-- Ícono de eliminar -->
+
+<!-- Modal para crear el torneo -->
+<div class="modal fade" id="crearTorneoModal" tabindex="-1" role="dialog" aria-labelledby="crearTorneoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
+
+            <div class="modal-header text-center">
+                <h5 class="modal-title w-100" id="crearTorneoModalLabel" style="color: white;">Crear Torneo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar" style="color: white;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body d-flex justify-content-center align-items-center" style="color: white;">
+                <!-- Formulario para crear torneo -->
+                <form method="post" action="{% url 'crear_torneo' %}" class="w-100" style="max-width: 400px;">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form_crear.as_p }}
+                    </div>
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                        <!-- Botón para eliminar torneo -->
+                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#confirmDeleteModal{{ torneo.id }}">
+                            <i class="fas fa-trash-alt"></i>
                         </button>
 
-                        <!-- Modal de confirmación -->
-                        <div class="modal fade" id="confirmDeleteModal{{ torneo.id_torneo }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
+                        <!-- Modal de confirmación de eliminación -->
+                        <div class="modal fade" id="confirmDeleteModal{{ torneo.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
                                 <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="confirmDeleteModalLabel" style="color: white;">Confirmar Eliminación</h5>
@@ -65,7 +112,7 @@
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                        <form action="{% url 'delete_torneo' torneo.id_torneo %}" method="post" id="deleteForm{{ torneo.id_torneo }}">
+                                        <form action="{% url 'delete_torneo' torneo.id %}" method="post" id="deleteForm{{ torneo.id }}">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-danger">Eliminar</button>
                                         </form>
@@ -81,8 +128,8 @@
     </div>
 </div>
 
-<!-- Asegúrate de incluir jQuery y Bootstrap JS -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 

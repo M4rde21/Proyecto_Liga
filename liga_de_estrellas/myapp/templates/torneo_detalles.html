@@ -4,41 +4,34 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row">
-        <!-- Caja Izquierda - Más Ancha -->
         <div class="col-lg-8 mb-4">
             <div class="d-flex align-items-start" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
-                <!-- Caja Blanca con Logo del Torneo -->
                 <div class="bg-white p-3 rounded d-flex justify-content-center align-items-center" 
                     style="width: 120px; height: 120px;">
-                    <!-- Logo del Torneo -->
                     <img src="{% static 'images/Logo_Liga.png' %}" alt="Logo del Torneo" class="img-fluid" style="max-width: 100px;">
                 </div>
 
-                <!-- Contenedor para el texto -->
                 <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
                     <h5 class="mb-2" style="font-weight: bold;">{{ torneo.nombre_torneo }}</h5>
                     <p class="mb-0" style="font-size: 0.9em;">
                         <strong>Tipo:</strong> {{ torneo.id_tipo_torneo.nombre_tipo_torneo }}
                     </p>
 
-                    <!-- Selector de Temporada -->
                     <div class="mt-3">
                         <select class="form-select" id="temporadaSelect">
-                            <!-- Opciones de temporadas se llenarán con JavaScript -->
+
                         </select>
                     </div>
                 </div>
             </div>
-            <!-- Tabla de Posiciones -->
+
             <div class="mt-4">
                 <div class="bg-black text-white p-3 rounded" style="border: 2px solid white; border-radius: 8px;">
                     <h5 class="text-center">Tabla de Posiciones</h5>
                     <div id="tablaPosicionesContainer">
-                        <!-- La tabla se llenará con JavaScript -->
                     </div>
                 </div>
             </div> 
-            <!-- Caja de Partidos -->
             <div class="card mt-4" style="background-color: black; border: 2px solid white; border-radius: 8px;">
                 <div class="card-header text-center" style="background-color: black; margin-bottom: 0; padding-bottom: 0;">
                     <h5 style="margin-bottom: 0;">Partidos</h5>
@@ -48,38 +41,28 @@
     </div>
 </div>
 
-<!-- Caja Derecha - Menos Ancha -->
 <div class="col-lg-4 mb-4">
-    <!-- Caja Partido Destacado -->
     <div class="card" style="background-color: black; border: 2px solid white; height: 170px; border-radius: 8px;">
         <div class="card-header text-center" style="background-color: black; margin-bottom: 0; padding-bottom: 0;">
             <h5 style="margin-bottom: 0;">Partido Destacado</h5>
         </div>
         <div class="card-body d-flex align-items-center justify-content-center" style="height: 100%; padding: 10px;">
             <div id="partidoDestacadoContent" class="d-flex align-items-center justify-content-between" style="width: 100%; flex-direction: row;">
-                <!-- Foto del Equipo 1 -->
                 <div id="equipo1Logo" class="team-logo d-flex justify-content-center align-items-center" style="width: 40%;">
-                    <!-- Se llenará con JavaScript -->
                 </div>
-                <!-- Fecha y Hora del Partido -->
                 <div id="partidoInfo" class="match-info text-center" style="width: 40%; font-size: 0.8em;">
-                    <!-- Se llenará con JavaScript -->
                 </div>
-                <!-- Foto del Equipo 2 -->
                 <div id="equipo2Logo" class="team-logo d-flex justify-content-center align-items-center" style="width: 40%;">
-                    <!-- Se llenará con JavaScript -->
                 </div>
             </div>
         </div>
     </div>
 
-<!-- Caja Ranking -->
 <div class="card mt-4" style="background-color: black; border: 2px solid white; border-radius: 8px;">
     <div class="card-header text-center" style="background-color: black; margin-bottom: 0; padding-bottom: 0;">
         <h5 style="margin-bottom: 0;">Ranking de Jugadores</h5>
     </div>
     <div class="card-body" style="padding: 10px;">
-        <!-- Contenedor para centrar el select -->
         <div class="d-flex justify-content-center mb-3">
             <select class="form-select" id="rankingSelect" style="max-width: 200px;">
                 <option value="goles">Goleadores</option>
@@ -87,17 +70,12 @@
                 <option value="tarjetas.rojas">Tarjetas Rojas</option>
             </select>
         </div>
-        <!-- Contenedor para centrar el ranking -->
         <div id="rankingContent">
-            <!-- Se llenará con JavaScript -->
         </div>
     </div>
 </div>
 
 
-
-
-<!-- Incluye Bootstrap JS y dependencias si es necesario -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -115,7 +93,6 @@
         var tablaPosicionesContainer = document.getElementById('tablaPosicionesContainer');
         var rankingContent = document.getElementById('rankingContent');
 
-        // Cargar temporadas y el partido destacado inicial
         fetch(urlTemporadas)
             .then(response => {
                 if (!response.ok) {
@@ -139,7 +116,6 @@
                     var ultima = data.temporadas[0];
                     temporadaSelect.value = ultima.id_temporada;
 
-                    // Cargar el partido destacado, la tabla de posiciones y el ranking para la última temporada
                     cargarPartidoDestacado(ultima.id_temporada);
                     cargarTablaPosiciones(ultima.id_temporada);
                     cargarRanking(ultima.id_temporada, rankingSelect.value);

@@ -3,40 +3,34 @@
 {% block content %}
 
 <div class="container mt-5">
-    <!-- Contenedor con fondo negro y borde blanco -->
     <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
 
-        <!-- Título centrado -->
         <div class="text-center mb-4">
             <h1>{{ categoria.nombre_categoria }}</h1>
         </div>
 
-        <!-- Mostrar errores (si los hay) -->
         {% if error %}
         <div class="alert alert-danger">
             {{ error }}
         </div>
         {% endif %}
 
-        <!-- Formulario de edición -->
-        <form method="POST" action="{% url 'edit_categoria' categoria.id_categoria %}">
+        <form method="POST" action="{% url 'edit_categoria' categoria.id %}">
             {% csrf_token %}
             {{ form.as_p }}
 
-            <!-- Botón para actualizar -->
             <div class="text-center mt-4">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> <!-- Ícono de guardar -->
+                    <i class="fas fa-save"></i> 
                     Actualizar
                 </button>
             </div>
         </form>
 
-        <!-- Botón para volver atrás -->
         <div class="text-center mt-3">
             <form action="{% url 'categorias_adm' %}" method="get" style="display:inline;">
                 <button type="submit" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> <!-- Ícono de volver -->
+                    <i class="fas fa-arrow-left"></i> 
                     Volver atrás
                 </button>
             </form>
@@ -44,7 +38,6 @@
     </div>
 </div>
 
-<!-- Asegúrate de tener los íconos de Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 {% endblock %}

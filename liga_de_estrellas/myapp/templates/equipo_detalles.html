@@ -5,17 +5,12 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row">
-        <!-- Caja Izquierda - Más Ancha -->
         <div class="col-lg-8 mb-4">
             <div class="d-flex align-items-start" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
-                <!-- Caja Blanca con Logo del Equipo -->
                 <div class="bg-white p-3 rounded d-flex justify-content-center align-items-center" 
                     style="width: 120px; height: 120px;">
-                    <!-- Logo del Equipo -->
                     <img src="{{ equipo.foto_equipo.url }}" alt="Logo del Equipo" class="img-fluid" style="max-width: 100px;">
                 </div>
-
-                <!-- Contenedor para el texto -->
                 <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
                     <h5 class="mb-2" style="font-weight: bold;">{{ equipo.nombre_equipo }}</h5>
                     <p class="mb-1" style="font-size: 0.9em;">
@@ -28,7 +23,6 @@
                 </div>
             </div>
 
-            <!-- Caja de Tabla de Posiciones -->
             <div class="d-flex align-items-start mt-4" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
                 <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
                     <h5 class="text-center mb-2" style="font-weight: bold;">Clasificaciones</h5>
@@ -76,30 +70,24 @@
                 </div>
             </div>
 
-            <!-- Caja del Plantel -->
             <div class="d-flex align-items-start mt-4" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
                 <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
                     <h5 class="text-center mb-2" style="font-weight: bold;">Plantel</h5>
                     <p class="mb-1" style="font-size: 0.9em;">
-                        <!-- Contenido de la caja del plantel -->
                     </p>
                 </div>
             </div>
 
-            <!-- Nueva caja debajo de Plantel -->
             <div class="d-flex align-items-start mt-4" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
                 <div class="bg-black text-white p-3 ms-3 rounded" style="flex: 1;">
                     <h5 class="text-center mb-2" style="font-weight: bold;">Información</h5>
                     <p class="mb-1" style="font-size: 0.9em;">
-                        <!-- Contenido de la caja de información -->
                     </p>
                 </div>
             </div>
         </div>
 
-        <!-- Caja Derecha - Menos Ancha -->
         <div class="col-lg-4 mb-4 text-center">
-            <!-- Caja Siguiente Partido -->
             <div class="card" style="background-color: black; border: 2px solid white; height: 180px; border-radius: 8px; margin-bottom: 20px;">
                 <h5 class="text-center text-white">Siguiente Partido</h5>
                 <div class="d-flex justify-content-center align-items-center mt-3">
@@ -112,7 +100,6 @@
                 </div>
             </div>
 
-            <!-- Caja Historial de Partidos -->
             <div class="d-flex align-items-start text-center" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
                 <div class="bg-black text-white p-3 ms-3 rounded text-center" style="flex: 1;">
                     <h5>Historial de Partidos</h5>
@@ -131,32 +118,26 @@
                 </div>
             </div>
 
-            <!-- Caja Estadísticas -->
             <div class="d-flex align-items-start mt-4 text-center" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
                 <div class="bg-black text-white p-3 ms-3 rounded text-center" style="flex: 1;">
                     <h5 class="mb-2">Estadísticas</h5>
                     <p class="mb-1" style="font-size: 0.9em;">
-                        <!-- Contenido de la caja de estadísticas -->
                     </p>
                 </div>
             </div>
 
-            <!-- Caja de Rankings -->
             <div class="d-flex align-items-start mt-4 text-center" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
                 <div class="bg-black text-white p-3 ms-3 rounded text-center" style="flex: 1;">
                     <h5 class="mb-2">Ranking de Jugadores</h5>
                     <p class="mb-1" style="font-size: 0.9em;">
-                        <!-- Contenido de la caja de rankings -->
                     </p>
                 </div>
             </div>
 
-            <!-- Caja de Premios -->
             <div class="d-flex align-items-start mt-4 text-center" style="border: 2px solid white; padding: 20px; border-radius: 8px;">
                 <div class="bg-black text-white p-3 ms-3 rounded text-center" style="flex: 1;">
                     <h5 class="mb-2">Premios</h5>
                     <p class="mb-1" style="font-size: 0.9em;">
-                        <!-- Contenido de la caja -->
                     </p>
                 </div>
             </div>

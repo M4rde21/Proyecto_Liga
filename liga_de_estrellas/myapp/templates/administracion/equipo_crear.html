@@ -1,0 +1,38 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        <h2 class="text-center mb-4">Crear Equipo</h2>
+
+        {% if error %}
+            <div class="alert alert-danger" role="alert" style="color: black; background-color: white; border-radius: 5px;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form action="/equipos/crear/" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.as_p }}
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check"></i> CONFIRMAR
+                </button>
+                <a href="{% url 'equipos' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> CANCELAR
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+{% endblock %}

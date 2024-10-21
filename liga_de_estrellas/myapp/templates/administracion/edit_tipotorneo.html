@@ -3,40 +3,33 @@
 {% block content %}
 
 <div class="container mt-5">
-    <!-- Contenedor con fondo negro y borde blanco -->
     <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 60%; border: 2px solid white; border-radius: 10px;">
 
-        <!-- Título centrado con el nombre del tipo de torneo -->
         <div class="text-center mb-4">
             <h1>{{ tipotorneo.nombre_tipo_torneo }}</h1>
         </div>
 
-        <!-- Muestra de errores si los hay -->
         {% if error %}
         <div class="alert alert-danger">
             {{ error }}
         </div>
         {% endif %}
 
-        <!-- Formulario para editar el tipo de torneo -->
-        <form method="POST" action="{% url 'edit_tipotorneo' tipotorneo.id_tipo_torneo %}">
+        <form method="POST" action="{% url 'edit_tipotorneo' tipotorneo.id %}">
             {% csrf_token %}
             <div class="form-group">
                 {{ form.as_p }}
             </div>
 
-            <!-- Botones para actualizar y volver atrás -->
             <div class="text-center">
-                <!-- Botón de actualizar -->
                 <button type="submit" class="btn btn-success">
-                    <i class="fas fa-edit"></i> <!-- Ícono de actualización -->
+                    <i class="fas fa-edit"></i> 
                     Actualizar
                 </button>
-                
-                <!-- Botón de volver atrás -->
+
                 <form action="{% url 'tipotorneos_adm' %}" method="get" style="display:inline;">
                     <button type="submit" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> <!-- Ícono de volver atrás -->
+                        <i class="fas fa-arrow-left"></i> 
                         Volver atrás
                     </button>
                 </form>
@@ -45,7 +38,6 @@
     </div>
 </div>
 
-<!-- Asegúrate de tener los íconos de Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 {% endblock %}
