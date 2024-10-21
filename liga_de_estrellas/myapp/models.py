@@ -6,6 +6,7 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
+from datetime import date
 
 
 class Categorias(models.Model):
@@ -97,6 +98,11 @@ class Jugadores(models.Model):
     class Meta:
         managed = False
         db_table = 'jugadores'
+        
+    def calcular_edad(self):
+        today = date.today()
+        edad = today.year - self.fecha_nac_jugador.year - ((today.month, today.day) < (self.fecha_nac_jugador.month, self.fecha_nac_jugador.day))
+        return edad
 
 
 class Partidos(models.Model):

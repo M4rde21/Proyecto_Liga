@@ -83,7 +83,9 @@
                                         {% for posicion in tabla_posiciones %}
                                             <tr class="text-white">
                                                 <td class="text-center">{{ forloop.counter }}</td>
-                                                <td>{{ posicion.id_equipo.nombre_equipo }}</td>
+                                                <td><a href="{% url 'equipo_detalles' posicion.id_equipo.id_equipo temporada.id_temporada %}" style="color: white; text-decoration: none;">
+                                                    {{ posicion.id_equipo.nombre_equipo }}
+                                                </a></td>
                                                 <td class="text-center">{{ posicion.puntos }}</td>
                                                 <td class="text-center">{{ posicion.partidos_jugados }}</td>
                                                 <td class="text-center">{{ posicion.partidos_ganados }}</td>
@@ -154,66 +156,82 @@
                 <div class="col-md-12 d-flex justify-content-center">
                     <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 2px solid #ffffff; width: 100%;">
                         <h3 class="text-center">Partidos</h3>
-                    
-                        <!-- Estilo específico para la caja de partidos -->
+                
                         <style>
                             .partidos .list-group-item {
-                                font-size: 12px; /* Ajusta el tamaño de la fuente */
-                                white-space: nowrap; /* Evita que el texto se divida en varias líneas */
-                                overflow: hidden; /* Oculta el desbordamiento del texto */
-                                text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
-                                background-color: #000000; /* Fondo negro para los partidos */
-                                color: #ffffff; /* Texto blanco */
-                                border-bottom: 2px solid #ffffff; /* Línea blanca para separar los partidos */
+                                font-size: 12px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                background-color: #000000;
+                                color: #ffffff;
+                                border-bottom: 2px solid #ffffff;
+                                transition: background-color 0.3s ease, color 0.3s ease; /* Transición suave */
                             }
-                        
-                            /* Quitar la línea blanca en el último partido */
+                
                             .partidos .list-group-item:last-child {
                                 border-bottom: none;
                             }
-                        
+                
                             .fecha-item {
-                                border: none; /* Elimina bordes en el contenedor de la fecha */
+                                border: none;
                             }
-                        
+                
                             .list-group-item {
-                                border: none; /* Elimina el borde predeterminado */
+                                border: none;
                             }
-                        
+                
                             .partidos ul {
-                                padding-left: 0; /* Elimina el padding de la lista */
+                                padding-left: 0;
+                            }
+                
+                            /* Enlace en toda la tarjeta */
+                            .partido-link {
+                                text-decoration: none;
+                                color: inherit; /* Mantiene el color del texto */
+                                display: block; /* Asegura que el enlace cubra todo el contenido */
+                                transition: background-color 0.3s ease, color 0.3s ease; /* Transición suave */
+                            }
+                
+                            .partido-link:hover {
+                                background-color: #ffffff; /* Fondo blanco al pasar el mouse */
+                                color: #000000; /* Letras negras al pasar el mouse */
                             }
                         </style>
                 
-                        <!-- Contenedor flexible para botones de navegación y subtítulo -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <button id="prevFecha" class="btn btn-light">
                                 <i class="fa fa-chevron-left"></i>
                             </button>
-                        
+                
                             <h6 class="text-center flex-grow-1 mb-0" id="fechaSeleccionada">Fecha</h6>
-                        
+                
                             <button id="nextFecha" class="btn btn-light">
                                 <i class="fa fa-chevron-right"></i>
                             </button>
                         </div>
-                    
-                        <!-- Lista de partidos -->
+                
                         <div class="partidos">
                             {% if fechas_y_partidos %}
                                 <ul class="list-group text-center" id="listaPartidos">
                                     {% for fecha, partidos in fechas_y_partidos %}
-                                        <li class="list-group-item fecha-item" style="background-color: #000000; color: #ffffff;" data-fecha="{{ fecha.nombre_fecha }}">
+                                        <li class="list-group-item fecha-item" data-fecha="{{ fecha.nombre_fecha }}">
                                             <ul class="list-group mt-2">
                                                 {% for partido in partidos %}
                                                     <li class="list-group-item">
-                                                        <div class="row">
-                                                            <div class="col-md-2">{{ partido.fecha_partido|date:"d/m/Y" }}</div>
-                                                            <div class="col-md-2">{{ partido.hora_partido|time:"H:i" }}</div>
-                                                            <div class="col-md-2 d-flex justify-content-end">{{ partido.id_equipo_1.nombre_equipo }}</div>
-                                                            <div class="col-md-2 text-center">{{ partido.resultado }}</div>
-                                                            <div class="col-md-2 d-flex justify-content-start">{{ partido.id_equipo_2.nombre_equipo }}</div>
-                                                        </div>
+                                                        <a href="{% url 'partido_detalles' partido.id_partido %}" class="partido-link">
+                                                            <div class="row">
+                                                                <div class="col-md-2">{{ partido.fecha_partido|date:"d/m/Y" }}</div>
+                                                                <div class="col-md-2">{{ partido.hora_partido|time:"H:i" }}</div>
+                                                                <div class="col-md-2 d-flex justify-content-end">
+                                                                    <span>{{ partido.id_equipo_1.nombre_equipo }}</span>
+                                                                </div>
+                                                                <div class="col-md-2 text-center">{{ partido.resultado }}</div>
+                                                                <div class="col-md-2 d-flex justify-content-start">
+                                                                    <span>{{ partido.id_equipo_2.nombre_equipo }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </a>
                                                     </li>
                                                 {% endfor %}
                                             </ul>
@@ -226,7 +244,8 @@
                         </div>
                     </div>
                 </div>
-
+                
+                
             </div>
         </div>
 

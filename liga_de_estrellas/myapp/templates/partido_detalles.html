@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Partido</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body style="background-color: #000; color: #fff;">
+
+    <div class="container mt-5">
+        <div class="card" style="background-color: #111; border: 1px solid #fff;">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">Detalle del Partido</h3>
+
+                <div class="row mb-3">
+                    <div class="col-md-6 text-center">
+                        <h5>{{ partido.id_equipo_1.nombre_equipo }}</h5>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <h5>{{ partido.id_equipo_2.nombre_equipo }}</h5>
+                    </div>
+                </div>
+
+                <div class="text-center mb-3">
+                    <h4>Resultado: {{ partido.resultado }}</h4>
+                </div>
+
+                <div class="text-center">
+                    <p>Fecha: {{ partido.fecha_partido|date:"d/m/Y" }}</p>
+                    <p>Hora: {{ partido.hora_partido|time:"H:i" }}</p>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'temporada_detalles' partido.id_temporada.id_temporada %}" class="btn btn-light">
+                        Volver a la Temporada
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

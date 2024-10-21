@@ -1,5 +1,441 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block content %}
-<h1>Info de Equipo xD</h1>
+
+<div class="container">
+    <div class="row">
+        <!-- Columnas de la izquierda (más anchas) -->
+        <div class="col-md-8">
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body d-flex align-items-start">
+                    <!-- Caja blanca cuadrada a la izquierda -->
+                    <div class="card" style="background-color: #fff; border: 1px solid #ccc; color: #000; width: 100px; height: 100px; margin-right: 15px;">
+                        <div class="card-body d-flex align-items-center justify-content-center">
+                            <!-- Puedes agregar contenido aquí si es necesario -->
+                        </div>
+                    </div>
+                    
+                    <div class="flex-grow-1">
+                        <h3 class="card-title">{{ nombre_equipo }}</h3> <!-- Mostrar el nombre del equipo -->
+                        <h5 class="card-title">Entrenador del Equipo</h5>
+                        {% if entrenador %}
+                            <p class="card-text">{{ entrenador.apellido_entrenador }}, {{ entrenador.nombre_entrenador }}</p>
+                        {% else %}
+                            <p class="card-text">No hay delegado asignado.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body">
+                    <h3 class="card-title text-center">Plantel</h3>
+                    <table class="table" style="background-color: #000; color: #ffffff;">
+                        <thead>
+                            <tr>
+                                <th style="background-color: white; color: black; padding: 10px;">NOMBRE DEL JUGADOR</th>
+                                <th class="text-center" style="background-color: white; color: black; padding: 10px;">EDAD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for jugador in jugadores %}
+                            <tr>
+                                <td>
+                                    <!-- Envolvemos el nombre del jugador en un enlace -->
+                                    <a href="{% url 'jugador_detalles' jugador.id_jugador equipo.id_equipo temporada.id_temporada %}" style="color: white; text-decoration: none;">
+                                        {{ jugador.apellido_jugador }}, {{ jugador.nombre_jugador }}
+                                    </a>
+                                </td>
+                                <td class="text-center">{{ jugador.calcular_edad }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center">No hay jugadores registrados para este equipo en esta temporada.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Información</h3>
+            
+                    <!-- Contenedor para las 3 cajas horizontales -->
+                    <div class="row">
+                        <!-- Primera caja (Total de jugadores) -->
+                        <div class="col-md-4">
+                            <div class="p-3" style="background-color: black; color: white; border: 1px solid black;">
+                                <h5 style="font-size: 1rem;">Total de Jugadores</h5>
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <img src="{% static 'images/Total_jugadores.png' %}" alt="Imagen 1" style="width: 40px; height: 40px; margin-left: 10px;">
+                                    <p style="margin: 0 0 0 10px; font-weight: bold; font-size: 1.4rem;">{{ total_jugadores }}</p>    
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Segunda caja -->
+                        <div class="col-md-4">
+                            <div class="p-3" style="background-color: black; color: white; border: 1px solid black;">
+                                <h5 style="font-size: 1rem;">Edad Promedio</h5>
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <img src="{% static 'images/Edad_promedio.png' %}" alt="Imagen 2" style="width: 40px; height: 40px; margin-left: 10px;">
+                                    <p style="margin: 0 0 0 10px; font-weight: bold; font-size: 1.4rem;">{{ edad_promedio }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Tercera caja -->
+                        <div class="col-md-4">
+                            <div class="p-3" style="background-color: black; color: white; border: 1px solid black;">
+                                <h5 style="font-size: 1rem;">Torneos Jugados</h5>
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <img src="{% static 'images/Torneos_jugados.png' %}" alt="Imagen 2" style="width: 40px; height: 40px; margin-left: 10px;">
+                                    <p style="margin: 0 0 0 10px; font-weight: bold; font-size: 1.4rem;">{{ total_torneos }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="text-center" style="color: white;">Últimos Traspasos</h4>
+                    
+                        <div>
+                            <h5 style="color: white;">Altas</h5>
+                            <table class="table table-striped" style="color: white;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left; width: 33%; color: white;">Nombre del Jugador</th>
+                                        <th style="text-align: left; width: 33%; color: white;">Fecha de Traspaso</th>
+                                        <th style="text-align: left; width: 33%; color: white;">Equipo Actual</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for alta in altas %}
+                                        <tr>
+                                            <td style="text-align: left;">{{ alta.id_jugador.apellido_jugador }}, {{ alta.id_jugador.nombre_jugador }} </td>
+                                            <td style="text-align: left;">{{ alta.fecha_transferencia }}</td>
+                                            <td style="text-align: left;">{{ alta.id_equipo_actual.nombre_equipo }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3">No hay altas recientes.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        
+                            <h5 style="color: white;">Bajas</h5>
+                            <table class="table table-striped" style="color: white;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left; width: 33%; color: white;">Nombre del Jugador</th>
+                                        <th style="text-align: left; width: 33%; color: white;">Fecha de Traspaso</th>
+                                        <th style="text-align: left; width: 33%; color: white;">Nuevo Equipo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for baja in bajas %}
+                                        <tr>
+                                            <td style="text-align: left;">{{ baja.id_jugador.apellido_jugador }}, {{ baja.id_jugador.nombre_jugador }}</td>
+                                            <td style="text-align: left;">{{ baja.fecha_transferencia }}</td>
+                                            <td style="text-align: left;">{{ baja.id_equipo_nuevo.nombre_equipo }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3">No hay bajas recientes.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+                        
+        </div>
+        <!-- Columnas de la derecha (más estrechas) -->
+        <div class="col-md-4">
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body">
+                    <h3 class="card-title text-center">Caja 4</h3>
+                    <p class="card-text text-center">Contenido de la caja 4</p>
+                </div>
+            </div>
+        
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body" style="padding: 15px;"> <!-- Mantener padding normal -->
+                    <h3 class="card-title text-center">Historial de Partidos</h3> <!-- Centrar título -->
+                    
+                    <div class="table-responsive" style="margin: 0; display: flex; justify-content: center;"> <!-- Centrando la tabla -->
+                        {% if historial_partidos %}
+                            <table class="table table-dark" style="margin: 0; border-collapse: collapse; width: 100%; text-align: center;"> <!-- Eliminar margen y centrar texto -->
+                                <tbody>
+                                    {% for partido in historial_partidos %}
+                                    <tr>
+                                        <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;"> <!-- Fondo negro, texto blanco y negrita -->
+                                            <div style="display: flex; justify-content: flex-end;"> <!-- Alinear a la derecha -->
+                                                {{ partido.equipo_1 }}
+                                            </div>
+                                        </td>
+                                        <td class="text-center" style="font-size: 0.8rem; white-space: nowrap; background-color: #000; color: white; font-weight: bold;"> <!-- Fondo negro, texto blanco y negrita -->
+                                            <div style="font-size: 0.7rem; white-space: nowrap;">{{ partido.resultado }}</div>
+                                        </td>
+                                        <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;"> <!-- Fondo negro, texto blanco y negrita -->
+                                            <div style="display: flex; justify-content: flex-start;"> <!-- Alinear a la izquierda -->
+                                                {{ partido.equipo_2 }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="card-text text-center">No hay partidos con resultados disponibles para esta temporada.</p> <!-- Centrar mensaje -->
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body">
+                    <h3 class="card-title text-center">Estadísticas</h3> <!-- Título centrado -->
+            
+                    <!-- Estilo personalizado para las estadísticas -->
+                    <style>
+                        .estadisticas {
+                            font-size: 16px; /* Ajusta el tamaño de la fuente */
+                            white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                            overflow: hidden; /* Oculta el desbordamiento del texto */
+                            text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                        }
+                    </style>
+            
+                    <!-- Contenedor de las filas -->
+                    <div class="row justify-content-center estadisticas">
+                        <div class="col-md-6">Partidos Jugados</div>
+                        <div class="col-md-4 text-center">{{ partidos_jugados }}</div>
+                    
+                        <div class="col-md-6">Partidos Ganados</div>
+                        <div class="col-md-4 text-center">{{ partidos_ganados }}</div>
+                    
+                        <div class="col-md-6">Partidos Empatados</div>
+                        <div class="col-md-4 text-center">{{ partidos_empatados }}</div>
+                    
+                        <div class="col-md-6">Partidos Perdidos</div>
+                        <div class="col-md-4 text-center">{{ partidos_perdidos }}</div>
+                    
+                        <div class="col-md-6">Goles a Favor</div>
+                        <div class="col-md-4 text-center">{{ goles_a_favor }}</div>
+                    
+                        <div class="col-md-6">Goles en Contra</div>
+                        <div class="col-md-4 text-center">{{ goles_en_contra }}</div>
+                    
+                        <div class="col-md-6">Tarjetas Amarillas</div>
+                        <div class="col-md-4 text-center">{{ tarjetas_amarillas_equipo }}</div>
+                    
+                        <div class="col-md-6">Tarjetas Rojas</div>
+                        <div class="col-md-4 text-center">{{ tarjetas_rojas_equipo }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-3">
+                <div class="p-3 rounded" style="background-color: #000000; color: #ffffff; border: 0px solid #ffffff;">
+                    <!-- Contenedor para el título -->
+                    <h3 class="text-center">Ranking</h3>
+                
+                    <!-- Contenedor flexible para botones de navegación y subtítulo -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <button id="btn-izquierda" class="btn btn-light" onclick="cambiarRanking('prev')">
+                            <i class="fa fa-chevron-left"></i>
+                        </button>
+                
+                        <h6 class="text-center flex-grow-1 mb-0" id="ranking-subtitle">GOLEADORES</h6>
+                
+                        <button id="btn-derecha" class="btn btn-light" onclick="cambiarRanking('next')">
+                            <i class="fa fa-chevron-right"></i>
+                        </button>
+                    </div>
+                
+                    <!-- Sección de Ranking de Jugadores -->
+                    <div id="ranking-section">
+                        <!-- Sección de Goleadores -->
+                        <div id="goleadores-section" class="ranking-section">
+                            {% if ranking_jugadores %}
+                                <div class="table-responsive">
+                                    <table class="table table-goleadores">
+                                        <thead>
+                                            <tr class="text-white">
+                                                <th class="text-center" style="width: 5%;">POS</th>
+                                                <th style="width: 50%;">JUGADOR</th>
+                                                <th class="text-center" style="width: 20%;">TOTAL</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for jugador in ranking_jugadores %}
+                                                <tr class="text-white">
+                                                    <td class="text-center">{{ forloop.counter }}</td>
+                                                    <td>
+                                                        {{ jugador.id_jugador__apellido_jugador }}, {{ jugador.id_jugador__nombre_jugador }}
+                                                    </td>
+                                                    <td class="text-center">{{ jugador.total_goles }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center">
+                                    <p>No hay datos de ranking de goleadores disponibles para esta temporada.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    
+                        <!-- Sección de Máximos Figuras -->
+                        <div id="figuras-section" class="ranking-section d-none">
+                            {% if ranking_figuras %}
+                                <div class="table-responsive">
+                                    <table class="table table-figuras">
+                                        <thead>
+                                            <tr class="text-white">
+                                                <th class="text-center" style="width: 5%;">POS</th>
+                                                <th style="width: 50%;">JUGADOR</th>
+                                                <th class="text-center" style="width: 20%;">TOTAL</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for figura in ranking_figuras %}
+                                                <tr class="text-white">
+                                                    <td class="text-center">{{ forloop.counter }}</td>
+                                                    <td>
+                                                        {{ figura.id_jugador__apellido_jugador }}, {{ figura.id_jugador__nombre_jugador }}
+                                                    </td>
+                                                    <td class="text-center">{{ figura.total_figuras }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center">
+                                    <p>No hay datos de ranking de figuras disponibles para esta temporada.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+            
+                        <!-- Sección de Tarjetas Amarillas -->
+                        <div id="tarjetas-amarillas-section" class="ranking-section d-none">
+                            {% if tarjetas_amarillas %}
+                                <div class="table-responsive">
+                                    <table class="table table-tarjetas-amarillas">
+                                        <thead>
+                                            <tr class="text-white">
+                                                <th class="text-center" style="width: 5%;">POS</th>
+                                                <th style="width: 50%;">JUGADOR</th>
+                                                <th class="text-center" style="width: 20%;">TOTAL</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for tarjeta in tarjetas_amarillas %}
+                                                <tr class="text-white">
+                                                    <td class="text-center">{{ forloop.counter }}</td>
+                                                    <td>
+                                                        {{ tarjeta.id_jugador__apellido_jugador }}, {{ tarjeta.id_jugador__nombre_jugador }}
+                                                    </td>
+                                                    <td class="text-center">{{ tarjeta.total_amarillas }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center">
+                                    <p>No hay datos de tarjetas amarillas para esta temporada.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+            
+                        <!-- Sección de Tarjetas Rojas -->
+                        <div id="tarjetas-rojas-section" class="ranking-section d-none">
+                            {% if tarjetas_rojas %}
+                                <div class="table-responsive">
+                                    <table class="table table-tarjetas-rojas">
+                                        <thead>
+                                            <tr class="text-white">
+                                                <th class="text-center" style="width: 5%;">POS</th>
+                                                <th style="width: 50%;">JUGADOR</th>
+                                                <th class="text-center" style="width: 20%;">TOTAL</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for tarjeta in tarjetas_rojas %}
+                                                <tr class="text-white">
+                                                    <td class="text-center">{{ forloop.counter }}</td>
+                                                    <td>
+                                                        {{ tarjeta.id_jugador__apellido_jugador }}, {{ tarjeta.id_jugador__nombre_jugador }}
+                                                    </td>
+                                                    <td class="text-center">{{ tarjeta.total_rojas }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center">
+                                    <p>No hay datos de tarjetas rojas para esta temporada.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+                function cambiarRanking(direction) {
+                    const goleadoresSection = document.getElementById('goleadores-section');
+                    const figurasSection = document.getElementById('figuras-section');
+                    const tarjetasAmarillasSection = document.getElementById('tarjetas-amarillas-section');
+                    const tarjetasRojasSection = document.getElementById('tarjetas-rojas-section');
+                    const rankingSubtitle = document.getElementById('ranking-subtitle');
+            
+                    const sections = [
+                        goleadoresSection,
+                        figurasSection,
+                        tarjetasAmarillasSection,
+                        tarjetasRojasSection
+                    ];
+                    
+                    let currentSection = sections.find(section => !section.classList.contains('d-none'));
+                    let currentIndex = sections.indexOf(currentSection);
+            
+                    if (direction === 'next') {
+                        sections[currentIndex].classList.add('d-none');
+                        let nextIndex = (currentIndex + 1) % sections.length;
+                        sections[nextIndex].classList.remove('d-none');
+                        rankingSubtitle.textContent = getRankingTitle(nextIndex);
+                    } else {
+                        sections[currentIndex].classList.add('d-none');
+                        let prevIndex = (currentIndex - 1 + sections.length) % sections.length;
+                        sections[prevIndex].classList.remove('d-none');
+                        rankingSubtitle.textContent = getRankingTitle(prevIndex);
+                    }
+                }
+            
+                function getRankingTitle(index) {
+                    switch(index) {
+                        case 0: return 'GOLEADORES';
+                        case 1: return 'MÁXIMOS FIGURAS';
+                        case 2: return 'TARJETAS AMARILLAS';
+                        case 3: return 'TARJETAS ROJAS';
+                    }
+                }
+            </script>
+        </div>
+    </div>
+</div>
+
+
+{% comment %}
+    <a href="{% url 'temporada_detalles' temporada.id_temporada %}" class="btn btn-light mt-3">Volver a la temporada</a>
+{% endcomment %}
+
 {% endblock %}

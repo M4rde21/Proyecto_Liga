@@ -3,10 +3,11 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Sum, F, Case, When, IntegerField, Q, Count
+from django.db import models
 from django.http import HttpResponse, JsonResponse
 from collections import defaultdict
 from datetime import datetime, date, time, timedelta
-from .models import Jugadores, Equipos, Planillas, PremiosEquipos, Partidos, Torneos, Temporadas, Categorias, TipoTorneos, TemporadasXTorneosXEquiposXJugadores, TablaDePosiciones, Tarjetas, Figuras, Fechas, Resultados
+from .models import Jugadores, Equipos, Planillas, PremiosEquipos, Partidos, Torneos, Temporadas, Categorias, TipoTorneos, TemporadasXTorneosXEquiposXJugadores, TablaDePosiciones, Tarjetas, Figuras, Fechas, Resultados, Entrenadores, EquiposXEntrenadores, Traspasos, PremiosIndividuales, PremiosJugadores
 
 # Create your views here.
 def home(request):
@@ -420,6 +421,7 @@ def temporada_detalles(request, id_temporada):
     return render(request, 'temporada_detalles.html', {
         'temporada': temporada,
         'torneo': torneo,
+        'temporada_id': temporada.id_temporada,
         'tabla_posiciones': tabla_posiciones,
         'temporada_anterior': temporada_anterior,
         'temporada_siguiente': temporada_siguiente,
@@ -441,6 +443,315 @@ def temporada_detalles(request, id_temporada):
         'fecha_a_mostrar': fecha_a_mostrar,
     })
     
+
+def equipo_detalles(request, equipo_id, temporada_id):
+    # Obtener el equipo
+    equipo = get_object_or_404(Equipos, id_equipo=equipo_id)
+    
+    # Obtener la temporada
+    temporada = get_object_or_404(Temporadas, id_temporada=temporada_id)
+
+    # Filtrar los jugadores asociados al equipo y la temporada
+    jugadores = Jugadores.objects.filter(
+        id_jugador__in=TemporadasXTorneosXEquiposXJugadores.objects.filter(
+            id_equipo=equipo_id, id_temporada=temporada_id
+        ).values('id_jugador')
+    )
+    
+    # Calcular el total de jugadores
+    total_jugadores = jugadores.count()
+
+    # Calcular la edad promedio de los jugadores
+    total_edad = sum(jugador.calcular_edad() for jugador in jugadores)
+
+    # Evitar división por cero y calcular el promedio con dos decimales
+    edad_promedio = round(total_edad / total_jugadores, 2) if total_jugadores > 0 else 0.0
+    
+    # Obtener el total de torneos jugados
+    total_torneos = TemporadasXTorneosXEquiposXJugadores.objects.filter(id_equipo=equipo_id).values('id_torneo').distinct().count()
+
+    # Obtener el entrenador del equipo
+    entrenador = Entrenadores.objects.filter(
+        id_entrenador__in=EquiposXEntrenadores.objects.filter(
+            id_equipo=equipo_id
+        ).values('id_entrenador')
+    ).first()
+    
+    
+    # Obtener el equipo
+    equipo = get_object_or_404(Equipos, id_equipo=equipo_id)
+
+    # Obtener las últimas 3 altas y 3 bajas del equipo
+    altas = Traspasos.objects.filter(id_equipo_nuevo=equipo).order_by('-fecha_transferencia')[:3]
+    bajas = Traspasos.objects.filter(id_equipo_actual=equipo).order_by('-fecha_transferencia')[:3]
+    
+    # Filtrar los partidos en los que el equipo participó como equipo 1 o equipo 2 en la temporada y torneo actuales
+    partidos_con_resultado = Partidos.objects.filter(
+        id_temporada=temporada_id,
+        id_torneo__in=TemporadasXTorneosXEquiposXJugadores.objects.filter(id_temporada=temporada_id, id_equipo=equipo_id).values('id_torneo'),
+    ).filter(
+        models.Q(id_equipo_1=equipo_id) | models.Q(id_equipo_2=equipo_id)
+    ).select_related('id_equipo_1', 'id_equipo_2').order_by('-fecha_partido')
+
+    # Filtrar solo partidos con resultados
+    historial_partidos = []
+    for partido in partidos_con_resultado:
+        resultado = Resultados.objects.filter(id_partido=partido).first()
+        if resultado:
+            historial_partidos.append({
+                'fecha': partido.fecha_partido,
+                'hora': partido.hora_partido,
+                'equipo_1': partido.id_equipo_1.nombre_equipo,
+                'equipo_2': partido.id_equipo_2.nombre_equipo,
+                'resultado': f"{resultado.goles_equipo_1} - {resultado.goles_equipo_2}",
+            })
+
+    # Obtener las estadísticas del equipo desde la tabla de posiciones
+    estadisticas = TablaDePosiciones.objects.filter(
+        id_equipo=equipo_id,
+        id_temporada=temporada_id
+    ).first()
+
+    # Si no se encuentran estadísticas, se inicializan en 0 para evitar errores
+    partidos_jugados = estadisticas.partidos_jugados if estadisticas else 0
+    partidos_ganados = estadisticas.partidos_ganados if estadisticas else 0
+    partidos_empatados = estadisticas.partidos_empatados if estadisticas else 0
+    partidos_perdidos = estadisticas.partidos_perdidos if estadisticas else 0
+    goles_a_favor = estadisticas.goles_a_favor if estadisticas else 0
+    goles_en_contra = estadisticas.goles_en_contra if estadisticas else 0
+    tarjetas_amarillas_equipo = estadisticas.tarjetas_amarillas if estadisticas else 0
+    tarjetas_rojas_equipo = estadisticas.tarjetas_rojas if estadisticas else 0
+    
+    # Obtener el ranking de goleadores del equipo en la temporada y torneo actuales
+    ranking_jugadores = Planillas.objects.filter(
+        id_equipo=equipo_id,
+        id_partido__id_temporada=temporada_id,
+        id_partido__id_torneo__in=TemporadasXTorneosXEquiposXJugadores.objects.filter(id_temporada=temporada_id, id_equipo=equipo_id).values('id_torneo'),
+    ).values(
+        'id_jugador__apellido_jugador',  # Acceso directo a apellido_jugador
+        'id_jugador__nombre_jugador',     # Acceso directo a nombre_jugador
+    ).annotate(total_goles=Sum('goles')).filter(total_goles__gt=0).order_by('-total_goles')
+    
+    # Obtener el total de figuras por jugador
+    ranking_figuras = Figuras.objects.filter(
+        id_jugador__in=jugadores
+    ).values(
+        'id_jugador__id_jugador', 'id_jugador__nombre_jugador', 'id_jugador__apellido_jugador'
+    ).annotate(
+        total_figuras=Count('id_figura')
+    ).order_by('-total_figuras')
+    
+    # Obtener las tarjetas amarillas de jugadores en la temporada y torneo actuales
+    tarjetas_amarillas = Tarjetas.objects.filter(
+        id_partido__id_temporada=temporada_id,
+        id_partido__id_torneo__in=TemporadasXTorneosXEquiposXJugadores.objects.filter(id_temporada=temporada_id, id_equipo=equipo_id).values('id_torneo'),
+        tipo_tarjeta='amarilla',
+        id_jugador__temporadasxtorneosxequiposxjugadores__id_equipo=equipo_id,  # Filtrar por el equipo específico
+    ).values(
+        'id_jugador__apellido_jugador',   # Acceso directo al apellido del jugador
+        'id_jugador__nombre_jugador',     # Acceso directo al nombre del jugador
+        'id_jugador__id_jugador',         # ID del jugador
+        'id_jugador__temporadasxtorneosxequiposxjugadores__id_equipo__nombre_equipo',  # Nombre del equipo
+    ).annotate(
+        total_amarillas=Count('id_tarjeta')  # Contamos las tarjetas amarillas por jugador
+    ).order_by('-total_amarillas')
+    
+    # Obtener las tarjetas rojas de jugadores en la temporada y torneo actuales
+    tarjetas_rojas = Tarjetas.objects.filter(
+        id_partido__id_temporada=temporada_id,
+        id_partido__id_torneo__in=TemporadasXTorneosXEquiposXJugadores.objects.filter(id_temporada=temporada_id, id_equipo=equipo_id).values('id_torneo'),
+        tipo_tarjeta='roja',
+        id_jugador__temporadasxtorneosxequiposxjugadores__id_equipo=equipo_id,  # Filtrar por el equipo específico
+    ).values(
+        'id_jugador__apellido_jugador',   # Acceso directo al apellido del jugador
+        'id_jugador__nombre_jugador',     # Acceso directo al nombre del jugador
+        'id_jugador__id_jugador',         # ID del jugador
+        'id_jugador__temporadasxtorneosxequiposxjugadores__id_equipo__nombre_equipo',  # Nombre del equipo
+    ).annotate(
+        total_rojas=Count('id_tarjeta')  # Contamos las tarjetas rojas por jugador
+    ).order_by('-total_rojas')
+
+    # Obtener los premios ganados por el equipo
+    premios_equipos = PremiosEquipos.objects.filter(
+        id_equipo=equipo_id,  # Filtra por el equipo actual
+        id_temporada=temporada_id  # Filtra por la temporada actual
+    ).values(
+        'id_torneo__nombre_torneo',           # Acceso directo al nombre del torneo
+        'id_premio_grupal__nombre_premio_grupal',  # Acceso directo al nombre del premio grupal
+        'id_premio_grupal__foto_premio_grupal'    # Acceso directo a la foto del premio grupal
+    ).annotate(
+        total_premios=Count('id_premio_grupal')  # Cuenta cuántas veces se ha ganado el premio grupal
+    ).order_by('-total_premios')  # Ordena por la cantidad de premios obtenidos
+
+
+
+    # Convertir el nombre del equipo a mayúsculas
+    nombre_equipo_mayusculas = equipo.nombre_equipo.upper()
+
+    # Pasar equipo, jugadores, temporada, entrenador, total de jugadores y edad promedio al contexto
+    context = {
+        'equipo': equipo,
+        'nombre_equipo': nombre_equipo_mayusculas,  # Nombre del equipo en mayúsculas
+        'jugadores': jugadores,
+        'temporada': temporada,
+        'entrenador': entrenador,
+        'total_jugadores': total_jugadores,  # Pasar el total de jugadores al contexto
+        'edad_promedio': f"{edad_promedio:.1f}",  # Formato a dos decimales
+        'total_torneos': total_torneos,  # Añadir el total de torneos al contexto
+        'altas': altas,  # Pasar las altas al contexto
+        'bajas': bajas,  # Pasar las bajas al contexto'
+        'historial_partidos': historial_partidos,  # Añadir historial de partidos al contexto
+        'partidos_jugados': partidos_jugados,  # Añadir partidos jugados al contexto
+        'partidos_ganados': partidos_ganados,  # Añadir partidos ganados al contexto
+        'partidos_empatados': partidos_empatados,  # Añadir partidos empatados al contexto
+        'partidos_perdidos': partidos_perdidos,  # Añadir partidos perdidos al contexto
+        'goles_a_favor': goles_a_favor,  # Añadir goles a favor al contexto
+        'goles_en_contra': goles_en_contra,  # Añadir goles en contra al contexto
+        'tarjetas_amarillas_equipo': tarjetas_amarillas_equipo,  # Añadir tarjetas amarillas al contexto
+        'tarjetas_rojas_equipo': tarjetas_rojas_equipo,  # Añadir tarjetas rojas al contexto
+        'ranking_jugadores': ranking_jugadores,  # Añadir ranking de goleadores al contexto
+        'ranking_figuras': ranking_figuras,
+        'tarjetas_amarillas': tarjetas_amarillas,
+        'tarjetas_rojas': tarjetas_rojas,
+        'premios_equipos': premios_equipos,
+    }
+    
+    return render(request, 'equipo_detalles.html', context)
+
+def jugador_detalles(request, id_jugador, id_equipo, id_temporada):
+    # Obtén el jugador por su ID
+    jugador = get_object_or_404(Jugadores, id_jugador=id_jugador)
+    
+    # Convertir el apellido y nombre a mayúsculas por separado
+    apellido_mayus = jugador.apellido_jugador.upper()
+    nombre_mayus = jugador.nombre_jugador.upper()
+    
+    # Obtén el equipo y la temporada
+    equipo = get_object_or_404(Equipos, id_equipo=id_equipo)
+    temporada = get_object_or_404(Temporadas, id_temporada=id_temporada)
+    
+    # Obtener la cantidad de partidos jugados por el jugador en la temporada y equipo
+    partidos_jugados = Planillas.objects.filter(
+        id_jugador=id_jugador,
+        id_equipo=id_equipo,
+        id_partido__id_temporada=id_temporada
+    ).extra(where=["participó = 1"]).count()  # Usando extra para el campo con tilde
+    
+    # Obtener el total de goles marcados por el jugador en la temporada y equipo
+    total_goles = Planillas.objects.filter(
+        id_jugador=id_jugador,
+        id_equipo=id_equipo,
+        id_partido__id_temporada=id_temporada
+    ).aggregate(Sum('goles'))['goles__sum'] or 0  # Si no hay goles, devolvemos 0
+    
+    # Calcular el promedio de goles
+    if partidos_jugados > 0:
+        promedio_goles = total_goles / partidos_jugados
+    else:
+        promedio_goles = 0  # Si no ha jugado ningún partido, el promedio es 0
+    
+    # Obtener el total de tarjetas amarillas (revisando ambos equipos del partido)
+    total_tarjetas_amarillas = Tarjetas.objects.filter(
+        id_jugador=id_jugador,
+        id_partido__id_temporada=id_temporada,
+        tipo_tarjeta="amarilla"
+    ).filter(
+        Q(id_partido__id_equipo_1=id_equipo) | Q(id_partido__id_equipo_2=id_equipo)
+    ).count()
+    
+    # Obtener el total de tarjetas rojas
+    total_tarjetas_rojas = Tarjetas.objects.filter(
+        id_jugador=id_jugador,
+        id_partido__id_temporada=id_temporada,
+        tipo_tarjeta="roja"
+    ).filter(
+        Q(id_partido__id_equipo_1=id_equipo) | Q(id_partido__id_equipo_2=id_equipo)
+    ).count()
+    
+    # Obtener la trayectoria del jugador (traspasos)
+    traspasos = Traspasos.objects.filter(id_jugador=id_jugador).order_by('-fecha_transferencia')
+    
+    # Historial de partidos en los que el jugador participó
+    historial_partidos = Partidos.objects.extra(
+        where=["planillas.`participó` = 1"]
+    ).filter(
+        planillas__id_jugador=jugador,
+        planillas__id_equipo=equipo,
+        id_temporada=temporada
+    ).select_related('id_fecha').prefetch_related('resultados_set')
+    
+    # Obtener estadísticas generales sin importar la temporada
+    partidos_jugados_generales = Planillas.objects.filter(
+        id_jugador=id_jugador,
+        id_equipo=id_equipo
+    ).extra(where=["participó = 1"]).count()
+
+    total_goles_generales = Planillas.objects.filter(
+        id_jugador=id_jugador,
+        id_equipo=id_equipo
+    ).aggregate(Sum('goles'))['goles__sum'] or 0
+
+    total_tarjetas_amarillas_generales = Tarjetas.objects.filter(
+        id_jugador=id_jugador,
+        tipo_tarjeta="amarilla"
+    ).filter(
+        Q(id_partido__id_equipo_1=id_equipo) | Q(id_partido__id_equipo_2=id_equipo)
+    ).count()
+
+    total_tarjetas_rojas_generales = Tarjetas.objects.filter(
+        id_jugador=id_jugador,
+        tipo_tarjeta="roja"
+    ).filter(
+        Q(id_partido__id_equipo_1=id_equipo) | Q(id_partido__id_equipo_2=id_equipo)
+    ).count()
+    
+    # Obtener todos los premios ganados por el jugador, agrupados por tipo de premio
+    premios_individuales = PremiosJugadores.objects.filter(
+        id_jugador=jugador
+    ).values(
+        'id_premio_individual__nombre_premio_individual',  # Nombre del premio
+        'id_premio_individual__foto_premio_individual',    # Foto del premio
+        'id_torneo__nombre_torneo',                        # Nombre del torneo
+        'id_temporada__nombre_temporada'                   # Nombre de la temporada
+    ).annotate(
+        total_premios=Count('id_premio_individual')  # Cuenta cuántas veces se ha ganado el premio
+    ).order_by('-total_premios')  # Ordenar por cantidad de premios obtenidos
+
+    context = {
+        'jugador': jugador,
+        'apellido_mayus': apellido_mayus,  # Añadir el apellido en mayúsculas al contexto
+        'nombre_mayus': nombre_mayus,      # Añadir el nombre en mayúsculas al contexto
+        'equipo': equipo,
+        'temporada': temporada,
+        'total_jugados': partidos_jugados,  # Total de partidos jugados
+        'total_goles': total_goles, 
+        'promedio_goles': promedio_goles,   # Promedio de goles
+        'total_tarjetas_amarillas': total_tarjetas_amarillas,  # Total de tarjetas amarillas
+        'total_tarjetas_rojas': total_tarjetas_rojas,  # Total de tarjetas rojas
+        'traspasos': traspasos,  # Agregamos la trayectoria al contexto
+        'historial_partidos': historial_partidos,
+        'total_jugados_generales': partidos_jugados_generales,
+        'total_goles_generales': total_goles_generales,
+        'total_tarjetas_amarillas_generales': total_tarjetas_amarillas_generales,
+        'total_tarjetas_rojas_generales': total_tarjetas_rojas_generales,
+        'premios_individuales': premios_individuales,  # Premios del jugador
+
+    }
+    
+    return render(request, 'jugador_detalles.html', context)
+
+from django.shortcuts import get_object_or_404, render
+from .models import Partidos
+
+def partido_detalles(request, id_partido):
+    partido = get_object_or_404(Partidos, id_partido=id_partido)
+    
+    context = {
+        'partido': partido,
+    }
+    return render(request, 'partido_detalles.html', context)
+
+
 
 def reglamentos(request):
     return render(request, 'reglamentos.html')
