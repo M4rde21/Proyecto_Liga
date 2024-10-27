@@ -1,21 +1,22 @@
 {% extends 'administracion/base2.html' %}
+
 {% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar entrenador</title>
+    <title>Editar Zona</title>
 </head>
 <body>
-    {{error}}
-    <form method="POST" enctype="multipart/form-data">
+    <h1>Editar Zona</h1>
+    <form method="post">
         {% csrf_token %}
-        {{form.as_p}}
-        <button type="submit">GUARDAR</button>
+        {{ form.as_p }}
+        <button type="submit">Guardar Cambios</button>
     </form>
-    <a href="{% url 'entrenadores' %}">
-        <button>CANCELAR</button>
+    <a href="{% url 'zonas' temporada.id %}">
+        <button>VOLVER</button>
     </a>
 </body>
 </html>

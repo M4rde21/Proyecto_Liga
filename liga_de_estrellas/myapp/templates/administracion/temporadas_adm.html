@@ -17,7 +17,7 @@
         <p>Fecha inicio: {{ temporada.fecha_inicio }}</p>
         <p>Fecha final: {{ temporada.fecha_final }}</p>
 
-       
+
         <form action="{% url 'edit_temporada' temporada.id %}" method="get" style="display:inline;">
             <button type="submit" >Modificar </button>
         </form>
@@ -27,6 +27,11 @@
             {% csrf_token %}
             <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta temporada?');" >Eliminar </button>
         </form>
+
+
+        <a href="{% url 'gestion_temporada' temporada.id %}">
+            <button>Gestion</button>
+        </a>
     </li>
     {% endfor %}
 </ul>

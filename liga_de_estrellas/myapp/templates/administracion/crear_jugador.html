@@ -12,7 +12,8 @@
     <form action="/jugadores/crear/" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{form.as_p}}
-        <button>CONFIRMAR</button>
+        <input type="text" name="nombre_jugador" id="">
+        <button type="submit">CONFIRMAR</button>
     </form>
     <a href="{% url 'jugadores' %}">
         <button>VOLVER</button>
@@ -20,3 +21,4 @@
 </body>
 </html>
 {% endblock %}
+

@@ -1,0 +1,40 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zonas</title>
+</head>
+<body>
+    <h1>{{ temporada.nombre_temporada }}</h1>
+    <h2>{{ temporada.id_torneo.nombre_torneo }}</h2>
+    <a href="{% url 'zona_crear' temporada.id %}">
+        <button>CREAR ZONA</button>
+    </a>
+
+    {% for zona in zonas %}
+        <h2>{{ zona.nombre_grupo }}</h2>
+
+        <!-- Lista de equipos importados -->
+        <ul>
+            {% for relacion in zona.equipos_importados %}
+                <li>{{ relacion.id_equipo.nombre_equipo }}</li>
+            {% empty %}
+                <li>No hay equipos importados en esta zona.</li>
+            {% endfor %}
+        </ul>
+        
+
+        <a href="{% url 'zona_editar' temporada.id zona.id %}">
+            <button>Editar</button>
+        </a>
+        <a href="{% url 'importar_equipos_zona' temporada.id zona.id %}">
+            <button>Importar Equipo</button>
+        </a>
+    {% endfor %}
+</body>
+</html>
+{% endblock %}
