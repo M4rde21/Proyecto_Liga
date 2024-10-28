@@ -1,0 +1,31 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+<h1>TIPOS DE TORNEOS</h1>
+
+
+<form action="{% url 'crear_tipotorneo' %}" method="get" style="display:inline;">
+    <button type="submit">Crear nuevo tipo de torneo</button>
+</form>
+
+<ul>
+    {% for tipotorneo in tipotorneos %}
+    <li>
+        <p>Nombre: {{ tipotorneo.nombre_tipo_torneo }}</p>
+
+         
+        <form action="{% url 'edit_tipotorneo' tipotorneo.id %}" method="get" style="display:inline;">
+            <button type="submit">Modificar </button>
+        </form>
+
+        
+        <form action="{% url 'delete_tipotorneo' tipotorneo.id %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este tipo de torneo?');" >Eliminar </button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+<h1>CATEGORIAS</h1>
+
+
+<form action="{% url 'crear_categoria' %}" method="get" style="display:inline;">
+    <button type="submit">Crear nueva categoría</button>
+</form>
+
+<ul>
+    {% for categoria in categorias %}
+    <li>
+        <p>Nombre: {{ categoria.nombre_categoria }}</p>
+
+        
+        <form action="{% url 'edit_categoria' categoria.id %}" method="get" style="display:inline;">
+            <button type="submit">Modificar </button>
+        </form>
+
+        
+        <form action="{% url 'delete_categoria' categoria.id %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta categoria?');" >Eliminar </button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

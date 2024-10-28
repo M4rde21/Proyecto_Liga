@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMINISTRACION</title>
+    
+</head>
+<body>
+    <nav>
+        <div>
+
+        
+            <ul>
+                
+                <li class="nav-item">
+                        <a href="{% url 'logout' %}" >LOGOUT</a>
+                </li>
+
+                <li>
+                    <a href="{% url 'resumen' %}">Resumen</a>
+                </li>
+                <li>
+                    <a href="{% url 'jugadores' %}">Jugadores</a>
+                </li>
+                <li>
+                    <a href="{% url 'equipos' %}">Equipos</a>
+                </li>
+                <li>
+                    <a href="{% url 'entrenadores' %}">Entrenadores/Delegados</a>
+                </li>
+
+                <li>
+                    <a href="{% url 'temporadas_adm' %}">Temporadas</a>
+                </li>
+
+                
+
+                <li>
+                    <a href="{% url 'torneos_adm' %}">Torneos</a>
+                </li>
+
+        
+                <li>
+                    <a href="{% url 'categorias_adm' %}">Categorias</a>
+                </li>
+
+                <li>
+                    <a href="{% url 'tipotorneos_adm' %}">Tipo de Torneo</a>
+                </li>
+
+                
+
+
+
+
+            </ul>
+        </div>
+    </nav>
+
+    {% block content %}
+        
+    {% endblock %}
+    
+
+</body>
+</html>
