@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
-LOGIN_REDIRECT_URL = 'torneos_adm'
+LOGIN_REDIRECT_URL = 'resumen'
 LOGOUT_REDIRECT_URL = 'inicio'
 
 

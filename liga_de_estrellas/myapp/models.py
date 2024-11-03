@@ -33,7 +33,7 @@ class Jugador(models.Model):
     dni_jugador = models.CharField(unique=True, max_length=20)
     fecha_nac_jugador = models.DateField()
     foto_jugador = models.ImageField(upload_to="fotos_jugador/", blank=True, null=True)
-    activo_jugador = models.BooleanField(default=False)
+    activo_jugador = models.BooleanField(default=True)
 
     def __str__(self):
         return self.nombre_jugador + ' ' + self.apellido_jugador
@@ -57,6 +57,10 @@ class TipoTorneo(models.Model):
 
     
     
+    def __str__(self):
+        return self.nombre_tipo_torneo
+
+
 class EquipoXEntrenador(models.Model):
     id_equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo', blank=True, null=True)
     id_entrenador = models.ForeignKey(Entrenador, on_delete=models.CASCADE, db_column='id_entrenador', blank=True, null=True)
@@ -131,7 +135,7 @@ class Fecha(models.Model):
     
 class Grupo(models.Model):
     nombre_grupo = models.CharField(max_length=100)
-    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada', blank=True, null=True)
+    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada', blank=False, null=True)
 
     class Meta:
         db_table = 'grupos'
@@ -214,11 +218,13 @@ class Tarjeta(models.Model):
         db_table = 'tarjetas'
         
         
-class TemporadaXTorneoXEquipoXJugador(models.Model):
-    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada')
+class TemporadaXTorneoXGrupoXEquipoXJugador(models.Model):
+    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada', null=True)
     id_torneo = models.ForeignKey(Torneo, on_delete=models.CASCADE, db_column='id_torneo')
     id_equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo')
-    id_jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE, db_column='id_jugador')
-
+    id_jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE, db_column='id_jugador', null=True, blank=True)
+    id_grupo = models.ForeignKey(Grupo, on_delete=models.CASCADE, db_column='id_grupo', null=True)
+    
     class Meta:
-        db_table = 'temporadas_x_torneos_x_equipos_x_jugadores'
+        db_table = 'temporadas_x_torneos_x_grupos_x_equipos_x_jugadores'
+

@@ -5,17 +5,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar entrenador</title>
+    <title>Crear Zona</title>
 </head>
 <body>
-    {{error}}
-    <form method="POST" enctype="multipart/form-data">
+    <form method="post" action="{% url 'zona_crear' temporada.id %}">
         {% csrf_token %}
-        {{form.as_p}}
-        <button type="submit">GUARDAR</button>
+        {{ form.as_p }}
+        <button type="submit">CONFIRMAR</button>
     </form>
-    <a href="{% url 'entrenadores' %}">
-        <button>CANCELAR</button>
+    <a href="{% url 'zonas' temporada.id %}">
+        <button>VOLVER</button>
     </a>
 </body>
 </html>

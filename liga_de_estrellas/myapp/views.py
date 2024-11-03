@@ -1,20 +1,31 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual
+from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm
+from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm,CrearZonaForm 
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.contrib import messages
 
 
 
 
 def inicio(request):
     return render(request, 'usuario/inicio.html')
+
+
+def login_view(request):
+    return render(request, 'login.html')
+
+     
+def signout(request):
+    logout(request)
+    return redirect('inicio')
 
 def torneos(request):
     torneos = Torneo.objects.all()
@@ -25,16 +36,6 @@ def reglamentos(request):
 
 def contacto(request):
     return render(request, 'usuario/contacto.html')
-
-
-
-def login_view(request):
-    return render(request, 'login.html')
-
-     
-def signout(request):
-    logout(request)
-    return redirect('inicio')
 
 def lista_equipos(request):
     
@@ -55,34 +56,56 @@ def crear_jugador(request):
     else:
         form = CrearJugadorForm(request.POST, request.FILES)
         if form.is_valid():
-            try:
-                form.save()
-                return redirect('jugadores')
-            except ValidationError as e:
-                return render(request, 'administracion/crear_jugador.html', {
-                    'form': form,
-                    'error': f'Error en los datos: {e}'
-                })
+            jugador = Jugador(
+                nombre_jugador=form.cleaned_data['nombre_jugador'],
+                apellido_jugador=form.cleaned_data['apellido_jugador'],
+                dni_jugador=form.cleaned_data['dni_jugador'],
+                fecha_nac_jugador=form.cleaned_data['fecha_nac_jugador'],
+                foto_jugador=form.cleaned_data['foto_jugador'],
+                activo_jugador=form.cleaned_data['activo_jugador'],
+            )
+            jugador.save()
+
+            return redirect('jugadores')
         else:
             return render(request, 'administracion/crear_jugador.html', {
                 'form': form,
                 'error': 'Por favor introduce datos válidos.'
             })
-    
+
 
 def editar_jugador(request, id_jugador):
     jugador = get_object_or_404(Jugador, pk=id_jugador)
-    
+
     if request.method == 'GET':
-        form = CrearJugadorForm(instance=jugador)
+        form = CrearJugadorForm(initial={
+            'nombre_jugador': jugador.nombre_jugador,
+            'apellido_jugador': jugador.apellido_jugador,
+            'dni_jugador': jugador.dni_jugador,
+            'fecha_nac_jugador': jugador.fecha_nac_jugador.strftime('%Y-%m-%d'),
+            'foto_jugador': jugador.foto_jugador,
+            'activo_jugador': jugador.activo_jugador
+        })
         return render(request, 'administracion/editar_jugador.html', {'form': form, 'jugador': jugador})
-    
+
     else:
-        form = CrearJugadorForm(request.POST, request.FILES, instance=jugador)
+        form = CrearJugadorForm(request.POST, request.FILES)
         
         if form.is_valid():
-            form.save() 
-            return redirect('jugadores') 
+            jugador.nombre_jugador = form.cleaned_data['nombre_jugador']
+            jugador.apellido_jugador = form.cleaned_data['apellido_jugador']
+            jugador.dni_jugador = form.cleaned_data['dni_jugador']
+            jugador.fecha_nac_jugador = form.cleaned_data['fecha_nac_jugador']
+            if 'foto_jugador' in request.FILES:
+                jugador.foto_jugador = form.cleaned_data['foto_jugador']
+            elif form.cleaned_data['foto_jugador'] is None:
+                pass
+            else:
+                jugador.foto_jugador.delete(save=False)
+                jugador.foto_jugador = None
+            
+            jugador.save()
+            return redirect('jugadores')
         else:
             return render(request, 'administracion/editar_jugador.html', {
                 'form': form,
@@ -120,6 +143,25 @@ def torneos_adm(request):
         'torneos': torneos
     })
 
+
+def crear_torneo(request):
+    form = TorneoForm(request.POST)
+    if form.is_valid():
+
+        torneo = Torneo()
+        torneo.nombre_torneo = form.cleaned_data['nombre_torneo']
+        torneo.id_categoria = form.cleaned_data["id_categoria"]
+        torneo.id_tipo_torneo = form.cleaned_data["id_tipo_torneo"]
+        torneo.año = form.cleaned_data["año"]
+        torneo.save()
+        return redirect('torneos_adm')
+        
+    else:
+        return render(request, 'administracion/crear_torneo.html', {'form': form})
+    return render(request, 'administracion/crear_torneo.html', {'form': form})
+
+
+
 def edit_torneo(request, id_torneo):
     torneo = get_object_or_404(Torneo, pk=id_torneo)
 
@@ -147,7 +189,6 @@ def delete_torneo(request, id_torneo):
     if request.method == 'POST':
         torneo.delete()
         return redirect('torneos_adm')
-    
 
 def crear_temporada(request):
     form = TemporadasForm(request.POST)
@@ -205,7 +246,259 @@ def delete_temporada(request, id_temporada):
     if request.method == 'POST':
         temporada.delete()
         return redirect('temporadas_adm')
+
+
+def gestion_temporada(request, id_temporada):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    return render(request, 'administracion/gestion_temporada.html', {'temporada': temporada})
+
+
+
+
+def zonas(request, id_temporada):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    zonas = Grupo.objects.filter(id_temporada=temporada)
+
+    equipos = list(Equipo.objects.all())
+
+    for zona in zonas:
+        zona.equipos_importados = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_jugador=None,
+            id_grupo=zona
+        ).values_list('id_equipo', flat=True)
+
+    return render(request, 'administracion/zonas.html', {
+        'temporada': temporada,
+        'zonas': zonas,
+        'equipos': equipos,
+    })
+
+
+
+
+
+def zona_crear(request, id_temporada):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    if request.method == 'POST':
+        form = CrearZonaForm(request.POST)
+        if form.is_valid():
+            zona = Grupo(
+                nombre_grupo=form.cleaned_data['nombre_grupo'],
+                id_temporada=temporada
+            )
+            zona.save()
+            return redirect('gestion_temporada', id_temporada=id_temporada)
+    else:
+        form = CrearZonaForm()
+    return render(request, 'administracion/zona_crear.html', {'form': form, 'temporada': temporada})
+
+
+
+def zona_editar(request, id_temporada, id_zona):
+    zona = get_object_or_404(Grupo, pk=id_zona, id_temporada=id_temporada)
+    if request.method == 'POST':
+        form = CrearZonaForm(request.POST)
+        if form.is_valid():
+            zona.nombre_grupo = form.cleaned_data['nombre_grupo']
+            zona.save()
+            return redirect('zonas', id_temporada=id_temporada)
+    else:
+        form = CrearZonaForm(initial={'nombre_grupo': zona.nombre_grupo})
+    return render(request, 'administracion/zona_editar.html', {'form': form, 'temporada': zona.id_temporada})
+
+
+
+def importar_equipos_zona(request, id_temporada, id_zona):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    zona = get_object_or_404(Grupo, pk=id_zona, id_temporada=temporada)
+    equipos = Equipo.objects.all()
+
+    if request.method == 'POST':
+        equipo_id = request.POST.get('equipo')
+        equipo = get_object_or_404(Equipo, pk=equipo_id)
+
+        relacion = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=temporada.id_torneo,
+            id_equipo=equipo,
+            id_grupo=zona,
+            id_jugador=None
+        ).exists()
+
+        if not relacion:
+            TemporadaXTorneoXGrupoXEquipoXJugador.objects.create(
+                id_temporada=temporada,
+                id_torneo=temporada.id_torneo,
+                id_equipo=equipo,
+                id_grupo=zona,
+                id_jugador=None
+            )
+
+        return redirect('zonas', id_temporada=id_temporada)
+
+    return render(request, 'administracion/importar_equipos_zona.html', {
+        'zona': zona,
+        'temporada': temporada,
+        'equipos': equipos
+    })
+
+def equipo_importado(request, id_temporada, id_zona, id_equipo):
+    # Filtrar la relación para obtener solo la que corresponde al equipo, temporada y zona específicos
+    relacion = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=id_temporada,
+        id_grupo=id_zona,
+        id_equipo=id_equipo
+    ).first()  # Usamos first() para obtener solo el primer resultado o None
+
+    if relacion is None:
+        # Manejar el caso en que no se encontró la relación
+        return render(request, 'administracion/error.html', {
+            'mensaje': 'No se encontró la relación entre la temporada, la zona y el equipo especificados.'
+        })
+
+    equipo = relacion.id_equipo 
+    equipos = Equipo.objects.all()  # Obtener todos los equipos disponibles
     
+    # Obtener todos los jugadores importados para este equipo
+    jugadores_importados = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=id_temporada,
+        id_grupo=id_zona,
+        id_equipo=equipo
+    ).select_related('id_jugador')  # Usamos select_related para obtener los jugadores
+
+    return render(request, 'administracion/equipo_importado.html', {
+        'equipo': equipo,
+        'temporada': relacion.id_temporada,
+        'zona': relacion.id_grupo,
+        'equipos': equipos,
+        'jugadores_importados': jugadores_importados
+    })
+
+
+
+def equipo_importado_cambiar(request, id_temporada, id_zona, id_equipo):
+    # Obtener la relación actual de manera segura
+    relacion = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=id_temporada,
+        id_grupo=id_zona,
+        id_equipo=id_equipo
+    ).first()  # Usamos first() para evitar el error si hay más de una relación
+
+    if relacion is None:
+        # Manejar el caso en que no se encontró la relación
+        messages.error(request, 'No se encontró la relación entre la temporada, la zona y el equipo especificados.')
+        return redirect(reverse('zonas', args=[id_temporada]))
+
+    equipos = Equipo.objects.all()
+
+    if request.method == 'POST':
+        nuevo_equipo_id = request.POST.get('equipo')
+        nuevo_equipo = get_object_or_404(Equipo, pk=nuevo_equipo_id)
+
+        # Obtener la instancia de Temporada y Grupo correspondientes
+        temporada = get_object_or_404(Temporada, pk=id_temporada)
+        grupo = get_object_or_404(Grupo, pk=id_zona, id_temporada=temporada)
+        torneo = temporada.id_torneo
+
+        if nuevo_equipo != relacion.id_equipo:
+            # Eliminar todas las relaciones existentes del equipo actual en esta zona
+            TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo=relacion.id_equipo
+            ).delete()
+
+            # Crear una nueva relación con el equipo seleccionado
+            TemporadaXTorneoXGrupoXEquipoXJugador.objects.create(
+                id_temporada=temporada,  # Instancia de Temporada
+                id_torneo=torneo,         # Instancia de Torneo obtenida a través de Temporada
+                id_grupo=grupo,           # Instancia de Grupo
+                id_equipo=nuevo_equipo,   # Instancia de Equipo
+                id_jugador=None           # Nueva relación sin jugador
+            )
+
+            messages.success(request, f'Equipo cambiado exitosamente a {nuevo_equipo}.')
+            return redirect(reverse('zonas', args=[id_temporada]))
+
+        else:
+            messages.info(request, 'El equipo seleccionado ya es el equipo actual.')
+
+    # Renderiza un formulario para seleccionar un nuevo equipo
+    return render(request, 'administracion/equipo_importado_cambiar.html', {
+        'relacion': relacion,
+        'equipos': equipos,
+        'temporada': id_temporada,
+        'zona': id_zona,
+        'equipo': id_equipo
+    })
+
+
+
+
+
+
+def equipo_importado_eliminado(request, id_temporada, id_zona, id_equipo):
+    # Filtramos todas las relaciones que coinciden con los parámetros
+    relaciones = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=id_temporada,
+        id_grupo=id_zona,
+        id_equipo=id_equipo
+    )
+
+    # Verificamos si hay relaciones que eliminar
+    if relaciones.exists():
+        relaciones.delete()  # Eliminar todas las relaciones que coincidan
+
+    return redirect('zonas', id_temporada=id_temporada)
+
+
+
+
+
+
+def importar_jugador_equipo(request, id_temporada, id_zona, id_equipo):
+    # Obtener la temporada y la zona
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    zona = get_object_or_404(Grupo, pk=id_zona, id_temporada=temporada)
+
+    # Obtener todos los jugadores disponibles
+    jugadores_disponibles = Jugador.objects.all()
+
+    # Obtener la instancia del equipo
+    equipo_instance = get_object_or_404(Equipo, pk=id_equipo)
+
+    if request.method == 'POST':
+        jugador_id = request.POST.get('jugador')
+        jugador = get_object_or_404(Jugador, pk=jugador_id)
+
+        # Crear una nueva relación sin modificar la relación existente con jugador=NULL
+        TemporadaXTorneoXGrupoXEquipoXJugador.objects.create(
+            id_temporada=temporada,
+            id_torneo=temporada.id_torneo,
+            id_grupo=zona,
+            id_equipo=equipo_instance,
+            id_jugador=jugador  # Nueva relación con el jugador seleccionado
+        )
+
+        messages.success(request, 'Jugador importado correctamente en el equipo de la zona en la temporada actual.')
+        return redirect(reverse('equipo_importado', args=[id_temporada, id_zona, id_equipo]))
+
+    return render(request, 'administracion/importar_jugador_equipo.html', {
+        'zona': zona,
+        'temporada': temporada,
+        'jugadores': jugadores_disponibles,
+        'equipo': equipo_instance
+    })
+
+
+
+
+
+
+
+
+
 
 def categorias_adm(request):
     categorias = Categoria.objects.all()
@@ -299,7 +592,6 @@ def delete_tipotorneo(request, id_tipo_torneo):
     if request.method == 'POST':
         tipotorneo.delete()
         return redirect('tipotorneos_adm')
-
         
 
 def equipos_lista(request):
@@ -314,14 +606,13 @@ def equipo_crear(request):
     else:
         form = CrearEquipoForm(request.POST, request.FILES)
         if form.is_valid():
-            try:
-                form.save()
-                return redirect('equipos')
-            except ValidationError as e:
-                return render(request, 'administracion/equipo_crear.html', {
-                    'form': form,
-                    'error': f'Error en los datos: {e}'
-                })
+            equipo = Equipo(
+                nombre_equipo=form.cleaned_data['nombre_equipo'],
+                logo_equipo=form.cleaned_data['logo_equipo']
+            )
+            
+            equipo.save()
+            return redirect('equipos')
         else:
             return render(request, 'administracion/equipo_crear.html', {
                 'form': form,
@@ -332,14 +623,27 @@ def equipo_editar(request, id_equipo):
     equipo = get_object_or_404(Equipo, pk=id_equipo)
     
     if request.method == 'GET':
-        form = CrearEquipoForm(instance=equipo)
+        form = CrearEquipoForm(initial={
+            'nombre_equipo': equipo.nombre_equipo,
+            'logo_equipo': equipo.logo_equipo
+        })
         return render(request, 'administracion/equipo_editar.html' ,{'form': form, 'equipo': equipo})
     
     else:
-        form = CrearEquipoForm(request.POST, request.FILES, instance=equipo)
+        form = CrearEquipoForm(request.POST, request.FILES)
         
         if form.is_valid():
-            form.save() 
+            equipo.nombre_equipo=form.cleaned_data['nombre_equipo']
+            if 'logo_equipo' in request.FILES:
+                equipo.logo_equipo=form.cleaned_data['logo_equipo']
+            elif form.cleaned_data['logo_equipo'] is None:
+                pass
+            else:
+                equipo.logo_equipo.delete(save=False)
+                equipo.logo_equipo = None
+            
+            equipo.save()
+    
             return redirect('equipos') 
         else:
             return render(request, 'administracion/equipo_editar.html', {
@@ -360,14 +664,16 @@ def entrenador_crear(request):
     else:
         form = CrearEntrenadorForm(request.POST, request.FILES)
         if form.is_valid():
-            try:
-                form.save()
-                return redirect('entrenadores')
-            except ValidationError as e:
-                return render(request, 'administracion/entrenador_crear.html', {
-                    'form': form,
-                    'error': f'Error en los datos: {e}'
-                })
+            entrenador = Entrenador(
+                nombre_entrenador=form.cleaned_data['nombre_entrenador'],
+                apellido_entrenador=form.cleaned_data['apellido_entrenador'],
+                dni_entrenador=form.cleaned_data['dni_entrenador'],
+                fecha_nac_entrenador=form.cleaned_data['fecha_nac_entrenador'],
+                foto_entrenador=form.cleaned_data['foto_entrenador']
+            )
+            entrenador.save()
+            
+            return redirect('entrenadores')
         else:
             return render(request, 'administracion/entrenador_crear.html', {
                 'form': form,
@@ -376,17 +682,34 @@ def entrenador_crear(request):
 
 def entrenador_editar(request, id_entrenador):
     entrenador = get_object_or_404(Entrenador, pk=id_entrenador)
-    
+
     if request.method == 'GET':
-        form = CrearEntrenadorForm(instance=entrenador)
+        form = CrearEntrenadorForm(initial={
+            'nombre_entrenador': entrenador.nombre_entrenador,
+            'apellido_entrenador': entrenador.apellido_entrenador,
+            'dni_entrenador': entrenador.dni_entrenador,
+            'fecha_nac_entrenador': entrenador.fecha_nac_entrenador.strftime('%Y-%m-%d'),
+            'foto_entrenador': entrenador.foto_entrenador
+        })
         return render(request, 'administracion/entrenador_editar.html', {'form': form, 'entrenador': entrenador})
-    
     else:
-        form = CrearEntrenadorForm(request.POST, request.FILES, instance=entrenador)
-        
+        form = CrearEntrenadorForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save() 
-            return redirect('entrenadores') 
+            entrenador.nombre_entrenador = form.cleaned_data['nombre_entrenador']
+            entrenador.apellido_entrenador = form.cleaned_data['apellido_entrenador']
+            entrenador.dni_entrenador = form.cleaned_data['dni_entrenador']
+            entrenador.fecha_nac_entrenador = form.cleaned_data['fecha_nac_entrenador']
+            
+            if 'foto_entrenador' in request.FILES:
+                entrenador.foto_entrenador = form.cleaned_data['foto_entrenador']
+            elif form.cleaned_data['foto_entrenador'] is None:
+                pass
+            else:
+                entrenador.foto_entrenador.delete(save=False)
+                entrenador.foto_entrenador = None
+                
+            entrenador.save()
+            return redirect('entrenadores')
         else:
             return render(request, 'administracion/entrenador_editar.html', {
                 'form': form,

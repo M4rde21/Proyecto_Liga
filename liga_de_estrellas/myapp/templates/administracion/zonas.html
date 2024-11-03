@@ -1,0 +1,52 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zonas</title>
+</head>
+<body>
+    <h1>{{ temporada.nombre_temporada }}</h1>
+    <h2>{{ temporada.id_torneo.nombre_torneo }}</h2>
+    <a href="{% url 'zona_crear' temporada.id %}">
+        <button>CREAR ZONA</button>
+    </a>
+
+    {% for zona in zonas %}
+        <h2>{{ zona.nombre_grupo }}</h2>
+
+        <!-- Lista de equipos importados -->
+        <ul>
+            {% if zona.equipos_importados %}
+                {% for equipo_id in zona.equipos_importados %}
+                    {% for equipo in equipos %}
+                        {% if equipo.id == equipo_id %}
+                            <a href="{% url 'equipo_importado' temporada.id zona.id equipo.id %}">
+                                {% if equipo.logo_equipo %}
+                                    <img src="{{ equipo.logo_equipo.url }}" alt="{{ equipo.nombre_equipo }} Logo" width="50" height="50">
+                                {% else %}
+                                    <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Foto no disponible" style="width: 50px; height: auto;">
+                                {% endif %}
+                                {{ equipo.nombre_equipo }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <li>No hay equipos importados en esta zona.</li>
+            {% endif %}
+        </ul>
+
+        <a href="{% url 'zona_editar' temporada.id zona.id %}">
+            <button>Editar</button>
+        </a>
+        <a href="{% url 'importar_equipos_zona' temporada.id zona.id %}">
+            <button>Importar Equipo</button>
+        </a>
+    {% endfor %}
+</body>
+</html>
+{% endblock %}
