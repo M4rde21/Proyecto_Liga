@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('', views.inicio, name='inicio'),
     path('login/', views.login, name='login'),
+    path('accounts/logout/', views.signout, name='logout'),
     path('resumen/', views.resumen, name='resumen'),
     path('jugadores/', views.lista_jugadores, name='jugadores'),
     path('jugadores/crear/', views.crear_jugador, name='crear_jugador'),
@@ -36,8 +37,14 @@ urlpatterns = [
     path('crear_tipotorneo/', views.crear_tipotorneo, name='crear_tipotorneo'),
     path('tipotorneos_adm/<int:id_tipo_torneo>/', views.edit_tipotorneo, name='edit_tipotorneo'),
     path('tipotorneos_adm/<int:id_tipo_torneo>/delete', views.delete_tipotorneo, name='delete_tipotorneo'),
-    path('accounts/logout/', views.signout, name='logout'),
-
+    path('premios_grupal/', views.premios_grupal, name='premios_grupal'),
+    path('premios_grupal/crear_premio_grupal/', views.crear_premio_grupal, name='crear_premio_grupal'),
+    path('premios_grupal/<int:id_premio_grupal>/', views.edit_premio_grupal, name='edit_premio_grupal'),
+    path('premios_grupal/<int:id_premio_grupal>/delete', views.delete_premio_grupal, name='delete_premio_grupal'),
+    path('premios_individual/', views.premios_individual, name='premios_individual'),
+    path('premios_individual/crear_premio_individual/', views.crear_premio_individual, name='crear_premio_individual'),
+    path('premios_individual/<int:id_premio_individual>/', views.edit_premio_individual, name='edit_premio_individual'),
+    path('premios_individual/<int:id_premio_individual>/delete', views.delete_premio_individual, name='delete_premio_individual'),
 ]
 
 if settings.DEBUG:

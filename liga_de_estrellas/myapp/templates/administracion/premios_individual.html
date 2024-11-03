@@ -1,0 +1,36 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+<h1>Premios Individual</h1>
+
+
+<form action="{% url 'crear_premio_individual' %}" method="get" style="display:inline;">
+    <button type="submit">Crear nuevo Premio individual</button>
+</form>
+
+<ul>
+    {% for premio in premios %}
+    <li>
+        <p><strong>Nombre:</strong> {{ premio.nombre_premio_individual }}</p>
+        
+        {% if premio.foto_premio_individual %}
+            <img src="{{ premio.foto_premio_individual.url }}" alt="Foto de {{premio.foto_premio_individual }}" style="width: 50px; height: auto">
+        {% else %}
+            <img src="{{ MEDIA_URL }}premio_individual/premio_individual_default.png"alt="Foto no disponible" style="width: 50px; height: auto;">
+        {% endif %}
+         
+        <form action="{% url 'edit_premio_individual' premio.id %}" method="get" style="display:inline;">
+            <button type="submit">Modificar</button>
+        </form>
+
+        
+        <form action="{% url 'delete_premio_individual' premio.id %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este premio?');" >Eliminar</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

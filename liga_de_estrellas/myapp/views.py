@@ -1,18 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador
+from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm
+from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 
 
 
-# Create your views here.
+
 def inicio(request):
     return render(request, 'usuario/inicio.html')
 
@@ -37,7 +37,7 @@ def signout(request):
     return redirect('inicio')
 
 def lista_equipos(request):
-    # Obtén todos los registros de la tabla 'equipos'
+    
     equipos = Equipo.objects.all()
 
 def resumen(request):
@@ -91,16 +91,29 @@ def editar_jugador(request, id_jugador):
             })
 
 
-def crear_torneo(request):
+def eliminar_jugador(request, id_jugador):
+    jugador = get_object_or_404(Jugador, pk=id_jugador)
     if request.method == 'POST':
-        form = TorneoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('torneos_adm')  
+        jugador.delete()
+        return redirect('jugadores')
+
+def crear_torneo(request):
+    form = TorneoForm(request.POST)
+    if form.is_valid():
+
+        torneo = Torneo()
+        torneo.nombre_torneo = form.cleaned_data['nombre_torneo']
+        torneo.id_categoria = form.cleaned_data["id_categoria"]
+        torneo.id_tipo_torneo = form.cleaned_data["id_tipo_torneo"]
+        torneo.año = form.cleaned_data["año"]
+        torneo.save()
+        return redirect('torneos_adm')
+        
     else:
-        form = TorneoForm()
+        return render(request, 'administracion/crear_torneo.html', {'form': form})
     return render(request, 'administracion/crear_torneo.html', {'form': form})
 
+   
 def torneos_adm(request):
     torneos = Torneo.objects.all()
     return render(request, 'administracion/torneos_adm.html', {
@@ -108,25 +121,26 @@ def torneos_adm(request):
     })
 
 def edit_torneo(request, id_torneo):
-    if request.method == 'GET':
-        torneo = get_object_or_404(Torneo, pk=id_torneo)
-        form=TorneoForm(instance=torneo)
-        return render(request, 'administracion/edit_torneo.html', {
-        'torneo': torneo,
-        'form' : form
-        })
-    else:
-        try:
-            torneo=get_object_or_404(Torneo, pk=id_torneo)
-            form=TorneoForm(request.POST, instance=torneo)
-            form.save()
+    torneo = get_object_or_404(Torneo, pk=id_torneo)
+
+    if request.method == 'POST':
+        form=TorneoForm(request.POST)
+        if form.is_valid():
+            torneo.nombre_torneo = form.cleaned_data['nombre_torneo']
+            torneo.id_categoria = form.cleaned_data["id_categoria"]
+            torneo.id_tipo_torneo = form.cleaned_data["id_tipo_torneo"]
+            torneo.año = form.cleaned_data["año"]
+            torneo.save()
             return redirect('torneos_adm')
-        except ValueError:
-            return render(request, 'administracion/torneos_adm.html', {
-                'torneo': torneo,
-                'form' : form,
-                'error' : "Error al actualizar datos"
-            })
+    else:
+        form = TorneoForm(initial={'nombre_torneo': torneo.nombre_torneo, 'id_categoria':torneo.id_categoria, 'id_tipo_torneo':torneo.id_tipo_torneo, 'año':torneo.año })
+            
+    return render(request, 'administracion/edit_torneo.html', {
+                 'torneo': torneo,
+                 'form' : form
+                })
+   
+
         
 def delete_torneo(request, id_torneo):
     torneo=get_object_or_404(Torneo, pk=id_torneo)
@@ -136,86 +150,104 @@ def delete_torneo(request, id_torneo):
     
 
 def crear_temporada(request):
-    if request.method == 'POST':
-        form = TemporadasForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('temporadas_adm')  # Cambia esto por la vista a la que quieres redirigir después de guardar
+    form = TemporadasForm(request.POST)
+    if form.is_valid():
+
+        temporada = Temporada()
+        temporada.nombre_temporada = form.cleaned_data['nombre_temporada']
+        temporada.id_torneo = form.cleaned_data["id_torneo"]
+        temporada.fecha_inicio = form.cleaned_data["fecha_inicio"]
+        temporada.fecha_final = form.cleaned_data["fecha_final"]
+        temporada.save()
+        return redirect('temporadas_adm')
+        
     else:
-        form = TemporadasForm()
-    
+        return render(request, 'administracion/crear_temporada.html', {'form': form})
     return render(request, 'administracion/crear_temporada.html', {'form': form})
     
+
 
 def temporadas_adm(request):
     temporadas = Temporada.objects.all()
     return render(request, 'administracion/temporadas_adm.html', {
         'temporadas': temporadas
     })
+
+
 def edit_temporada(request, id_temporada):
-    if request.method == 'GET':
-        temporada = get_object_or_404(Temporada, pk=id_temporada)
-        form=TemporadasForm(instance=temporada)
-        return render(request, 'administracion/edit_temporada.html', {
-        'temporada': temporada,
-        'form' : form
-        })
-    else:
-        try:
-            temporada=get_object_or_404(Temporada, pk=id_temporada)
-            form=TemporadasForm(request.POST, instance=temporada)
-            form.save()
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+
+    if request.method == 'POST':
+        form=TemporadasForm(request.POST)
+        if form.is_valid():
+            temporada.nombre_temporada = form.cleaned_data['nombre_temporada']
+            temporada.id_torneo = form.cleaned_data["id_torneo"]
+            temporada.fecha_inicio = form.cleaned_data["fecha_inicio"]
+            temporada.fecha_final = form.cleaned_data["fecha_final"]
+            temporada.save()
             return redirect('temporadas_adm')
-        except ValueError:
-            return render(request, 'administracion/temporadas_adm.html', {
-            'temporada': temporada,
-            'form' : form,
-            'error' : "Error al actualizar datos"
-            })
+    else:
+        form = TemporadasForm(initial={
+        'nombre_temporada': temporada.nombre_temporada,
+        'id_torneo': temporada.id_torneo,
+        'fecha_inicio': temporada.fecha_inicio.strftime('%Y-%m-%d') if temporada.fecha_inicio else '',
+        'fecha_final': temporada.fecha_final.strftime('%Y-%m-%d') if temporada.fecha_final else ''
+    })
+    return render(request, 'administracion/edit_temporada.html', {
+                 'temporada': temporada,
+                 'form' : form
+                })
+   
         
+
 def delete_temporada(request, id_temporada):
     temporada=get_object_or_404(Temporada, pk=id_temporada)
     if request.method == 'POST':
         temporada.delete()
         return redirect('temporadas_adm')
     
+
 def categorias_adm(request):
     categorias = Categoria.objects.all()
     return render(request, 'administracion/categorias_adm.html', {
         'categorias': categorias
     })
 
+
+
+    
 def crear_categoria(request):
-    if request.method == 'POST':
-        form = CategoriasForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('categorias_adm')  
+    form = CategoriasForm(request.POST)
+    if form.is_valid():
+
+        categoria = Categoria()
+        categoria.nombre_categoria = form.cleaned_data['nombre_categoria']
+        categoria.save()
+        return redirect('categorias_adm')
+        
     else:
-        form = CategoriasForm()
+        return render(request, 'administracion/crear_categoria.html', {'form': form})
     return render(request, 'administracion/crear_categoria.html', {'form': form})
 
+
 def edit_categoria(request, id_categoria):
-    if request.method == 'GET':
-        categoria = get_object_or_404(Categoria, pk=id_categoria)
-        form=CategoriasForm(instance=categoria)
-        return render(request, 'administracion/edit_categoria.html', {
-        'categoria': categoria,
-        'form' : form
-        })
-    else:
-        try:
-            categoria=get_object_or_404(Categoria, pk=id_categoria)
-            form=CategoriasForm(request.POST, instance=categoria)
-            form.save()
+    categoria = get_object_or_404(Categoria, pk=id_categoria)
+
+    if request.method == 'POST':
+        form=CategoriasForm(request.POST)
+        if form.is_valid():
+            categoria.nombre_categoria = form.cleaned_data['nombre_categoria']
+            categoria.save()
             return redirect('categorias_adm')
-        except ValueError:
-            return render(request, 'administracion/categorias_adm.html', {
-                'categoria': categoria,
-                'form' : form,
-                'error' : "Error al actualizar datos"
-            })
-        
+    else:
+        form = CategoriasForm(initial={'nombre_categoria': categoria.nombre_categoria})
+            
+    return render(request, 'administracion/edit_categoria.html', {
+                 'categoria': categoria,
+                 'form' : form
+                })
+
+
 
 def delete_categoria(request, id_categoria):
     categoria=get_object_or_404(Categoria, pk=id_categoria)
@@ -267,11 +299,7 @@ def delete_tipotorneo(request, id_tipo_torneo):
     if request.method == 'POST':
         tipotorneo.delete()
         return redirect('tipotorneos_adm')
-def eliminar_jugador(request, id_jugador):
-    jugador = get_object_or_404(Jugador, pk=id_jugador)
-    if request.method == 'POST':
-        jugador.delete()
-        return redirect('jugadores')
+
         
 
 def equipos_lista(request):
@@ -367,5 +395,141 @@ def entrenador_editar(request, id_entrenador):
             })
 
 
+def premios_grupal(request):
+    premios = PremiosGrupal.objects.all()
+    return render(request, 'administracion/premios_grupal.html', {
+        'premios': premios
+    })
+
+def crear_premio_grupal(request):
+    if request.method == 'GET':
+        return render(request, 'administracion/crear_premio_grupal.html', {
+            'form': CrearPremioGrupalForm
+        })
+    else:
+        form = CrearPremioGrupalForm(request.POST, request.FILES)
+        if form.is_valid():
+            premiogrupal = PremiosGrupal(
+                nombre_premio_grupal=form.cleaned_data['nombre_premio_grupal'],
+                foto_premio_grupal=form.cleaned_data['foto_premio_grupal']
+            )
+            premiogrupal.save()
+            
+            return redirect('premios_grupal')
+        else:
+            return render(request, 'administracion/crear_premio_grupal.html', {
+                'form': form,
+                'error': 'Por favor introduce datos válidos.'
+            })
+    
+
+def edit_premio_grupal(request, id_premio_grupal):
+    premiogrupal = get_object_or_404(PremiosGrupal, pk=id_premio_grupal)
+
+    if request.method == 'GET':
+        form = CrearPremioGrupalForm(initial={
+            'nombre_premio_grupal': premiogrupal.nombre_premio_grupal,
+            'foto_premio_grupal': premiogrupal.foto_premio_grupal
+        })
+        return render(request, 'administracion/edit_premio_grupal.html', {'form': form, 'premiogrupal': premiogrupal})
+    else:
+        form = CrearPremioGrupalForm(request.POST, request.FILES)
+        if form.is_valid():
+            premiogrupal.nombre_premio_grupal = form.cleaned_data['nombre_premio_grupal']
+            
+            if 'foto_premio_grupal' in request.FILES:
+                # Si hay una nueva foto, la actualizamos
+                premiogrupal.foto_premio_grupal = form.cleaned_data['foto_premio_grupal']
+            elif form.cleaned_data['foto_premio_grupal'] is None:
+                # Si no hay una nueva foto y el campo está vacío, no cambiamos la imagen
+                pass
+            else:
+                # Si el campo fue enviado vacío explícitamente, borramos la foto actual
+                premiogrupal.foto_premio_grupal.delete(save=False)
+                premiogrupal.foto_premio_grupal = None
+                
+            premiogrupal.save()
+            return redirect('premios_grupal')
+        else:
+            return render(request, 'administracion/edit_premio_grupal.html', {
+                'form': form,
+                'premiogrupal': premiogrupal,
+                'error': 'Por favor introduce datos válidos.'
+            })
+    
+
+def delete_premio_grupal(request, id_premio_grupal):
+    premiogrupal=get_object_or_404(PremiosGrupal, pk=id_premio_grupal)
+    if request.method == 'POST':
+        premiogrupal.delete()
+        return redirect('premios_grupal')
 
 
+def premios_individual(request):
+    premios = PremiosIndividual.objects.all()
+    return render(request, 'administracion/premios_individual.html', {
+        'premios': premios
+    })
+
+
+def crear_premio_individual(request):
+    if request.method == 'GET':
+        return render(request, 'administracion/crear_premio_individual.html', {
+            'form': CrearPremioIndividualForm
+        })
+    else:
+        form = CrearPremioIndividualForm(request.POST, request.FILES)
+        if form.is_valid():
+            premioindividual = PremiosIndividual(
+                nombre_premio_individual=form.cleaned_data['nombre_premio_individual'],
+                foto_premio_individual=form.cleaned_data['foto_premio_individual']
+            )
+            premioindividual.save()
+            
+            return redirect('premios_individual')
+        else:
+            return render(request, 'administracion/crear_premio_individual.html', {
+                'form': form,
+                'error': 'Por favor introduce datos válidos.'
+            })
+        
+
+def edit_premio_individual(request, id_premio_individual):
+    premioindividual = get_object_or_404(PremiosIndividual, pk=id_premio_individual)
+
+    if request.method == 'GET':
+        form = CrearPremioIndividualForm(initial={
+            'nombre_premio_individual': premioindividual.nombre_premio_individual,
+            'foto_premio_individual': premioindividual.foto_premio_individual
+        })
+        return render(request, 'administracion/edit_premio_individual.html', {'form': form, 'premioindividual': premioindividual})
+    else:
+        form = CrearPremioIndividualForm(request.POST, request.FILES)
+        if form.is_valid():
+            premioindividual.nombre_premio_individual = form.cleaned_data['nombre_premio_individual']
+            
+            if 'foto_premio_individual' in request.FILES:
+                # Si hay una nueva foto, la actualizamos
+                premioindividual.foto_premio_individual = form.cleaned_data['foto_premio_individual']
+            elif form.cleaned_data['foto_premio_individual'] is None:
+                # Si no hay una nueva foto y el campo está vacío, no cambiamos la imagen
+                pass
+            else:
+                # Si el campo fue enviado vacío explícitamente, borramos la foto actual
+                premioindividual.foto_premio_individual.delete(save=False)
+                premioindividual.foto_premio_individual = None
+                
+            premioindividual.save()
+            return redirect('premios_individual')
+        else:
+            return render(request, 'administracion/edit_premio_individual.html', {
+                'form': form,
+                'premioindividual': premioindividual,
+                'error': 'Por favor introduce datos válidos.'
+            })
+        
+def delete_premio_individual(request, id_premio_individual):
+    premioindividual=get_object_or_404(PremiosIndividual, pk=id_premio_individual)
+    if request.method == 'POST':
+        premioindividual.delete()
+        return redirect('premios_individual')

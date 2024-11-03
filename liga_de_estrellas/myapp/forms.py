@@ -1,5 +1,5 @@
 from django import forms
-from .models import Torneo, Temporada,Categoria,TipoTorneo, Jugador, Equipo, Entrenador
+from .models import Torneo, Temporada,Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal
 from django.core.exceptions import ValidationError
 import os
 from django.forms import ModelForm
@@ -7,23 +7,39 @@ from django.forms import ModelForm
 
 
 
-class TorneoForm(forms.ModelForm):
-    class Meta:
-        model = Torneo
-        fields = ['nombre_torneo', 'id_categoria', 'id_tipo_torneo', 'año']
+class TorneoForm(forms.Form):
+    nombre_torneo = forms.CharField(label="Nombre del torneo", max_length=100, required=True)
+    id_categoria = forms.ModelChoiceField(label="Categoria", queryset=Categoria.objects.all())
+    id_tipo_torneo = forms.ModelChoiceField(label="Tipo de Torneo", queryset=TipoTorneo.objects.all())
+    año = forms.IntegerField(label="Año", required=True, min_value=1900, max_value=2100)
 
-class TemporadasForm(forms.ModelForm):
-    fecha_inicio = forms.DateField(widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}))
-    fecha_final = forms.DateField(widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}), required=False)
-    class Meta:
-        model = Temporada
-        fields = ['nombre_temporada', 'id_torneo', 'fecha_inicio', 'fecha_final']
+    
 
 
-class CategoriasForm(forms.ModelForm):
-    class Meta:
-        model = Categoria
-        fields = ['nombre_categoria']
+
+class TemporadasForm(forms.Form):
+    nombre_temporada = forms.CharField(label="Nombre de la Temporada", max_length=100, required=True)
+    id_torneo = forms.ModelChoiceField(label="Torneo", queryset=Torneo.objects.all())
+    fecha_inicio = forms.DateField(
+        label="Fecha de Inicio", widget=forms.DateInput(attrs={'type': 'date'}), input_formats=['%Y-%m-%d'], required=True
+    )
+    fecha_final = forms.DateField(
+        label="Fecha Final", widget=forms.DateInput(attrs={'type': 'date'}), input_formats=['%Y-%m-%d'], required=True
+    )
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get("fecha_inicio")
+        fecha_final = cleaned_data.get("fecha_final")
+
+        if fecha_inicio and fecha_final and fecha_final <= fecha_inicio:
+            self.add_error('fecha_final', "La fecha final debe ser posterior a la fecha de inicio.")
+
+    
+
+
+class CategoriasForm(forms.Form):
+    nombre_categoria = forms.CharField(label="Nombre de la Categoria: ", max_length=100, required=True)
+
 
 class TipoTorneoForm(forms.ModelForm):
     class Meta:
@@ -83,3 +99,36 @@ class CrearEntrenadorForm(ModelForm):
                 raise ValidationError('Solo se permiten archivos con extensión .png, .jpg o .jpeg.')
 
         return foto
+
+class CrearPremioGrupalForm(forms.Form):
+    nombre_premio_grupal = forms.CharField(label="Nombre del Premio Grupal", max_length=100, required=True)
+    foto_premio_grupal = forms.ImageField(label="Foto del Premio", required=False)
+    
+    def clean_foto_premio_grupal(self):
+        foto = self.cleaned_data.get('foto_premio_grupal')
+
+        if foto:
+            ext = os.path.splitext(foto.name)[1].lower()
+            if ext not in ['.png', '.jpg', '.jpeg']:
+                raise ValidationError('Solo se permiten archivos con extensión .png, .jpg o .jpeg.')
+
+        return foto
+    
+class CrearPremioIndividualForm(forms.Form):
+    nombre_premio_individual = forms.CharField(label="Nombre del Premio Individual", max_length=100, required=True)
+    foto_premio_individual = forms.ImageField(label="Foto del Premio", required=False)
+    
+    def clean_foto_premio_individual(self):
+        foto = self.cleaned_data.get('foto_premio_individual')
+
+        if foto:
+            ext = os.path.splitext(foto.name)[1].lower()
+            if ext not in ['.png', '.jpg', '.jpeg']:
+                raise ValidationError('Solo se permiten archivos con extensión .png, .jpg o .jpeg.')
+
+        return foto
+    
+
+class CrearFechasForm(forms.Form):
+    nombre_fecha = forms.CharField(label="Nombre de la fecha", max_length=100, required=True)
+    id_temporada = forms.ModelChoiceField(label="Temporada", queryset=Temporada.objects.all())

@@ -51,6 +51,11 @@ class PremiosIndividual(models.Model):
     
 class TipoTorneo(models.Model):
     nombre_tipo_torneo = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nombre_tipo_torneo
+
+    
     
 class EquipoXEntrenador(models.Model):
     id_equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo', blank=True, null=True)
