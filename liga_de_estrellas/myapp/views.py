@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from .models import Equipo, Torneo, Temporada, Categoria, TipoTorneo, Jugador, Equipo, Entrenador, Grupo, TemporadaXTorneoXEquipoXJugador
+from .models import Equipo, Torneo, Temporada, Categoria, TipoTorneo, Jugador, Equipo, Entrenador, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
@@ -9,6 +9,8 @@ from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, Cr
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.contrib import messages
 
 
 
@@ -221,27 +223,19 @@ def zonas(request, id_temporada):
     temporada = get_object_or_404(Temporada, pk=id_temporada)
     zonas = Grupo.objects.filter(id_temporada=temporada)
 
+    equipos = list(Equipo.objects.all())
+
     for zona in zonas:
-        # Obtener solo los equipos importados para la zona actual
-        zona.equipos_importados = TemporadaXTorneoXEquipoXJugador.objects.filter(
+        zona.equipos_importados = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
             id_temporada=temporada,
             id_jugador=None,
-            id_equipo__in=TemporadaXTorneoXEquipoXJugador.objects.filter(
-                id_temporada=temporada,
-                id_jugador=None,
-                id_equipo__isnull=False
-            ).values_list('id_equipo', flat=True)
-        ).filter(id_equipo__in=TemporadaXTorneoXEquipoXJugador.objects.filter(
-            id_temporada=temporada,
-            id_jugador=None,
-            # Filtrar por la zona actual aquí
-            # Esto funcionaría si tuvieras un campo de grupo en el modelo Equipo
-            # id_equipo__id_grupo=zona  # Aquí sería si tuvieras el id_grupo
-        ).values_list('id_equipo', flat=True))
+            id_grupo=zona
+        ).values_list('id_equipo', flat=True)
 
     return render(request, 'administracion/zonas.html', {
         'temporada': temporada,
         'zonas': zonas,
+        'equipos': equipos,
     })
 
 
@@ -288,25 +282,182 @@ def importar_equipos_zona(request, id_temporada, id_zona):
         equipo_id = request.POST.get('equipo')
         equipo = get_object_or_404(Equipo, pk=equipo_id)
 
-        # Verificar si ya existe la relación para la temporada y la zona actual
-        existing_relation = TemporadaXTorneoXEquipoXJugador.objects.filter(
+        relacion = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
             id_temporada=temporada,
             id_torneo=temporada.id_torneo,
             id_equipo=equipo,
-            id_jugador=None  # Suponiendo que deseas que el jugador sea None
+            id_grupo=zona,
+            id_jugador=None
         ).exists()
 
-        if not existing_relation:  # Solo crea la relación si no existe
-            TemporadaXTorneoXEquipoXJugador.objects.create(
+        if not relacion:
+            TemporadaXTorneoXGrupoXEquipoXJugador.objects.create(
                 id_temporada=temporada,
                 id_torneo=temporada.id_torneo,
                 id_equipo=equipo,
+                id_grupo=zona,
                 id_jugador=None
             )
 
         return redirect('zonas', id_temporada=id_temporada)
 
-    return render(request, 'administracion/importar_equipos_zona.html', {'zona': zona, 'temporada': temporada, 'equipos': equipos})
+    return render(request, 'administracion/importar_equipos_zona.html', {
+        'zona': zona,
+        'temporada': temporada,
+        'equipos': equipos
+    })
+
+def equipo_importado(request, id_temporada, id_zona, id_equipo):
+    # Filtrar la relación para obtener solo la que corresponde al equipo, temporada y zona específicos
+    relacion = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=id_temporada,
+        id_grupo=id_zona,
+        id_equipo=id_equipo
+    ).first()  # Usamos first() para obtener solo el primer resultado o None
+
+    if relacion is None:
+        # Manejar el caso en que no se encontró la relación
+        return render(request, 'administracion/error.html', {
+            'mensaje': 'No se encontró la relación entre la temporada, la zona y el equipo especificados.'
+        })
+
+    equipo = relacion.id_equipo 
+    equipos = Equipo.objects.all()  # Obtener todos los equipos disponibles
+    
+    # Obtener todos los jugadores importados para este equipo
+    jugadores_importados = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=id_temporada,
+        id_grupo=id_zona,
+        id_equipo=equipo
+    ).select_related('id_jugador')  # Usamos select_related para obtener los jugadores
+
+    return render(request, 'administracion/equipo_importado.html', {
+        'equipo': equipo,
+        'temporada': relacion.id_temporada,
+        'zona': relacion.id_grupo,
+        'equipos': equipos,
+        'jugadores_importados': jugadores_importados
+    })
+
+
+
+def equipo_importado_cambiar(request, id_temporada, id_zona, id_equipo):
+    # Obtener la relación actual de manera segura
+    relacion = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=id_temporada,
+        id_grupo=id_zona,
+        id_equipo=id_equipo
+    ).first()  # Usamos first() para evitar el error si hay más de una relación
+
+    if relacion is None:
+        # Manejar el caso en que no se encontró la relación
+        messages.error(request, 'No se encontró la relación entre la temporada, la zona y el equipo especificados.')
+        return redirect(reverse('zonas', args=[id_temporada]))
+
+    equipos = Equipo.objects.all()
+
+    if request.method == 'POST':
+        nuevo_equipo_id = request.POST.get('equipo')
+        nuevo_equipo = get_object_or_404(Equipo, pk=nuevo_equipo_id)
+
+        # Obtener la instancia de Temporada y Grupo correspondientes
+        temporada = get_object_or_404(Temporada, pk=id_temporada)
+        grupo = get_object_or_404(Grupo, pk=id_zona, id_temporada=temporada)
+        torneo = temporada.id_torneo
+
+        if nuevo_equipo != relacion.id_equipo:
+            # Eliminar todas las relaciones existentes del equipo actual en esta zona
+            TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo=relacion.id_equipo
+            ).delete()
+
+            # Crear una nueva relación con el equipo seleccionado
+            TemporadaXTorneoXGrupoXEquipoXJugador.objects.create(
+                id_temporada=temporada,  # Instancia de Temporada
+                id_torneo=torneo,         # Instancia de Torneo obtenida a través de Temporada
+                id_grupo=grupo,           # Instancia de Grupo
+                id_equipo=nuevo_equipo,   # Instancia de Equipo
+                id_jugador=None           # Nueva relación sin jugador
+            )
+
+            messages.success(request, f'Equipo cambiado exitosamente a {nuevo_equipo}.')
+            return redirect(reverse('zonas', args=[id_temporada]))
+
+        else:
+            messages.info(request, 'El equipo seleccionado ya es el equipo actual.')
+
+    # Renderiza un formulario para seleccionar un nuevo equipo
+    return render(request, 'administracion/equipo_importado_cambiar.html', {
+        'relacion': relacion,
+        'equipos': equipos,
+        'temporada': id_temporada,
+        'zona': id_zona,
+        'equipo': id_equipo
+    })
+
+
+
+
+
+
+def equipo_importado_eliminado(request, id_temporada, id_zona, id_equipo):
+    # Filtramos todas las relaciones que coinciden con los parámetros
+    relaciones = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=id_temporada,
+        id_grupo=id_zona,
+        id_equipo=id_equipo
+    )
+
+    # Verificamos si hay relaciones que eliminar
+    if relaciones.exists():
+        relaciones.delete()  # Eliminar todas las relaciones que coincidan
+
+    return redirect('zonas', id_temporada=id_temporada)
+
+
+
+
+
+
+def importar_jugador_equipo(request, id_temporada, id_zona, id_equipo):
+    # Obtener la temporada y la zona
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    zona = get_object_or_404(Grupo, pk=id_zona, id_temporada=temporada)
+
+    # Obtener todos los jugadores disponibles
+    jugadores_disponibles = Jugador.objects.all()
+
+    # Obtener la instancia del equipo
+    equipo_instance = get_object_or_404(Equipo, pk=id_equipo)
+
+    if request.method == 'POST':
+        jugador_id = request.POST.get('jugador')
+        jugador = get_object_or_404(Jugador, pk=jugador_id)
+
+        # Crear una nueva relación sin modificar la relación existente con jugador=NULL
+        TemporadaXTorneoXGrupoXEquipoXJugador.objects.create(
+            id_temporada=temporada,
+            id_torneo=temporada.id_torneo,
+            id_grupo=zona,
+            id_equipo=equipo_instance,
+            id_jugador=jugador  # Nueva relación con el jugador seleccionado
+        )
+
+        messages.success(request, 'Jugador importado correctamente en el equipo de la zona en la temporada actual.')
+        return redirect(reverse('equipo_importado', args=[id_temporada, id_zona, id_equipo]))
+
+    return render(request, 'administracion/importar_jugador_equipo.html', {
+        'zona': zona,
+        'temporada': temporada,
+        'jugadores': jugadores_disponibles,
+        'equipo': equipo_instance
+    })
+
+
+
+
 
 
 
@@ -509,13 +660,10 @@ def entrenador_editar(request, id_entrenador):
             entrenador.fecha_nac_entrenador = form.cleaned_data['fecha_nac_entrenador']
             
             if 'foto_entrenador' in request.FILES:
-                # Si hay una nueva foto, la actualizamos
                 entrenador.foto_entrenador = form.cleaned_data['foto_entrenador']
             elif form.cleaned_data['foto_entrenador'] is None:
-                # Si no hay una nueva foto y el campo está vacío, no cambiamos la imagen
                 pass
             else:
-                # Si el campo fue enviado vacío explícitamente, borramos la foto actual
                 entrenador.foto_entrenador.delete(save=False)
                 entrenador.foto_entrenador = None
                 

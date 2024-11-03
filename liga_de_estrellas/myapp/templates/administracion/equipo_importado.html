@@ -1,0 +1,55 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipo Importado</title>
+</head>
+<body>
+    <a href="{% url 'zonas' temporada.id %}">
+        <button>Volver</button>
+    </a>
+    <h1>{{ equipo.nombre_equipo }}</h1>
+    <div>
+        {% if equipo.logo_equipo %}
+            <img src="{{ equipo.logo_equipo.url }}" alt="Logo de {{ equipo.nombre_equipo }}" width="150" height="150">
+        {% else %}
+            <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" width="150" height="150">
+        {% endif %}
+    </div>
+
+    <a href="{% url 'equipo_importado_cambiar' temporada.id zona.id equipo.id %}">
+        <button>Cambiar equipo</button>
+    </a>
+
+    <form action="{% url 'equipo_importado_eliminado' temporada.id zona.id equipo.id %}" method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit">Eliminar</button>
+    </form>
+
+    <h2>PLANTEL</h2>
+    <a href="{% url 'importar_jugador_equipo' temporada.id zona.id equipo.id %}">
+        <button>Importar jugador</button>
+    </a>
+
+    <h3>Jugadores Importados:</h3>
+    <ul>
+        {% if jugadores_importados.exists %}
+            {% for jugador in jugadores_importados %}
+                <li>
+                    Nombre: {{ jugador.id_jugador.nombre_jugador }}, 
+                    Apellido: {{ jugador.id_jugador.apellido_jugador }},
+                    DNI: {{ jugador.id_jugador.dni_jugador }},
+                    Fecha de Nacimiento: {{ jugador.id_jugador.fecha_nac_jugador }}
+                </li>
+            {% endfor %}
+        {% else %}
+            <li>No hay jugadores importados para este equipo.</li>
+        {% endif %}
+    </ul>
+</body>
+</html>
+{% endblock %}

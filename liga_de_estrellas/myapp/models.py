@@ -130,7 +130,7 @@ class Fecha(models.Model):
     
 class Grupo(models.Model):
     nombre_grupo = models.CharField(max_length=100)
-    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada', blank=False, null=False)
+    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada', blank=False, null=True)
 
     class Meta:
         db_table = 'grupos'
@@ -213,12 +213,13 @@ class Tarjeta(models.Model):
         db_table = 'tarjetas'
         
         
-class TemporadaXTorneoXEquipoXJugador(models.Model):
-    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada')
+class TemporadaXTorneoXGrupoXEquipoXJugador(models.Model):
+    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada', null=True)
     id_torneo = models.ForeignKey(Torneo, on_delete=models.CASCADE, db_column='id_torneo')
     id_equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo')
     id_jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE, db_column='id_jugador', null=True, blank=True)
+    id_grupo = models.ForeignKey(Grupo, on_delete=models.CASCADE, db_column='id_grupo', null=True)
     
     class Meta:
-        db_table = 'temporadas_x_torneos_x_equipos_x_jugadores'
+        db_table = 'temporadas_x_torneos_x_grupos_x_equipos_x_jugadores'
 

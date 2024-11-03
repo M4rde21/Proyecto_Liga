@@ -1,0 +1,37 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambiar Equipo</title>
+</head>
+<body>
+    <h1>Cambiar equipo</h1>
+    <form action="{% url 'equipo_importado_cambiar' temporada zona equipo %}" method="post">
+        {% csrf_token %}
+        <label for="equipo">Selecciona un nuevo equipo:</label>
+        <select name="equipo" id="equipo">
+            {% for equipo_nuevo in equipos %}
+                <option value="{{ equipo_nuevo.id }}" {% if equipo_nuevo.id == relacion.id_equipo.id %}selected{% endif %}>
+                    {{ equipo_nuevo.nombre_equipo }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Actualizar equipo</button>
+    </form>
+    <a href="{% url 'equipo_importado' temporada zona equipo %}">
+        <button>Cancelar</button>
+    </a>
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
+{% endblock %}

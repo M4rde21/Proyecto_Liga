@@ -20,13 +20,25 @@
 
         <!-- Lista de equipos importados -->
         <ul>
-            {% for relacion in zona.equipos_importados %}
-                <li>{{ relacion.id_equipo.nombre_equipo }}</li>
-            {% empty %}
+            {% if zona.equipos_importados %}
+                {% for equipo_id in zona.equipos_importados %}
+                    {% for equipo in equipos %}
+                        {% if equipo.id == equipo_id %}
+                            <a href="{% url 'equipo_importado' temporada.id zona.id equipo.id %}">
+                                {% if equipo.logo_equipo %}
+                                    <img src="{{ equipo.logo_equipo.url }}" alt="{{ equipo.nombre_equipo }} Logo" width="50" height="50">
+                                {% else %}
+                                    <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Foto no disponible" style="width: 50px; height: auto;">
+                                {% endif %}
+                                {{ equipo.nombre_equipo }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
                 <li>No hay equipos importados en esta zona.</li>
-            {% endfor %}
+            {% endif %}
         </ul>
-        
 
         <a href="{% url 'zona_editar' temporada.id zona.id %}">
             <button>Editar</button>
