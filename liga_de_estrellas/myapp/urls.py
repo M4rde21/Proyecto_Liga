@@ -10,6 +10,7 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('accounts/logout/', views.signout, name='logout'),
     path('reglamentos/', views.reglamento, name='reglamentos'),
+    path('avisos/', views.avisos, name='avisos'),
     path('contacto/', views.contacto, name='contacto'),
     path('resumen_adm/', views.resumen_adm, name='resumen_adm'),
     path('torneos_adm/', views.torneos_adm, name='torneos_adm'),
@@ -40,7 +41,10 @@ urlpatterns = [
     path('entrenadores/crear/', views.entrenador_crear, name='entrenador_crear'),
     path('entrenadores/<int:id_entrenador>/', views.entrenador_editar, name='entrenador_editar'),
 
-
+    path('avisos_adm/', views.avisos_adm, name='avisos_adm'),
+    path('avisos_adm/crear_aviso/', views.crear_aviso, name='crear_aviso'),
+    path('avisos_adm/<int:id_aviso>/', views.edit_aviso, name='edit_aviso'),
+    path('avisos_adm/<int:id_aviso>/delete', views.delete_aviso, name='delete_aviso'),
 ]
 
 

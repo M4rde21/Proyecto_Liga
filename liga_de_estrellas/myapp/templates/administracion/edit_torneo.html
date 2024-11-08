@@ -2,38 +2,61 @@
 
 {% block content %}
 
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
-<div class="container mt-5">
-    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 600px; border: 2px solid white; border-radius: 10px;">
-
-        <div class="text-center mb-4">
-            <h1>{{ torneo.nombre_torneo }}</h1>
-        </div>
-
-        {% if error %}
-        <div class="alert alert-danger text-center">
-            {{ error }}
-        </div>
-        {% endif %}
-
-        <form method="POST" action="{% url 'edit_torneo' torneo.id %}">
-            {% csrf_token %}
-            <div class="form-group">
-                {{ form.as_p }}
+<!-- Formulario para editar el torneo -->
+<div class="container">
+    <form method="post" action="{% url 'edit_torneo' torneo.id %}" class="w-100" style="max-width: 100%; margin: 20px auto; background-color: black; border: 2px solid white; border-radius: 5px; padding: 20px;">
+        {% csrf_token %}
+        <h1 style="color: white; text-transform: uppercase; text-align: center; margin-bottom: 50px;">EDITAR TORNEO</h1>
+        
+        <div class="row">
+            <!-- Campo Nombre del Torneo -->
+            <div class="form-group col-md-6">
+                <label for="nombre_torneo" style="color: white; text-align: center; display: block;">Nombre del torneo:</label>
+                <input type="text" id="nombre_torneo" name="nombre_torneo" class="form-control" maxlength="100" required value="{{ torneo.nombre_torneo }}" style="background-color: black; color: white; border: 1px solid white;">
             </div>
-            <button type="submit" class="btn btn-warning btn-block">
-                <i class="fas fa-edit"></i> Actualizar
-            </button>
-        </form>
+            
+            <!-- Campo Categoría -->
+            <div class="form-group col-md-6">
+                <label for="id_categoria" style="color: white; text-align: center; display: block;">Categoría:</label>
+                <select id="id_categoria" name="id_categoria" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                    {% for categoria in form.fields.id_categoria.queryset %}
+                        <option value="{{ categoria.id }}" {% if torneo.id_categoria.id == categoria.id %}selected{% endif %}>
+                            {{ categoria.nombre_categoria }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
 
-        <form action="{% url 'torneos_adm' %}" method="get" style="display:inline;">
-            <button type="submit" class="btn btn-danger btn-block mt-2">
-                <i class="fas fa-arrow-left"></i> Volver atrás
+        <div class="row">
+            <!-- Campo Tipo de Torneo -->
+            <div class="form-group col-md-6">
+                <label for="id_tipo_torneo" style="color: white; text-align: center; display: block;">Tipo de Torneo:</label>
+                <select id="id_tipo_torneo" name="id_tipo_torneo" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                    {% for tipo in form.fields.id_tipo_torneo.queryset %}
+                        <option value="{{ tipo.id }}" {% if torneo.id_tipo_torneo.id == tipo.id %}selected{% endif %}>
+                            {{ tipo.nombre_tipo_torneo }}  <!-- Asegúrate de que este campo exista en tu modelo TipoTorneo -->
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>              
+            
+            <!-- Campo Año -->
+            <div class="form-group col-md-6">
+                <label for="año" style="color: white; text-align: center; display: block;">Año:</label>
+                <input type="number" id="año" name="año" class="form-control" min="1900" max="2100" required value="{{ torneo.año }}" style="background-color: black; color: white; border: 1px solid white;">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                Guardar
             </button>
-        </form>
-    </div>
+            <a href="{% url 'torneos_adm' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                Cancelar
+            </a>
+        </div>
+    </form>
 </div>
 
 {% endblock %}

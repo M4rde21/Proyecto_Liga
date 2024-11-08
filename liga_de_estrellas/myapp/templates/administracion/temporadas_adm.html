@@ -7,10 +7,10 @@
     <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
         <div class="text-center mb-4">
             <h1>TEMPORADAS</h1>
-            <!-- Botón que abre el modal para crear una nueva temporada -->
-            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#crearTemporadaModal">
+            <!-- Botón para crear temporada -->
+            <a href="{% url 'crear_temporada' %}" class="btn btn-success">
                 <i class="fas fa-plus"></i> CREAR TEMPORADA
-            </button>
+            </a>
         </div>
 
         <!-- Tabla de temporadas -->
@@ -32,89 +32,34 @@
                     <td>{{ temporada.fecha_inicio|date:"d/m/Y" }}</td>
                     <td>{{ temporada.fecha_final|date:"d/m/Y" }}</td>
                     <td>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editarTemporadaModal{{ temporada.id }}">
+                        <!-- Botón para editar temporada -->
+                        <a href="{% url 'edit_temporada' temporada.id %}" class="btn btn-primary btn-sm">
                             <i class="fas fa-edit"></i>
-                        </button>
-<!-- Modal para editar la temporada -->
-<div class="modal fade" id="editarTemporadaModal{{ temporada.id }}" tabindex="-1" role="dialog" aria-labelledby="editarTemporadaModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
-            
-            <div class="modal-header text-center">
-                <h5 class="modal-title w-100" id="editarTemporadaModalLabel" style="color: white;">Editar Temporada</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar" style="color: white;">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            
-            <div class="modal-body d-flex justify-content-center align-items-center" style="color: white;">
-                <form method="post" action="{% url 'edit_temporada' temporada.id %}" class="w-100" style="max-width: 400px;">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        {{ temporada.form_editar.as_p }}
-                    </div>
-                    <button type="submit" class="btn btn-warning btn-block">
-                        <i class="fas fa-edit"></i> Actualizar
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- Modal para crear una nueva temporada -->
-<div class="modal fade" id="crearTemporadaModal" tabindex="-1" role="dialog" aria-labelledby="crearTemporadaModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
-            
-            <div class="modal-header text-center">
-                <h5 class="modal-title w-100" id="crearTemporadaModalLabel" style="color: white;">Crear Temporada</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar" style="color: white;">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            
-            <div class="modal-body d-flex justify-content-center align-items-center" style="color: white;">
-                <form method="post" action="{% url 'crear_temporada' %}" class="w-100" style="max-width: 400px;">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        {{ form_crear.as_p }}
-                    </div>
-                    <button type="submit" class="btn btn-success btn-block">
-                        <i class="fas fa-save"></i> Guardar
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
+                        </a>
 
                         <!-- Botón para eliminar temporada -->
                         <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#confirmDeleteModal{{ temporada.id }}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
-            
-<!-- Modal de confirmación de eliminación -->
-<div class="modal fade" id="confirmDeleteModal{{ temporada.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirmDeleteModalLabel" style="color: white;">Confirmar Eliminación</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" style="color: white;">
-                ¿Estás seguro de que deseas eliminar esta temporada?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <form action="{% url 'delete_temporada' temporada.id %}" method="post" id="deleteForm{{ temporada.id }}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
+                                                <!-- Modal de confirmación de eliminación -->
+                        <div class="modal fade" id="confirmDeleteModal{{ temporada.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="confirmDeleteModalLabel" style="color: white;">Confirmar Eliminación</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body" style="color: white;">
+                                        ¿Estás seguro de que deseas eliminar este torneo?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                        <form action="{% url 'delete_temporada' temporada.id %}" method="post" id="deleteForm{{ temporada.id }}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -127,9 +72,7 @@
     </div>
 </div>
 
-
-
-
+<!-- Scripts de Bootstrap -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

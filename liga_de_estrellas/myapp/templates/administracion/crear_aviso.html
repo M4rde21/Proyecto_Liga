@@ -1,0 +1,51 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+<!-- Formulario para crear el aviso -->
+<div class="container">
+    <form method="post" action="{% url 'crear_aviso' %}" class="w-100" style="max-width: 100%; margin: 20px auto; background-color: black; border: 2px solid white; border-radius: 5px; padding: 20px;">
+        {% csrf_token %}
+        <h1 style="color: white; text-transform: uppercase; text-align: center; margin-bottom: 50px;">CREAR AVISO</h1>
+        
+        <div class="row">
+            <!-- Campo Título -->
+            <div class="form-group col-md-12">
+                <label for="titulo" style="color: white; text-align: center; display: block;">Título del aviso:</label>
+                <input type="text" id="titulo" name="titulo" class="form-control" maxlength="200" required style="background-color: black; color: white; border: 1px solid white;">
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Campo Mensaje -->
+            <div class="form-group col-md-12">
+                <label for="mensaje" style="color: white; text-align: center; display: block;">Mensaje del aviso:</label>
+                <textarea id="mensaje" name="mensaje" class="form-control" required style="background-color: black; color: white; border: 1px solid white; height: 150px;"></textarea>
+            </div>
+        </div>
+
+<div class="row">
+    <!-- Campo Mostrar -->
+    <div class="form-group col-md-12 d-flex justify-content-center">
+        <div class="form-check form-check-inline">
+            <input type="checkbox" id="mostrar" name="mostrar" class="form-check-input" checked>
+            <label for="mostrar" class="form-check-label" style="color: white; margin-left: 5px;">Mostrar</label>
+        </div>
+    </div>
+</div>
+
+        
+        
+
+        <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                Guardar
+            </button>
+            <a href="{% url 'avisos_adm' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

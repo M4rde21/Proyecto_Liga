@@ -1,12 +1,13 @@
 {% extends 'administracion/base2.html' %}
 
 {% block content %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 <div class="container mt-5">
     <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 60%; border: 2px solid white; border-radius: 10px;">
-
         <div class="text-center mb-4">
-            <h1>{{ tipotorneo.nombre_tipo_torneo }}</h1>
+            <h1 style="color: white; text-transform: uppercase;">Editar Tipo de Torneo </h1>
         </div>
 
         {% if error %}
@@ -17,27 +18,24 @@
 
         <form method="POST" action="{% url 'edit_tipotorneo' tipotorneo.id %}">
             {% csrf_token %}
-            <div class="form-group">
-                {{ form.as_p }}
+            <div class="row">
+                <!-- Campo Nombre del Tipo de Torneo -->
+                <div class="form-group col-md-12">
+                    <label for="nombre_tipo_torneo" style="color: white; text-align: center; display: block;">Nombre del Tipo de Torneo:</label>
+                    <input type="text" id="nombre_tipo_torneo" name="nombre_tipo_torneo" class="form-control" maxlength="100" required value="{{ form.nombre_tipo_torneo.value }}" style="background-color: black; color: white; border: 1px solid white;">
+                </div>
             </div>
 
-            <div class="text-center">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-edit"></i> 
-                    Actualizar
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                    Guardar
                 </button>
-
-                <form action="{% url 'tipotorneos_adm' %}" method="get" style="display:inline;">
-                    <button type="submit" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> 
-                        Volver atrás
-                    </button>
-                </form>
+                <a href="{% url 'tipotorneos_adm' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                    Cancelar
+                </a>
             </div>
         </form>
     </div>
 </div>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 {% endblock %}

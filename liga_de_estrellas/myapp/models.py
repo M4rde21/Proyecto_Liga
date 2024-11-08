@@ -220,3 +220,14 @@ class TemporadaXTorneoXEquipoXJugador(models.Model):
 
     class Meta:
         db_table = 'temporadas_x_torneos_x_equipos_x_jugadores'
+
+
+
+class Aviso(models.Model):
+    titulo = models.CharField(max_length=100)
+    mensaje = models.TextField()
+    fecha_publicacion = models.DateTimeField(auto_now_add=True)
+    mostrar = models.BooleanField(default=False)  # Controla si el aviso debe mostrarse
+
+    def __str__(self):
+        return self.titulo + ' ' + self.mensaje 
