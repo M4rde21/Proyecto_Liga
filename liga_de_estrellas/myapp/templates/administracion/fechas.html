@@ -1,0 +1,72 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<h1>{{ temporada.nombre_temporada }}</h1>
+<h2>{{ temporada.id_torneo.nombre_torneo }}</h2>
+
+<a href="{% url 'crear_fecha' temporada.id %}">
+    <button>Crear nueva Fecha</button>
+</a>
+
+<ul>
+    {% for fecha in fechas %}
+    <li>
+        <h3>{{ fecha.nombre_fecha }}</h3>
+
+        <a href="{% url 'crear_partido' temporada.id fecha.id %}">
+            <button>Crear partido</button>
+        </a>
+
+        <a href="{% url 'edit_fecha' temporada.id fecha.id %}">
+            <button>Editar Fecha</button>
+        </a>
+
+        <form method="POST" action="{% url 'delete_fecha' temporada.id fecha.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta fecha?');">Eliminar Fecha</button>
+        </form>
+
+        
+        {% if fecha.partidos_listados %}
+            <ul>
+                {% for partido in fecha.partidos_listados %}
+                    <li>
+                        <p>{{ partido.fecha_partido }} - {{ partido.hora_partido|time:"H:i" }}</p>
+                        <div>
+                            <h4>Equipo 1: {{ partido.id_equipo_1.nombre_equipo }}</h4>
+                            {% if partido.id_equipo_1.logo_equipo %}
+                                <img src="{{ partido.id_equipo_1.logo_equipo.url }}" alt="{{ partido.id_equipo_1.nombre_equipo }} Logo" width="50" height="50">
+                            {% else %}
+                                <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 50px; height: auto;">
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h4>Equipo 2: {{ partido.id_equipo_2.nombre_equipo }}</h4>
+                            {% if partido.id_equipo_2.logo_equipo %}
+                                <img src="{{ partido.id_equipo_2.logo_equipo.url }}" alt="{{ partido.id_equipo_2.nombre_equipo }} Logo" width="50" height="50">
+                            {% else %}
+                                <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 50px; height: auto;">
+                            {% endif %}
+                        </div>
+                        <p>{% if partido.destacado %}<strong>Partido Destacado</strong>{% endif %}</p>
+                        
+                      
+                        <a href="{% url 'edit_partido' temporada.id fecha.id partido.id %}">
+                            <button>Editar partido</button>
+                        </a>
+                        <form method="POST" action="{% url 'delete_partido' temporada.id fecha.id partido.id %}">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este partido?');">Eliminar Partido</button>
+
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No hay partidos programados para esta fecha.</p>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

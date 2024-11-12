@@ -1,0 +1,20 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+
+<h1>{{ fecha.nombre_fecha }}</h1>
+
+{{error}}
+
+<form method="POST" action="{% url 'edit_fecha' id_temporada=temporada.id id_fecha=fecha.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+<form action="{% url 'fechas' id_temporada=temporada.id %}" method="get" style="display:inline;">
+    <button type="submit" >Volver atrás</button>
+</form>
+
+
+{% endblock %}

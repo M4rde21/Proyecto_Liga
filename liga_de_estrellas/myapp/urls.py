@@ -54,6 +54,19 @@ urlpatterns = [
     path('premios_individual/crear_premio_individual/', views.crear_premio_individual, name='crear_premio_individual'),
     path('premios_individual/<int:id_premio_individual>/', views.edit_premio_individual, name='edit_premio_individual'),
     path('premios_individual/<int:id_premio_individual>/delete', views.delete_premio_individual, name='delete_premio_individual'),
+    path('fechas/<int:id_temporada>/', views.fechas, name='fechas'),
+    path('fechas/<int:id_temporada>/crear/', views.crear_fecha, name='crear_fecha'),
+    path('fechas/<int:id_temporada>/editar/<int:id_fecha>/', views.edit_fecha, name='edit_fecha'),
+    path('fechas/<int:id_temporada>/<int:id_fecha>/delete/', views.delete_fecha, name='delete_fecha'),
+    # path('partidos/<int:id_temporada>/<int:id_fecha>', views.partidos, name="partidos"),
+    path('partidos/<int:id_temporada>/<int:id_fecha>/crear/', views.crear_partido, name="crear_partido"),
+    path('partidos/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/editar/', views.edit_partido, name='edit_partido'),
+    path('partidos/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/eliminar/', views.delete_partido, name='delete_partido'),
+    path('resultado/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/crear/', views.crear_resultado, name="crear_resultado"),
+
+
+
+    
 ]
 
 if settings.DEBUG:

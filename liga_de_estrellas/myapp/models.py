@@ -40,6 +40,9 @@ class Jugador(models.Model):
     
 class Predio(models.Model):
     nombre_predio = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nombre_predio
     
 class PremiosGrupal(models.Model):
     nombre_premio_grupal = models.CharField(max_length=100)
@@ -57,8 +60,6 @@ class TipoTorneo(models.Model):
 
     
     
-    def __str__(self):
-        return self.nombre_tipo_torneo
 
 
 class EquipoXEntrenador(models.Model):
@@ -102,7 +103,8 @@ class Temporada(models.Model):
     class Meta:
         db_table = 'temporadas'
 
-
+    def __str__(self):
+        return self.nombre_temporada
 
 class PremioEquipo(models.Model):
     id_premio_grupal = models.ForeignKey(PremiosGrupal, on_delete=models.CASCADE, db_column='id_premio_grupal', blank=True, null=True)
@@ -139,6 +141,10 @@ class Grupo(models.Model):
 
     class Meta:
         db_table = 'grupos'
+
+    def __str__(self):
+        return self.nombre_grupo
+
 
 
 class Partido(models.Model):

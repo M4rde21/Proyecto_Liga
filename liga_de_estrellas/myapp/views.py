@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, JsonResponse
-from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
+from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador, Fecha, Partido, Resultado
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm,CrearZonaForm 
+from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm,CrearZonaForm, CrearFechaForm, CrearPartidoForm, resultadoForm
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -856,3 +856,261 @@ def delete_premio_individual(request, id_premio_individual):
     if request.method == 'POST':
         premioindividual.delete()
         return redirect('premios_individual')
+
+
+
+def fechas(request, id_temporada):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fechas = Fecha.objects.filter(id_temporada=temporada)
+
+    equipos = list(Equipo.objects.all())
+    partidos = Partido.objects.filter(id_temporada=temporada)
+
+    for fecha in fechas:
+        fecha.partidos_listados = partidos.filter(id_fecha=fecha).select_related('id_equipo_1', 'id_equipo_2')
+
+    return render(request, 'administracion/fechas.html', {
+        'temporada': temporada,
+        'fechas': fechas,
+        'equipos': equipos,
+    })
+
+# def fechas(request,id_temporada):
+#     temporada = get_object_or_404(Temporada, pk=id_temporada)
+#     fechas = Fecha.objects.filter(id_temporada=temporada)  # Filtrar por temporada
+#     partidos_por_fecha = {
+#         fecha.id: Partido.objects.filter(id_fecha=fecha) for fecha in fechas
+#     }
+#     return render(request, 'administracion/fechas.html', {
+#         'fechas': fechas,
+#         'temporada': temporada,  # Pasar la temporada para mostrar sus datos
+#         'partidos_por_fecha': partidos_por_fecha,
+#     })
+    
+
+    
+def crear_fecha(request,id_temporada):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    if request.method == 'POST':
+        form = CrearFechaForm(request.POST)
+        if form.is_valid():
+            fecha = Fecha(
+                nombre_fecha=form.cleaned_data['nombre_fecha'],
+                id_temporada=temporada  # Asocia la temporada actual
+            )
+            fecha.save()
+            return redirect('fechas', id_temporada=id_temporada)
+    else:
+        form = CrearFechaForm()
+
+    return render(request, 'administracion/crear_fecha.html', {'form': form, 'temporada': temporada})
+    # form = CrearFechaForm(request.POST)
+    # if form.is_valid():
+
+    #     fecha = Fecha()
+    #     fecha.nombre_fecha = form.cleaned_data['nombre_fecha']
+    #     fecha.save()
+    #     return redirect('fechas')
+        
+    # else:
+    #     return render(request, 'administracion/crear_fecha.html', {'form': form})
+    # return render(request, 'administracion/crear_fecha.html', {'form': form})
+
+
+def edit_fecha(request,id_temporada, id_fecha):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha, id_temporada=temporada) 
+
+    if request.method == 'POST':
+        form = CrearFechaForm(request.POST)
+        if form.is_valid():
+            fecha.nombre_fecha = form.cleaned_data['nombre_fecha']
+            fecha.save()
+            return redirect('fechas', id_temporada=id_temporada)
+    else:
+        form = CrearFechaForm(initial={'nombre_fecha': fecha.nombre_fecha})
+
+    return render(request, 'administracion/edit_fecha.html', {
+        'temporada': temporada,  
+        'fecha': fecha,
+        'form': form,
+    })
+    # fecha = get_object_or_404(Fecha, pk=id_fecha)
+
+    # if request.method == 'POST':
+    #     form=CrearFechaForm(request.POST)
+    #     if form.is_valid():
+    #         fecha.nombre_fecha = form.cleaned_data['nombre_fecha']
+    #         fecha.save()
+    #         return redirect('fechas')
+    # else:
+    #     form = CrearFechaForm(initial={'nombre_fecha': fecha.nombre_fecha})
+            
+    # return render(request, 'administracion/edit_fecha.html', {
+    #              'fecha': fecha,
+    #              'form' : form
+    #             })
+
+
+def delete_fecha(request, id_temporada, id_fecha):
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    
+    if request.method == 'POST':
+        fecha.delete()
+        
+        return redirect('fechas', id_temporada=id_temporada)
+
+    return render(request, 'administracion/delete_fecha.html', {'fecha': fecha, 'temporada': id_temporada})
+
+def partidos(request,id_temporada, id_fecha):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    partidos = Partido.objects.filter(id_temporada=temporada, id_fecha=fecha)  
+    return render(request, 'administracion/partidos.html', {
+        'partidos': partidos,
+        'temporada': temporada,  
+        'fecha' : fecha,
+    })
+
+def crear_partido(request, id_temporada, id_fecha):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    torneo = temporada.id_torneo
+
+    # Filtrar los grupos correspondientes a la temporada y torneo actual
+    grupos = Grupo.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=torneo
+        ).values('id_grupo')
+    ).distinct()
+
+    # Filtrar los equipos que pertenecen a esos grupos, temporada y torneo
+    equipos = Equipo.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=torneo,
+            id_grupo__in=grupos
+        ).values('id_equipo')
+    ).distinct()
+
+    if request.method == 'POST':
+        form = CrearPartidoForm(request.POST)
+        form.fields['id_equipo_1'].queryset = equipos
+        form.fields['id_equipo_2'].queryset = equipos
+        form.fields['id_grupo'].queryset = grupos
+
+        if form.is_valid():
+            equipo_1 = form.cleaned_data['id_equipo_1']
+            equipo_2 = form.cleaned_data['id_equipo_2']
+
+            # Verificar que los equipos no sean el mismo
+            if equipo_1 == equipo_2:
+                form.add_error('id_equipo_2', 'El equipo 2 no puede ser el mismo que el equipo 1.')
+            else:
+                partido = Partido(
+                    id_temporada=temporada,
+                    id_fecha=fecha,
+                    id_torneo=torneo,
+                    id_equipo_1=equipo_1,
+                    id_equipo_2=equipo_2,
+                    id_predio=form.cleaned_data['id_predio'],
+                    id_grupo=form.cleaned_data['id_grupo'],
+                    fecha_partido=form.cleaned_data['fecha_partido'],
+                    hora_partido=form.cleaned_data['hora_partido'],
+                    destacado=form.cleaned_data['destacado']
+                )
+                partido.save()
+                return redirect('fechas', id_temporada=id_temporada)
+    else:
+        form = CrearPartidoForm()
+        form.fields['id_equipo_1'].queryset = equipos
+        form.fields['id_equipo_2'].queryset = equipos
+        form.fields['id_grupo'].queryset = grupos
+
+    return render(request, 'administracion/crear_partido.html', {
+        'form': form,
+        'temporada': temporada,
+        'fecha': fecha
+    })
+
+
+def edit_partido(request, id_temporada, id_fecha, id_partido):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    partido = get_object_or_404(Partido, pk=id_partido)
+
+    if request.method == 'POST':
+        form = CrearPartidoForm(request.POST)
+        if form.is_valid():
+            partido.id_equipo_1 = form.cleaned_data['id_equipo_1']
+            partido.id_equipo_2 = form.cleaned_data['id_equipo_2']
+            partido.id_predio = form.cleaned_data['id_predio']
+            partido.id_grupo = form.cleaned_data['id_grupo']
+            partido.fecha_partido = form.cleaned_data['fecha_partido']
+            partido.hora_partido = form.cleaned_data['hora_partido']
+            partido.destacado = form.cleaned_data['destacado']
+            partido.save()
+            return redirect('fechas', id_temporada=id_temporada)
+    else:
+        # Inicializa el formulario con los datos del partido
+        form = CrearPartidoForm(initial={
+            'id_equipo_1': partido.id_equipo_1,
+            'id_equipo_2': partido.id_equipo_2,
+            'id_predio': partido.id_predio,
+            'id_grupo': partido.id_grupo,
+            'fecha_partido': partido.fecha_partido.strftime('%Y-%m-%d'),  # Formato correcto
+            'hora_partido': partido.hora_partido.strftime('%H:%M'),
+            'destacado': partido.destacado
+        })
+
+    return render(request, 'administracion/edit_partido.html', {
+        'form': form,
+        'temporada': temporada,
+        'fecha': fecha
+    })
+
+
+def delete_partido(request, id_temporada, id_fecha, id_partido):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    partido = get_object_or_404(Partido, pk=id_partido, id_temporada=temporada, id_fecha=fecha)
+
+    if request.method == 'POST':
+        partido.delete()
+        return redirect('fechas', id_temporada=id_temporada)
+
+    return render(request, 'administracion/delete_partido.html', {
+        'temporada': temporada,
+        'fecha': fecha,
+        'partido': partido
+    })
+
+def crear_resultado(request, id_temporada, id_fecha, id_partido):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    partido = get_object_or_404(Partido, pk=id_partido, id_temporada=temporada, id_fecha=fecha)
+    
+    if request.method == 'POST':
+        form = resultadoForm(request.POST)
+        
+        if form.is_valid():
+            resultado = Resultado(
+                partido=partido,
+                goles_equipo_1=form.cleaned_data['goles_equipo_1'],
+                goles_equipo_2=form.cleaned_data['goles_equipo_2'],
+                penales=form.cleaned_data['penales'],
+                penales_equipo_1=form.cleaned_data['penales_equipo_1'] if form.cleaned_data['penales'] else 0,
+                penales_equipo_2=form.cleaned_data['penales_equipo_2'] if form.cleaned_data['penales'] else 0
+            )
+            resultado.save()
+            return redirect('fechas', id_temporada=id_temporada)
+    else:
+        form = resultadoForm()
+    
+    return render(request, 'administracion/crear_resultado.html', {
+        'form': form,
+        'temporada': temporada,
+        'fecha': fecha,
+        'partido': partido
+    })
