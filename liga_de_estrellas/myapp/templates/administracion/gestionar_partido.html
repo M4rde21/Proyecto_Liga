@@ -1,0 +1,59 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<h1>Gestionar Partido</h1>
+
+<!-- Mostrar equipo 1 -->
+<div class="equipo">
+    <h2>{{ equipo_1.nombre_equipo }}</h2>
+    {% if equipo_1.logo_equipo %}
+        <img src="{{ equipo_1.logo_equipo.url }}" alt="Logo de {{ equipo_1.nombre_equipo }}" style="width: 100px;">
+    {% else %}
+        <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 100px;">
+    {% endif %}
+</div>
+
+<!-- Mostrar equipo 2 -->
+<div class="equipo">
+    <h2>{{ equipo_2.nombre_equipo }}</h2>
+    {% if equipo_2.logo_equipo %}
+        <img src="{{ equipo_2.logo_equipo.url }}" alt="Logo de {{ equipo_2.nombre_equipo }}" style="width: 100px;">
+    {% else %}
+        <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 100px;">
+    {% endif %}
+</div>
+
+<h2>Resultado</h2>
+<form method="POST">
+    {% csrf_token %}
+    
+    <!-- Formulario de resultado -->
+    <div id="resultadoForm">
+        {{ resultado_form.as_p }}
+    </div>
+
+    <button type="submit" name="resultado_submit">Guardar Resultado</button>
+</form>
+
+<h2>Planilla</h2>
+<form method="POST">
+    {% csrf_token %}
+
+    {% for jugador, form in jugadores_formularios.items %}
+        <div class="jugador">
+            <h3>{{ jugador.nombre_jugador }} {{ jugador.apellido_jugador }}</h3>
+            {% if jugador.foto_jugador %}
+                <img src="{{ jugador.foto_jugador.url }}" alt="Foto de {{ jugador.nombre_jugador }}" style="width: 50px; height: auto;">
+            {% else %}
+                <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width: 50px; height: auto;">
+            {% endif %}
+            <div class="formulario">
+                {{ form.as_p }}
+            </div>
+        </div>
+    {% endfor %}
+
+    <button type="submit" name="planilla_submit">Guardar Planilla</button>
+</form>
+
+{% endblock %}

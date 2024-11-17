@@ -175,10 +175,12 @@ class Planilla(models.Model):
     id_partido = models.ForeignKey(Partido, on_delete=models.CASCADE, db_column='id_partido', blank=True, null=True)
     id_equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo', blank=True, null=True)
     id_jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE, db_column='id_jugador', blank=True, null=True)
-    goles = models.IntegerField(blank=True, null=True)
-    num_camiseta = models.IntegerField(blank=True, null=True)
-    participo = models.BooleanField(blank=True, default=False)
-
+    goles = models.IntegerField(blank=True)
+    num_camiseta = models.IntegerField(blank=True)
+    participo = models.BooleanField(default=False)
+    tarjeta_amarilla = models.BooleanField(default=False)  
+    tarjeta_roja = models.BooleanField(default=False)  
+    figura = models.BooleanField(default=False)  
     class Meta:
         db_table = 'planillas'
         

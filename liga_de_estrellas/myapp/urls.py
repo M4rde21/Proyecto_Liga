@@ -63,10 +63,10 @@ urlpatterns = [
     path('partidos/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/editar/', views.edit_partido, name='edit_partido'),
     path('partidos/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/eliminar/', views.delete_partido, name='delete_partido'),
     path('resultado/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/crear/', views.crear_resultado, name="crear_resultado"),
+    path('planilla/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/crear/', views.crear_planilla, name="crear_planilla"),
+    path('gestionar_partido/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/', views.gestionar_partido, name='gestionar_partido'),
 
 
-
-    
 ]
 
 if settings.DEBUG:

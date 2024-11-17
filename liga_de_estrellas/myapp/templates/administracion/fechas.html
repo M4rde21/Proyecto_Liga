@@ -51,6 +51,10 @@
                         <p>{% if partido.destacado %}<strong>Partido Destacado</strong>{% endif %}</p>
                         
                       
+                        <a href="{% url 'gestionar_partido' temporada.id fecha.id partido.id %}">
+                            <button>Gestionar partido</button>
+                        </a>
+
                         <a href="{% url 'edit_partido' temporada.id fecha.id partido.id %}">
                             <button>Editar partido</button>
                         </a>

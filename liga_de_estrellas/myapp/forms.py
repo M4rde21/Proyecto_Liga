@@ -1,5 +1,5 @@
 from django import forms
-from .models import Torneo, Temporada,Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, Grupo, Fecha, Predio
+from .models import Torneo, Temporada,Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, Grupo, Fecha, Predio,Partido,Planilla,Resultado
 from django.core.exceptions import ValidationError
 import os
 from django.forms import ModelForm
@@ -152,9 +152,62 @@ class CrearPartidoForm(forms.Form):
     destacado = forms.BooleanField(label="Partido Destacado", required=False)
 
 
-class resultadoForm(forms.Form):
-    goles_equipo_1 = forms.IntegerField(label="goles del equipo 1", min_value=0)
-    goles_equipo_2 = forms.IntegerField(label="goles del equipo 2", min_value=0)
-    penales =forms.BooleanField(label="Penales", required=False)
-    penales_equipo_1 = forms.IntegerField(label="goles por penales del equipo 1", required=False)
-    penales_equipo_2 = forms.IntegerField(label="goles por penales del equipo 2", required=False)
+class ResultadoForm(forms.Form):
+    goles_equipo_1 = forms.IntegerField(label="Goles del equipo 1", min_value=0,initial=0, required=False)
+    goles_equipo_2 = forms.IntegerField(label="Goles del equipo 2", min_value=0,initial=0, required=False)
+    penales = forms.BooleanField(label="Penales", required=False)
+    penales_equipo_1 = forms.IntegerField(label="Goles por penales del equipo 1", required=False)
+    penales_equipo_2 = forms.IntegerField(label="Goles por penales del equipo 2", required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        penales = cleaned_data.get('penales')
+        penales_equipo_1 = cleaned_data.get('penales_equipo_1')
+        penales_equipo_2 = cleaned_data.get('penales_equipo_2')
+        
+        # Si penales no está marcado, pero los goles por penales están llenos, mostramos un error
+        if not penales and (penales_equipo_1 is not None or penales_equipo_2 is not None):
+            raise forms.ValidationError(
+                "Si 'Penales' no está marcado, no se deben ingresar goles por penales. Esos datos no se guardarán."
+            )
+
+        # Validar que los goles por penales solo se completen si penales es True
+        if penales:
+            if penales_equipo_1 is None or penales_equipo_2 is None:
+                raise forms.ValidationError("Debe ingresar los goles por penales de ambos equipos si se selecciona 'Penales'.")
+        else:
+            # Si no hay penales, asegura que los campos estén vacíos o en cero
+            cleaned_data['penales_equipo_1'] = 0
+            cleaned_data['penales_equipo_2'] = 0
+
+        return cleaned_data
+    
+
+    
+    
+
+class PlanillaForm(forms.Form):
+    goles = forms.IntegerField(label="Goles", min_value=0,initial=0, required=False)
+    num_camiseta = forms.IntegerField(label="Nro de camiseta", min_value=1, required=False)
+    participo = forms.BooleanField(label="Jugó", required=False)
+    tarjeta_amarilla = forms.BooleanField(label="TA", required=False)
+    tarjeta_roja = forms.BooleanField(label="TR", required=False)
+    figura = forms.BooleanField(label="Figura del partido", required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        participo = cleaned_data.get("participo")
+        goles = cleaned_data.get("goles")
+        num_camiseta = cleaned_data.get("num_camiseta")
+
+        if not participo:
+            cleaned_data["goles"] = 0
+            cleaned_data["tarjeta_amarilla"] = False
+            cleaned_data["tarjeta_roja"] = False
+            cleaned_data["figura"] = False
+        elif participo and (goles is None or num_camiseta is None):
+            raise forms.ValidationError("Cuando un jugador participa, los campos de goles y número de camiseta son obligatorios.")
+        
+        return cleaned_data
+    
+

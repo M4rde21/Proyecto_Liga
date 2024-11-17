@@ -1,16 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
-from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador, Fecha, Partido, Resultado
+from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador, Fecha, Partido, Resultado, Planilla
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
-from django.db import IntegrityError
-from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm,CrearZonaForm, CrearFechaForm, CrearPartidoForm, resultadoForm
+from django.db import IntegrityError, transaction
+from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm,CrearZonaForm, CrearFechaForm, CrearPartidoForm, ResultadoForm, PlanillaForm
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.contrib import messages
+from django.forms import formset_factory, modelformset_factory
 
 
 
@@ -875,18 +876,7 @@ def fechas(request, id_temporada):
         'equipos': equipos,
     })
 
-# def fechas(request,id_temporada):
-#     temporada = get_object_or_404(Temporada, pk=id_temporada)
-#     fechas = Fecha.objects.filter(id_temporada=temporada)  # Filtrar por temporada
-#     partidos_por_fecha = {
-#         fecha.id: Partido.objects.filter(id_fecha=fecha) for fecha in fechas
-#     }
-#     return render(request, 'administracion/fechas.html', {
-#         'fechas': fechas,
-#         'temporada': temporada,  # Pasar la temporada para mostrar sus datos
-#         'partidos_por_fecha': partidos_por_fecha,
-#     })
-    
+
 
     
 def crear_fecha(request,id_temporada):
@@ -904,18 +894,7 @@ def crear_fecha(request,id_temporada):
         form = CrearFechaForm()
 
     return render(request, 'administracion/crear_fecha.html', {'form': form, 'temporada': temporada})
-    # form = CrearFechaForm(request.POST)
-    # if form.is_valid():
-
-    #     fecha = Fecha()
-    #     fecha.nombre_fecha = form.cleaned_data['nombre_fecha']
-    #     fecha.save()
-    #     return redirect('fechas')
-        
-    # else:
-    #     return render(request, 'administracion/crear_fecha.html', {'form': form})
-    # return render(request, 'administracion/crear_fecha.html', {'form': form})
-
+    
 
 def edit_fecha(request,id_temporada, id_fecha):
     temporada = get_object_or_404(Temporada, pk=id_temporada)
@@ -935,21 +914,7 @@ def edit_fecha(request,id_temporada, id_fecha):
         'fecha': fecha,
         'form': form,
     })
-    # fecha = get_object_or_404(Fecha, pk=id_fecha)
-
-    # if request.method == 'POST':
-    #     form=CrearFechaForm(request.POST)
-    #     if form.is_valid():
-    #         fecha.nombre_fecha = form.cleaned_data['nombre_fecha']
-    #         fecha.save()
-    #         return redirect('fechas')
-    # else:
-    #     form = CrearFechaForm(initial={'nombre_fecha': fecha.nombre_fecha})
-            
-    # return render(request, 'administracion/edit_fecha.html', {
-    #              'fecha': fecha,
-    #              'form' : form
-    #             })
+    
 
 
 def delete_fecha(request, id_temporada, id_fecha):
@@ -1040,18 +1005,47 @@ def edit_partido(request, id_temporada, id_fecha, id_partido):
     fecha = get_object_or_404(Fecha, pk=id_fecha)
     partido = get_object_or_404(Partido, pk=id_partido)
 
+    # Filtrar los grupos correspondientes a la temporada y torneo actual
+    torneo = temporada.id_torneo
+    grupos = Grupo.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=torneo
+        ).values('id_grupo')
+    ).distinct()
+
+    # Filtrar los equipos que pertenecen a esos grupos, temporada y torneo
+    equipos = Equipo.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=torneo,
+            id_grupo__in=grupos
+        ).values('id_equipo')
+    ).distinct()
+
     if request.method == 'POST':
         form = CrearPartidoForm(request.POST)
+        form.fields['id_equipo_1'].queryset = equipos
+        form.fields['id_equipo_2'].queryset = equipos
+        form.fields['id_grupo'].queryset = grupos
+
         if form.is_valid():
-            partido.id_equipo_1 = form.cleaned_data['id_equipo_1']
-            partido.id_equipo_2 = form.cleaned_data['id_equipo_2']
-            partido.id_predio = form.cleaned_data['id_predio']
-            partido.id_grupo = form.cleaned_data['id_grupo']
-            partido.fecha_partido = form.cleaned_data['fecha_partido']
-            partido.hora_partido = form.cleaned_data['hora_partido']
-            partido.destacado = form.cleaned_data['destacado']
-            partido.save()
-            return redirect('fechas', id_temporada=id_temporada)
+            equipo_1 = form.cleaned_data['id_equipo_1']
+            equipo_2 = form.cleaned_data['id_equipo_2']
+
+            # Verificar que los equipos no sean el mismo
+            if equipo_1 == equipo_2:
+                form.add_error('id_equipo_2', 'El equipo 2 no puede ser el mismo que el equipo 1.')
+            else:
+                partido.id_equipo_1 = equipo_1
+                partido.id_equipo_2 = equipo_2
+                partido.id_predio = form.cleaned_data['id_predio']
+                partido.id_grupo = form.cleaned_data['id_grupo']
+                partido.fecha_partido = form.cleaned_data['fecha_partido']
+                partido.hora_partido = form.cleaned_data['hora_partido']
+                partido.destacado = form.cleaned_data['destacado']
+                partido.save()
+                return redirect('fechas', id_temporada=id_temporada)
     else:
         # Inicializa el formulario con los datos del partido
         form = CrearPartidoForm(initial={
@@ -1063,6 +1057,9 @@ def edit_partido(request, id_temporada, id_fecha, id_partido):
             'hora_partido': partido.hora_partido.strftime('%H:%M'),
             'destacado': partido.destacado
         })
+        form.fields['id_equipo_1'].queryset = equipos
+        form.fields['id_equipo_2'].queryset = equipos
+        form.fields['id_grupo'].queryset = grupos
 
     return render(request, 'administracion/edit_partido.html', {
         'form': form,
@@ -1092,11 +1089,11 @@ def crear_resultado(request, id_temporada, id_fecha, id_partido):
     partido = get_object_or_404(Partido, pk=id_partido, id_temporada=temporada, id_fecha=fecha)
     
     if request.method == 'POST':
-        form = resultadoForm(request.POST)
+        form = ResultadoForm(request.POST)
         
         if form.is_valid():
             resultado = Resultado(
-                partido=partido,
+                id_partido=partido,
                 goles_equipo_1=form.cleaned_data['goles_equipo_1'],
                 goles_equipo_2=form.cleaned_data['goles_equipo_2'],
                 penales=form.cleaned_data['penales'],
@@ -1106,7 +1103,7 @@ def crear_resultado(request, id_temporada, id_fecha, id_partido):
             resultado.save()
             return redirect('fechas', id_temporada=id_temporada)
     else:
-        form = resultadoForm()
+        form = ResultadoForm()
     
     return render(request, 'administracion/crear_resultado.html', {
         'form': form,
@@ -1114,3 +1111,315 @@ def crear_resultado(request, id_temporada, id_fecha, id_partido):
         'fecha': fecha,
         'partido': partido
     })
+
+
+def crear_planilla(request, id_temporada, id_fecha, id_partido):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    partido = get_object_or_404(Partido, pk=id_partido)
+    torneo = temporada.id_torneo
+
+    # Filtrar jugadores por equipos, temporada, torneo y grupo del partido
+    jugadores = Jugador.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=torneo,
+            id_grupo=partido.id_grupo,
+        ).values('id_jugador')
+    ).distinct()
+
+    # Crear un diccionario para los formularios de cada jugador
+    jugadores_formularios = {}
+
+    if request.method == 'POST':
+        # Procesar cada formulario individualmente
+        for jugador in jugadores:
+            # Crear un formulario por jugador con los datos del POST
+            form = PlanillaForm(request.POST, prefix=f'jugador_{jugador.id}')
+            if form.is_valid():
+                # Solo guardar si el jugador participó
+                if form.cleaned_data['participo']:
+                    try:
+                        Planilla.objects.create(
+                            id_partido=partido,
+                            id_equipo=TemporadaXTorneoXGrupoXEquipoXJugador.objects.get(
+                                id_jugador=jugador,
+                                id_temporada=temporada,
+                                id_torneo=torneo,
+                                id_grupo=partido.id_grupo
+                            ).id_equipo,
+                            id_jugador=jugador,
+                            goles=form.cleaned_data['goles'],
+                            num_camiseta=form.cleaned_data['num_camiseta'],
+                            participo=form.cleaned_data['participo'],
+                            tarjeta_amarilla=form.cleaned_data['tarjeta_amarilla'],
+                            tarjeta_roja=form.cleaned_data['tarjeta_roja'],
+                            figura=form.cleaned_data['figura']
+                        )
+                    except Exception as e:
+                        print(f"Error al guardar la planilla para el jugador {jugador.nombre_jugador}: {e}")
+            jugadores_formularios[jugador] = form  # Guardar el formulario con el objeto jugador completo
+
+        # Si todos los formularios son válidos, redirigir a la vista de fechas
+        return redirect('fechas', id_temporada=id_temporada)
+
+    else:
+        # Crear los formularios vacíos cuando el request es GET
+        for jugador in jugadores:
+            form = PlanillaForm(prefix=f'jugador_{jugador.id}')
+            jugadores_formularios[jugador] = form  # Guardar el formulario con el objeto jugador completo
+
+    return render(request, 'administracion/crear_planilla.html', {
+        'temporada': temporada,
+        'fecha': fecha,
+        'partido': partido,
+        'jugadores_formularios': jugadores_formularios,
+    })
+
+
+# def crear_planilla(request, id_temporada, id_fecha, id_partido):
+#     temporada = get_object_or_404(Temporada, pk=id_temporada)
+#     fecha = get_object_or_404(Fecha, pk=id_fecha)
+#     partido = get_object_or_404(Partido, pk=id_partido)
+#     torneo = temporada.id_torneo
+
+#     # Filtrar jugadores por equipos, temporada, torneo y grupo del partido
+#     jugadores = Jugador.objects.filter(
+#         id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+#             id_temporada=temporada,
+#             id_torneo=torneo,
+#             id_grupo=partido.id_grupo,
+#         ).values('id_jugador')
+#     ).distinct()
+
+#     # Crear un formset para gestionar los formularios de cada jugador
+#     PlanillaFormSet = formset_factory(PlanillaForm, extra=0)
+#     initial_data = [{'participo': False} for jugador in jugadores]
+#     formset = PlanillaFormSet(initial=initial_data)
+
+#     # Emparejar jugadores con formularios
+#     jugadores_formularios = zip(jugadores, formset)
+
+#     if request.method == 'POST':
+#         formset = PlanillaFormSet(request.POST)
+
+#         if formset.is_valid():
+#             print("Formset válido, iniciando proceso de guardado...")
+#             try:
+#                 for form, jugador in zip(formset, jugadores):
+#                     if form.cleaned_data['participo']:
+#                         print(f"Guardando planilla para el jugador {jugador.nombre_jugador}")
+#                         Planilla.objects.create(
+#                             id_partido=partido,
+#                             id_equipo=TemporadaXTorneoXGrupoXEquipoXJugador.objects.get(
+#                                 id_jugador=jugador,
+#                                 id_temporada=temporada,
+#                                 id_torneo=torneo,
+#                                 id_grupo=partido.id_grupo
+#                             ).id_equipo,
+#                             id_jugador=jugador,
+#                             goles=form.cleaned_data['goles'],
+#                             num_camiseta=form.cleaned_data['num_camiseta'],
+#                             participo=form.cleaned_data['participo'],
+#                             tarjeta_amarilla=form.cleaned_data['tarjeta_amarilla'],
+#                             tarjeta_roja=form.cleaned_data['tarjeta_roja'],
+#                             figura=form.cleaned_data['figura']
+#                         )
+#                 print("Todos los datos se guardaron correctamente.")
+#                 return redirect('fechas', id_temporada=id_temporada)
+#             except Exception as e:
+#                 print(f"Error durante el guardado: {e}")
+#         else:
+#             print("El formset no es válido, errores:", formset.errors)
+
+#     return render(request, 'administracion/crear_planilla.html', {
+#         'temporada': temporada,
+#         'fecha': fecha,
+#         'partido': partido,
+#         'jugadores_formularios': jugadores_formularios,
+#         'formset_errors': formset.errors,
+#     })
+
+
+def gestionar_partido(request, id_temporada, id_fecha, id_partido):
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    partido = get_object_or_404(Partido, pk=id_partido)
+
+    # Obtener o inicializar el resultado del partido
+    resultado, created = Resultado.objects.get_or_create(id_partido=partido)
+
+    # Acceso a los equipos
+    equipo_1 = partido.id_equipo_1
+    equipo_2 = partido.id_equipo_2
+
+    # Filtrar jugadores por equipos, temporada, torneo y grupo del partido
+    jugadores_equipo_1 = Jugador.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=partido.id_torneo,
+            id_grupo=partido.id_grupo,
+            id_equipo=equipo_1
+        ).values('id_jugador')
+    ).order_by('nombre_jugador')
+
+    jugadores_equipo_2 = Jugador.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=partido.id_torneo,
+            id_grupo=partido.id_grupo,
+            id_equipo=equipo_2
+        ).values('id_jugador')
+    ).order_by('nombre_jugador')
+
+    # Formularios
+    resultado_form = ResultadoForm(request.POST or None)
+    jugadores_formularios = {}
+
+    # Crear formularios de planilla para cada jugador
+    for jugador in jugadores_equipo_1 | jugadores_equipo_2:
+        form = PlanillaForm(request.POST or None, prefix=f'jugador_{jugador.id}')
+        jugadores_formularios[jugador] = form
+
+    if request.method == 'POST':
+        # Procesar el formulario de resultado manualmente
+        if 'resultado_submit' in request.POST and resultado_form.is_valid():
+            # Obtener los datos del formulario
+            goles_equipo_1 = resultado_form.cleaned_data.get('goles_equipo_1', 0)
+            goles_equipo_2 = resultado_form.cleaned_data.get('goles_equipo_2', 0)
+            penales = resultado_form.cleaned_data.get('penales', False)
+            penales_equipo_1 = resultado_form.cleaned_data.get('penales_equipo_1', 0)
+            penales_equipo_2 = resultado_form.cleaned_data.get('penales_equipo_2', 0)
+
+            # Actualizar o crear el resultado
+            resultado.goles_equipo_1 = goles_equipo_1
+            resultado.goles_equipo_2 = goles_equipo_2
+            resultado.penales = penales
+            resultado.penales_equipo_1 = penales_equipo_1
+            resultado.penales_equipo_2 = penales_equipo_2
+            resultado.save()
+
+        # Procesar las planillas
+        if 'planilla_submit' in request.POST:
+            for jugador, form in jugadores_formularios.items():
+                if form.is_valid():
+                    participo = form.cleaned_data.get('participo', False)
+
+                    if participo:
+                        # Solo guardamos la planilla si el jugador participó
+                        Planilla.objects.create(
+                            id_partido=partido,
+                            id_equipo=equipo_1 if jugador in jugadores_equipo_1 else equipo_2,
+                            id_jugador=jugador,
+                            goles=form.cleaned_data['goles'] or 0,
+                            num_camiseta=form.cleaned_data['num_camiseta'] or 0,
+                            participo=participo,
+                            tarjeta_amarilla=form.cleaned_data['tarjeta_amarilla'],
+                            tarjeta_roja=form.cleaned_data['tarjeta_roja'],
+                            figura=form.cleaned_data['figura']
+                        )
+                    else:
+                        # Si el jugador no participó, no se guarda nada
+                        pass
+
+            # Redirigir a la vista de fechas
+            return redirect('fechas', id_temporada=temporada.id)
+
+    return render(request, 'administracion/gestionar_partido.html', {
+        'temporada': temporada,
+        'fecha': fecha,
+        'partido': partido,
+        'equipo_1': equipo_1,
+        'equipo_2': equipo_2,
+        'resultado_form': resultado_form,
+        'jugadores_formularios': jugadores_formularios,
+        'jugadores_equipo_1': jugadores_equipo_1,
+        'jugadores_equipo_2': jugadores_equipo_2,
+    })
+
+
+
+
+
+
+
+# def gestion_partido(request, id_temporada, id_fecha, id_partido):
+#     # Obtener la temporada, fecha, y partido
+#     temporada = get_object_or_404(Temporada, pk=id_temporada)
+#     fecha = get_object_or_404(Fecha, pk=id_fecha)
+#     partido = get_object_or_404(Partido, pk=id_partido)
+#     torneo = temporada.id_torneo
+
+#     # Obtener los equipos del partido
+#     equipo_1 = partido.id_equipo_1
+#     equipo_2 = partido.id_equipo_2
+
+#     # Filtrar jugadores por equipos, temporada, torneo y grupo del partido
+#     jugadores = Jugador.objects.filter(
+#         id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+#             id_temporada=temporada,
+#             id_torneo=torneo,
+#             id_grupo=partido.id_grupo,
+#         ).values('id_jugador')
+#     ).distinct()
+
+#     # Crear el formset para los formularios de Planilla
+#     PlanillaFormSet = formset_factory(PlanillaForm, extra=0)
+
+#     if request.method == 'POST':
+#         resultado_form = ResultadoForm(request.POST)
+#         formset = PlanillaFormSet(request.POST)
+
+#         if resultado_form.is_valid() and formset.is_valid():
+#             # Guardar el resultado
+#             resultado = Resultado(
+#                 id_partido=partido,
+#                 goles_equipo_1=resultado_form.cleaned_data['goles_equipo_1'],
+#                 goles_equipo_2=resultado_form.cleaned_data['goles_equipo_2'],
+#                 penales=resultado_form.cleaned_data['penales'],
+#                 penales_equipo_1=resultado_form.cleaned_data['penales_equipo_1'] if resultado_form.cleaned_data['penales'] else 0,
+#                 penales_equipo_2=resultado_form.cleaned_data['penales_equipo_2'] if resultado_form.cleaned_data['penales'] else 0
+#             )
+#             resultado.save()
+
+#             # Guardar las planillas para los jugadores
+#             for form, jugador in zip(formset, jugadores):
+#                 if form.cleaned_data.get('participo', False):
+#                     Planilla.objects.create(
+#                         id_partido=partido,
+#                         id_equipo=TemporadaXTorneoXGrupoXEquipoXJugador.objects.get(
+#                             id_jugador=jugador,
+#                             id_temporada=temporada,
+#                             id_torneo=torneo,
+#                             id_grupo=partido.id_grupo
+#                         ).id_equipo,
+#                         id_jugador=jugador,
+#                         goles=form.cleaned_data.get('goles', 0),
+#                         num_camiseta=form.cleaned_data.get('num_camiseta', ''),
+#                         participo=form.cleaned_data['participo'],
+#                         tarjeta_amarilla=form.cleaned_data.get('tarjeta_amarilla', False),
+#                         tarjeta_roja=form.cleaned_data.get('tarjeta_roja', False),
+#                         figura=form.cleaned_data.get('figura', False)
+#                     )
+
+#             return redirect('fechas', id_temporada=id_temporada)  # Redirigir a la vista de fechas
+#         else:
+#             # Depuración de errores
+#             print("Errores en resultado_form:", resultado_form.errors.as_json())
+#             print("Errores en formset:", formset.errors)
+#     else:
+#         # Inicializar los formularios en GET
+#         resultado_form = ResultadoForm()
+#         initial_data = [{'participo': False} for _ in jugadores]
+#         formset = PlanillaFormSet(initial=initial_data)
+
+#     return render(request, 'administracion/gestion_partido.html', {
+#         'temporada': temporada,
+#         'fecha': fecha,
+#         'partido': partido,
+#         'equipo_1': equipo_1,
+#         'equipo_2': equipo_2,
+#         'resultado_form': resultado_form,
+#         'formset': formset,
+#         'jugadores_formularios': zip(jugadores, formset),
+#     })
