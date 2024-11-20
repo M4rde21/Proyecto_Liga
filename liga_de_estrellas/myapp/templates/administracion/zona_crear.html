@@ -1,0 +1,21 @@
+{% extends 'administracion/base2.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Zona</title>
+</head>
+<body>
+    <form method="post" action="{% url 'zona_crear' temporada.id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">CONFIRMAR</button>
+    </form>
+    <a href="{% url 'zonas' temporada.id %}">
+        <button>VOLVER</button>
+    </a>
+</body>
+</html>
+{% endblock %}

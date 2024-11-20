@@ -1,0 +1,38 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignmar premio grupal</title>
+</head>
+<body>
+    <h2>Asignar Premio</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="premio_grupal">Selecciona un premio:</label>
+        <select name="premio_grupal" id="premio_grupal">
+            {% for premio in premios_disponibles %}
+                <option value="{{ premio.id }}">{{ premio.nombre_premio_grupal }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">CONFIRMAR</button>
+    </form>
+    <a href="{% url 'equipo_importado' temporada.id zona.id equipo.id %}">
+        <button>CANCELAR</button>
+    </a>
+    
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
+{% endblock %}

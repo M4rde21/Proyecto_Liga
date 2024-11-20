@@ -2,6 +2,12 @@
 {% load static %}
 
 {% block content %}
+<style>
+    body {
+    overflow-x: hidden;
+}
+</style>
+
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
@@ -107,16 +113,6 @@ function previewFoto(event) {
         // Si no hay archivo, mostrar imagen por defecto
         fotoPreview.src = '{% static "media/fotos_jugador/jugador_default.png" %}'; // Cambia esto a tu ruta por defecto
     }
-}
-
-// Función para limpiar la imagen
-function clearImage() {
-    const fotoPreview = document.getElementById('fotoPreview');
-    const inputFile = document.getElementById('foto_jugador');
-
-    // Restablecer a la imagen por defecto
-    fotoPreview.src = '{% static "media/fotos_jugador/jugador_default.png" %}'; // Cambia esto a tu ruta por defecto
-    inputFile.value = ''; // Limpia el valor del input de archivo
 }
 </script>
 

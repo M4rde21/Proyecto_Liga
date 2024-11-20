@@ -1,0 +1,35 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importar Equipos a Zona</title>
+</head>
+<body>
+    <h1>Importar Equipos a {{ zona.nombre_grupo }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="equipo">Seleccione un equipo:</label>
+        <select name="equipo" id="equipo">
+            {% for equipo in equipos %}
+                <option value="{{ equipo.id }}">{{ equipo.nombre_equipo }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Importar Equipo</button>
+    </form>
+    <a href="{% url 'zonas' temporada.id %}">
+        <button>VOLVER</button>
+    </a>
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
+{% endblock %}

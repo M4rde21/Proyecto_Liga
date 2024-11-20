@@ -1,7 +1,7 @@
 from django import forms
 import os
 from django.core.exceptions import ValidationError
-from .models import Torneo, Temporada,Categoria,TipoTorneo, Jugador, Equipo, Entrenador, Aviso
+from .models import Torneo, Temporada, Categoria, TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, Fecha, Partido, Predio
 
 
 class TorneoForm(forms.Form):
@@ -88,8 +88,57 @@ class CrearEntrenadorForm(forms.Form):
         return foto
 
 
-class AvisoForm(forms.Form):
-    titulo = forms.CharField(label="Título del aviso", max_length=200, required=True)
-    mensaje = forms.CharField(label="Mensaje del aviso", widget=forms.Textarea, required=True)
-    mostrar = forms.BooleanField(label="Mostrar", required=False, initial=True)
+class CrearPremioGrupalForm(forms.Form):
+    nombre_premio_grupal = forms.CharField(label="Nombre del Premio Grupal", max_length=100, required=True)
+    foto_premio_grupal = forms.ImageField(label="Foto del Premio", required=False)
+    
+    def clean_foto_premio_grupal(self):
+        foto = self.cleaned_data.get('foto_premio_grupal')
 
+        if foto:
+            ext = os.path.splitext(foto.name)[1].lower()
+            if ext not in ['.png', '.jpg', '.jpeg']:
+                raise ValidationError('Solo se permiten archivos con extensión .png, .jpg o .jpeg.')
+
+        return foto
+    
+class CrearPremioIndividualForm(forms.Form):
+    nombre_premio_individual = forms.CharField(label="Nombre del Premio Individual", max_length=100, required=True)
+    foto_premio_individual = forms.ImageField(label="Foto del Premio", required=False)
+    
+    def clean_foto_premio_individual(self):
+        foto = self.cleaned_data.get('foto_premio_individual')
+
+        if foto:
+            ext = os.path.splitext(foto.name)[1].lower()
+            if ext not in ['.png', '.jpg', '.jpeg']:
+                raise ValidationError('Solo se permiten archivos con extensión .png, .jpg o .jpeg.')
+
+        return foto
+    
+
+
+class CrearZonaForm(forms.Form):
+    nombre_grupo = forms.CharField(label="Nombre de la Zona", max_length=100)
+
+
+class CrearFechaForm(forms.Form):
+    nombre_fecha = forms.CharField(label="Nombre de la fecha", max_length=100, required=True)
+
+
+
+class CrearPartidoForm(forms.Form):
+
+    id_equipo_1 = forms.ModelChoiceField(label="Equipo 1", queryset=Equipo.objects.all())
+    id_equipo_2 = forms.ModelChoiceField(label="Equipo 2", queryset=Equipo.objects.all())
+    id_predio = forms.ModelChoiceField(label="Predio", queryset=Predio.objects.all())
+    id_grupo = forms.ModelChoiceField(label="Grupo", queryset=Grupo.objects.all())
+    fecha_partido = forms.DateField(
+        label="Fecha", widget=forms.DateInput(attrs={'type': 'date'}), input_formats=['%Y-%m-%d'], required=True
+    )
+    hora_partido = forms.TimeField(
+        label="Hora del Partido", 
+        widget=forms.TimeInput(attrs={'type': 'time', 'pattern': '[0-9]{2}:[0-9]{2}', 'title': 'Use format HH:MM'}),
+        input_formats=['%H:%M']
+    )
+    destacado = forms.BooleanField(label="Partido Destacado", required=False)

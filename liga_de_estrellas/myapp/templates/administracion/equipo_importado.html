@@ -1,0 +1,199 @@
+{% extends 'administracion/base2.html' %}
+{% block content %}
+<style>
+    body {
+        overflow-x: hidden;
+    }
+    .team-logo {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+    }
+    .rounded-circle {
+        display: block;
+        margin: 0 auto;
+    }
+    .team-name {
+        text-align: center;
+        margin-top: 10px;
+    }
+    .no-bullets {
+        list-style: none;
+        padding: 0;
+        text-align: center;
+    }
+    .button-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .left-button {
+        margin-right: auto; /* Alinea el botón Volver a la izquierda */
+    }
+    .table th, .table td {
+        text-align: center;
+    }
+    .title-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .section-title {
+        margin-bottom: 0;
+    }
+    hr {
+        border: none;
+        height: 2px;
+        background-color: white;
+        margin-top: 10px;
+    }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        
+        <!-- Button Group with Volver button -->
+        <div class="button-group">
+            <a href="{% url 'zonas' temporada.id %}" class="btn btn-secondary btn-sm left-button">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{% url 'equipo_importado_cambiar' temporada.id zona.id equipo.id %}" class="btn-sm" style="background-color: brown;">
+                <i class="fas fa-sync" style="color: white;"></i>
+            </a>
+            <a href="{% url 'asignar_premio_grupal' temporada.id zona.id equipo.id %}" class="btn-sm" style="background-color: black; border: 1px solid yellow;">
+                <i class="fas fa-trophy" style="color: yellow;"></i>
+            </a>
+            <form action="{% url 'equipo_importado_eliminado' temporada.id zona.id equipo.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Team Logo and Name -->
+        <div class="text-center">
+            {% if equipo.logo_equipo %}
+                <img src="{{ equipo.logo_equipo.url }}" alt="Logo de {{ equipo.nombre_equipo }}" class="rounded-circle team-logo">
+            {% else %}
+                <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" class="rounded-circle team-logo">
+            {% endif %}
+            <div class="team-name">
+                <h1>{{ equipo.nombre_equipo }}</h1>
+            </div>
+        </div>
+
+        <!-- PLANTEL Section -->
+        <div class="zona-section mt-4 p-3" style="border: 1px solid white; border-radius: 10px;">
+            <div class="title-container">
+                <h2 class="section-title text-center flex-grow-1">PLANTEL</h2>
+                <div class="button-group">
+                    <a href="{% url 'importar_jugador_equipo' temporada.id zona.id equipo.id %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-user-plus"></i>
+                    </a>
+                </div>
+            </div>
+            <hr>
+            <table class="table table-dark text-center" style="background-color: black; border: none;">
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>DNI</th>
+                        <th>Fecha de Nacimiento</th>
+                        <th>Premio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for relacion in jugadores_importados %}
+                    <tr>
+                        <td>
+                            {% if relacion.id_jugador.foto_jugador %}
+                                <img src="{{ relacion.id_jugador.foto_jugador.url }}" alt="Foto de {{ relacion.id_jugador.nombre_jugador }}" style="width:50px; height:auto;">
+                            {% else %}
+                                <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width:50px; height:auto;">
+                            {% endif %}
+                        </td>
+                        <td>{{ relacion.id_jugador.nombre_jugador }}</td>
+                        <td>{{ relacion.id_jugador.apellido_jugador }}</td>
+                        <td>{{ relacion.id_jugador.dni_jugador }}</td>
+                        <td>{{ relacion.id_jugador.fecha_nac_jugador|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if relacion.premios %}
+                                <div class="premios" style="position: relative;">
+                                    {% for premio_obj in relacion.premios %}
+                                        <div class="premio" style="display:inline-block; text-align:center; margin-right:5px;">
+                                            <img src="{{ premio_obj.id_premio_individual.foto_premio_individual.url }}" alt="{{ premio_obj.id_premio_individual.nombre_premio_individual }}" style="width:40px; height:auto;" />
+                                        </div>
+                                    {% endfor %}
+                                    <!-- Botón de eliminar premio -->
+                                    <!-- Alineación a la derecha -->
+                                    <form action="{% url 'eliminar_premio_individual' temporada.id zona.id equipo.id relacion.id_jugador.id %}" method="POST" style="
+                                        position:absolute; right:-10px; top:5px;"> <!-- Ajuste en top para elevar -->
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-circle" style="
+                                            width:10px; height:25px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                            <i class="fas fa-times"></i> <!-- Icono de la "X" -->
+                                        </button>
+                                    </form>
+                                </div>
+                            {% else %}
+                            {% endif %}
+                        </td>
+
+                        <!-- Acciones -->
+                        <td>
+                            <div class="d-flex justify-content-center">
+                                <a href="{% url 'asignar_premio_individual' relacion.id_temporada.id relacion.id_grupo.id relacion.id_equipo.id relacion.id_jugador.id %}" class="btn btn-warning btn-sm mr-1">
+                                    <i class="fas fa-award"></i>
+                                </a>
+                                <form action="{% url 'eliminar_jugador_equipo' temporada.id zona.id equipo.id relacion.id_jugador.id %}" method="POST">
+                                    {% csrf_token %}
+                                    <button class="btn btn-danger btn-sm" type="submit">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8">No hay jugadores importados para este equipo.</td></tr>
+                    {% endfor %}
+                </tbody> 
+            </table> 
+        </div>
+
+        <!-- PREMIOS Section -->
+        <div class="zona-section mt-4 p-3 text-center" style="border: 1px solid white; border-radius: 10px;">
+            <div class="title-container d-flex justify-content-between align-items-center">
+                <h3 class="section-title text-center flex-grow-1">PREMIOS DEL EQUIPO</h3>
+                <form action="{% url 'eliminar_premio_grupal' temporada.id zona.id equipo.id %}" method="POST" class="text-center">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+            <hr>
+            {% if premios_asignados %}
+                <ul class="no-bullets">
+                    {% for premio in premios_asignados %}
+                        <li>
+                            <img src="{{ premio.id_premio_grupal.foto_premio_grupal.url }}" alt="{{ premio.id_premio_grupal.nombre_premio_grupal }}" style="width: 100px; height: auto;"><br>
+                            <strong>{{ premio.id_premio_grupal.nombre_premio_grupal }}</strong>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No se han asignado premios a este equipo.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

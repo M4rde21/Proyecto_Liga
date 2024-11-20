@@ -1,0 +1,34 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignar Premio Individual</title>
+</head>
+<body>
+        <h1>Asignar Premio Individual</h1>
+    
+        <form method="POST">
+            {% csrf_token %}
+            <label for="premio_individual">Seleccione un Premio:</label>
+            <select name="premio_individual" id="premio_individual" required>
+                <option value="" disabled selected>Seleccione un premio...</option>
+                {% for premio in premios_disponibles %}
+                    <option value="{{ premio.id }}">{{ premio.nombre_premio_individual }}</option>
+                {% empty %}
+                    <option value="" disabled>No hay premios disponibles</option>
+                {% endfor %}
+            </select>
+            <br><br>
+            <button type="submit">Confirmar</button>
+            
+        </form>
+    
+    
+
+</body>
+</html>
+{% endblock %}

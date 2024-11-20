@@ -1,6 +1,11 @@
 {% extends 'administracion/base2.html' %}
 
 {% block content %}
+<style>
+        body {
+        overflow-x: hidden;
+    }
+</style>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
@@ -33,7 +38,7 @@
                 <tr>
                     <td>
                         {% if jugador.foto_jugador %}
-                            <img src="{{ jugador.foto_jugador.url }}" alt="Foto de {{ jugador.nombre_jugador }}" style="width: 40px; height: 40px;">
+                            <img src="{{ jugador.foto_jugador.url }}" style="width: 40px; height: 40px;">
                         {% else %}
                             <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width: 40px; height: 40px;">
                         {% endif %}

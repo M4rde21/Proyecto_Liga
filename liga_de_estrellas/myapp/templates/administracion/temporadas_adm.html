@@ -1,15 +1,21 @@
 {% extends 'administracion/base2.html' %}
 
 {% block content %}
+<style>
+    body {
+        overflow-x: hidden;
+    }
+</style>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 <div class="container mt-5">
     <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
         <div class="text-center mb-4">
-            <h1>TEMPORADAS</h1>
+            <h4>Temporadas</h4>
             <!-- Botón para crear temporada -->
-            <a href="{% url 'crear_temporada' %}" class="btn btn-success">
-                <i class="fas fa-plus"></i> CREAR TEMPORADA
+            <a href="{% url 'crear_temporada' %}" class="btn btn-success font-weight-bold">
+                CREAR TEMPORADA
             </a>
         </div>
 
@@ -32,16 +38,21 @@
                     <td>{{ temporada.fecha_inicio|date:"d/m/Y" }}</td>
                     <td>{{ temporada.fecha_final|date:"d/m/Y" }}</td>
                     <td>
+                        <!-- Botón para gestionar temporada -->
+                        <a href="{% url 'zonas' temporada.id %}" class="btn btn-primary btn-sm">
+                            <i class="fa fa-cogs"></i>
+                        </a>
                         <!-- Botón para editar temporada -->
-                        <a href="{% url 'edit_temporada' temporada.id %}" class="btn btn-primary btn-sm">
+                        <a href="{% url 'edit_temporada' temporada.id %}" class="btn btn-warning btn-sm">
                             <i class="fas fa-edit"></i>
                         </a>
-
                         <!-- Botón para eliminar temporada -->
                         <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#confirmDeleteModal{{ temporada.id }}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
-                                                <!-- Modal de confirmación de eliminación -->
+
+
+                        <!-- Modal de confirmación de eliminación -->
                         <div class="modal fade" id="confirmDeleteModal{{ temporada.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered" role="document">
                                 <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">

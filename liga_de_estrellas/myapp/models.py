@@ -29,7 +29,7 @@ class Jugador(models.Model):
     dni_jugador = models.CharField(unique=True, max_length=20)
     fecha_nac_jugador = models.DateField()
     foto_jugador = models.ImageField(upload_to="fotos_jugador/", blank=True, null=True)
-    activo_jugador = models.BooleanField(default=False)
+    activo_jugador = models.BooleanField(default=True)
 
     def __str__(self):
         return self.nombre_jugador + ' ' + self.apellido_jugador
@@ -131,8 +131,12 @@ class Grupo(models.Model):
     nombre_grupo = models.CharField(max_length=100)
     id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada', blank=True, null=True)
 
+    def __str__(self):
+        return self.nombre_grupo
+
     class Meta:
         db_table = 'grupos'
+
 
 
 class Partido(models.Model):
@@ -212,22 +216,12 @@ class Tarjeta(models.Model):
         db_table = 'tarjetas'
         
         
-class TemporadaXTorneoXEquipoXJugador(models.Model):
-    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada')
+class TemporadaXTorneoXGrupoXEquipoXJugador(models.Model):
+    id_temporada = models.ForeignKey(Temporada, on_delete=models.CASCADE, db_column='id_temporada', null=True)
     id_torneo = models.ForeignKey(Torneo, on_delete=models.CASCADE, db_column='id_torneo')
     id_equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, db_column='id_equipo')
-    id_jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE, db_column='id_jugador')
+    id_jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE, db_column='id_jugador', null=True, blank=True)
+    id_grupo = models.ForeignKey(Grupo, on_delete=models.CASCADE, db_column='id_grupo', null=True)
 
     class Meta:
-        db_table = 'temporadas_x_torneos_x_equipos_x_jugadores'
-
-
-
-class Aviso(models.Model):
-    titulo = models.CharField(max_length=100)
-    mensaje = models.TextField()
-    fecha_publicacion = models.DateTimeField(auto_now_add=True)
-    mostrar = models.BooleanField(default=False)  # Controla si el aviso debe mostrarse
-
-    def __str__(self):
-        return self.titulo + ' ' + self.mensaje 
+        db_table = 'temporadas_x_torneos_x_grupos_x_equipos_x_jugadores'
