@@ -153,34 +153,60 @@ class CrearPartidoForm(forms.Form):
 
 
 class ResultadoForm(forms.Form):
-    goles_equipo_1 = forms.IntegerField(label="Goles del equipo 1", min_value=0,initial=0, required=False)
-    goles_equipo_2 = forms.IntegerField(label="Goles del equipo 2", min_value=0,initial=0, required=False)
-    penales = forms.BooleanField(label="Penales", required=False)
-    penales_equipo_1 = forms.IntegerField(label="Goles por penales del equipo 1", required=False)
-    penales_equipo_2 = forms.IntegerField(label="Goles por penales del equipo 2", required=False)
+    goles_equipo_1 = forms.IntegerField(
+        label="Goles del equipo 1", 
+        min_value=0, 
+        initial=0, 
+        required=False
+    )
+    goles_equipo_2 = forms.IntegerField(
+        label="Goles del equipo 2", 
+        min_value=0, 
+        initial=0, 
+        required=False
+    )
+    penales = forms.BooleanField(
+        label="Penales", 
+        required=False
+    )
+    penales_equipo_1 = forms.IntegerField(
+        label="Goles por penales del equipo 1", 
+        min_value=0, 
+        initial=0, 
+        required=False
+    )
+    penales_equipo_2 = forms.IntegerField(
+        label="Goles por penales del equipo 2", 
+        min_value=0, 
+        initial=0, 
+        required=False
+    )
 
     def clean(self):
         cleaned_data = super().clean()
         penales = cleaned_data.get('penales')
-        penales_equipo_1 = cleaned_data.get('penales_equipo_1')
-        penales_equipo_2 = cleaned_data.get('penales_equipo_2')
-        
-        # Si penales no está marcado, pero los goles por penales están llenos, mostramos un error
-        if not penales and (penales_equipo_1 is not None or penales_equipo_2 is not None):
+        penales_equipo_1 = cleaned_data.get('penales_equipo_1', 0)
+        penales_equipo_2 = cleaned_data.get('penales_equipo_2', 0)
+
+        # Validar si se ingresaron goles por penales cuando 'Penales' no está seleccionado
+        if not penales and (penales_equipo_1 or penales_equipo_2):
             raise forms.ValidationError(
-                "Si 'Penales' no está marcado, no se deben ingresar goles por penales. Esos datos no se guardarán."
+                "Si 'Penales' no está marcado, los goles por penales deben estar vacíos o en cero."
             )
 
-        # Validar que los goles por penales solo se completen si penales es True
+        # Validar que ambos goles por penales estén presentes si 'Penales' está marcado
         if penales:
             if penales_equipo_1 is None or penales_equipo_2 is None:
-                raise forms.ValidationError("Debe ingresar los goles por penales de ambos equipos si se selecciona 'Penales'.")
+                raise forms.ValidationError(
+                    "Debe ingresar los goles por penales de ambos equipos si se selecciona 'Penales'."
+                )
         else:
-            # Si no hay penales, asegura que los campos estén vacíos o en cero
+            # Si no hay penales, asegúrate de que los valores sean 0
             cleaned_data['penales_equipo_1'] = 0
             cleaned_data['penales_equipo_2'] = 0
 
         return cleaned_data
+
     
 
     

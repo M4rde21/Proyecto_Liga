@@ -23,22 +23,17 @@
     {% endif %}
 </div>
 
-<h2>Resultado</h2>
 <form method="POST">
     {% csrf_token %}
     
     <!-- Formulario de resultado -->
+    <h2>Resultado</h2>
     <div id="resultadoForm">
         {{ resultado_form.as_p }}
     </div>
 
-    <button type="submit" name="resultado_submit">Guardar Resultado</button>
-</form>
-
-<h2>Planilla</h2>
-<form method="POST">
-    {% csrf_token %}
-
+    <!-- Formularios de planilla -->
+    <h2>Planilla</h2>
     {% for jugador, form in jugadores_formularios.items %}
         <div class="jugador">
             <h3>{{ jugador.nombre_jugador }} {{ jugador.apellido_jugador }}</h3>
@@ -53,7 +48,8 @@
         </div>
     {% endfor %}
 
-    <button type="submit" name="planilla_submit">Guardar Planilla</button>
+    <button type="submit">Guardar Todo</button>
 </form>
 
 {% endblock %}
+

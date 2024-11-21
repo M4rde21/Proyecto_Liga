@@ -1246,8 +1246,13 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
     fecha = get_object_or_404(Fecha, pk=id_fecha)
     partido = get_object_or_404(Partido, pk=id_partido)
 
-    # Obtener o inicializar el resultado del partido
-    resultado, created = Resultado.objects.get_or_create(id_partido=partido)
+    # Verificar si ya existe un resultado para el partido
+    resultado_existente = Resultado.objects.filter(id_partido=partido).first()
+    if resultado_existente:
+        resultado = resultado_existente
+    else:
+        resultado = Resultado(id_partido=partido)
+        resultado.save()
 
     # Acceso a los equipos
     equipo_1 = partido.id_equipo_1
@@ -1272,58 +1277,71 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
         ).values('id_jugador')
     ).order_by('nombre_jugador')
 
-    # Formularios
-    resultado_form = ResultadoForm(request.POST or None)
-    jugadores_formularios = {}
+    # Formularios existentes de planillas
+    planillas_existentes = Planilla.objects.filter(id_partido=partido)
 
-    # Crear formularios de planilla para cada jugador
+    # Crear formularios para planillas
+    jugadores_formularios = {}
     for jugador in jugadores_equipo_1 | jugadores_equipo_2:
-        form = PlanillaForm(request.POST or None, prefix=f'jugador_{jugador.id}')
+        planilla_jugador = planillas_existentes.filter(id_jugador=jugador).first()
+        initial_data = {
+            'goles': planilla_jugador.goles if planilla_jugador else 0,
+            'num_camiseta': planilla_jugador.num_camiseta if planilla_jugador else '',
+            'participo': planilla_jugador.participo if planilla_jugador else False,
+            'tarjeta_amarilla': planilla_jugador.tarjeta_amarilla if planilla_jugador else False,
+            'tarjeta_roja': planilla_jugador.tarjeta_roja if planilla_jugador else False,
+            'figura': planilla_jugador.figura if planilla_jugador else False,
+        }
+        form = PlanillaForm(request.POST or None, initial=initial_data, prefix=f'jugador_{jugador.id}')
         jugadores_formularios[jugador] = form
 
-    if request.method == 'POST':
-        # Procesar el formulario de resultado manualmente
-        if 'resultado_submit' in request.POST and resultado_form.is_valid():
-            # Obtener los datos del formulario
-            goles_equipo_1 = resultado_form.cleaned_data.get('goles_equipo_1', 0)
-            goles_equipo_2 = resultado_form.cleaned_data.get('goles_equipo_2', 0)
-            penales = resultado_form.cleaned_data.get('penales', False)
-            penales_equipo_1 = resultado_form.cleaned_data.get('penales_equipo_1', 0)
-            penales_equipo_2 = resultado_form.cleaned_data.get('penales_equipo_2', 0)
+    # Crear formulario para resultado
+    initial_resultado = {
+        'goles_equipo_1': resultado.goles_equipo_1,
+        'goles_equipo_2': resultado.goles_equipo_2,
+        'penales': resultado.penales,
+        'penales_equipo_1': resultado.penales_equipo_1,
+        'penales_equipo_2': resultado.penales_equipo_2,
+    }
+    resultado_form = ResultadoForm(request.POST or None, initial=initial_resultado)
 
-            # Actualizar o crear el resultado
-            resultado.goles_equipo_1 = goles_equipo_1
-            resultado.goles_equipo_2 = goles_equipo_2
-            resultado.penales = penales
-            resultado.penales_equipo_1 = penales_equipo_1
-            resultado.penales_equipo_2 = penales_equipo_2
+    if request.method == 'POST':
+        # Procesar el formulario de resultado
+        if resultado_form.is_valid():
+            resultado_data = resultado_form.cleaned_data
+            # Actualizar el resultado con los datos del formulario
+            resultado.goles_equipo_1 = resultado_data.get('goles_equipo_1', 0)
+            resultado.goles_equipo_2 = resultado_data.get('goles_equipo_2', 0)
+            resultado.penales = resultado_data.get('penales', False)
+            if resultado.penales:
+                resultado.penales_equipo_1 = resultado_data.get('penales_equipo_1', 0)
+                resultado.penales_equipo_2 = resultado_data.get('penales_equipo_2', 0)
+            else:
+                resultado.penales_equipo_1 = 0
+                resultado.penales_equipo_2 = 0
             resultado.save()
 
         # Procesar las planillas
-        if 'planilla_submit' in request.POST:
-            for jugador, form in jugadores_formularios.items():
-                if form.is_valid():
-                    participo = form.cleaned_data.get('participo', False)
+        for jugador, form in jugadores_formularios.items():
+            if form.is_valid():
+                participo = form.cleaned_data.get('participo', False)
+                if participo:
+                    planilla, _ = Planilla.objects.update_or_create(
+                        id_partido=partido,
+                        id_jugador=jugador,
+                        defaults={
+                            'id_equipo': equipo_1 if jugador in jugadores_equipo_1 else equipo_2,
+                            'goles': form.cleaned_data.get('goles', 0),
+                            'num_camiseta': form.cleaned_data.get('num_camiseta', ''),
+                            'participo': participo,
+                            'tarjeta_amarilla': form.cleaned_data.get('tarjeta_amarilla', False),
+                            'tarjeta_roja': form.cleaned_data.get('tarjeta_roja', False),
+                            'figura': form.cleaned_data.get('figura', False),
+                        }
+                    )
 
-                    if participo:
-                        # Solo guardamos la planilla si el jugador participó
-                        Planilla.objects.create(
-                            id_partido=partido,
-                            id_equipo=equipo_1 if jugador in jugadores_equipo_1 else equipo_2,
-                            id_jugador=jugador,
-                            goles=form.cleaned_data['goles'] or 0,
-                            num_camiseta=form.cleaned_data['num_camiseta'] or 0,
-                            participo=participo,
-                            tarjeta_amarilla=form.cleaned_data['tarjeta_amarilla'],
-                            tarjeta_roja=form.cleaned_data['tarjeta_roja'],
-                            figura=form.cleaned_data['figura']
-                        )
-                    else:
-                        # Si el jugador no participó, no se guarda nada
-                        pass
-
-            # Redirigir a la vista de fechas
-            return redirect('fechas', id_temporada=temporada.id)
+        # Redirigir a la vista de fechas
+        return redirect('fechas', id_temporada=temporada.id)
 
     return render(request, 'administracion/gestionar_partido.html', {
         'temporada': temporada,
@@ -1336,6 +1354,114 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
         'jugadores_equipo_1': jugadores_equipo_1,
         'jugadores_equipo_2': jugadores_equipo_2,
     })
+
+
+
+
+
+
+
+
+
+# def gestionar_partido(request, id_temporada, id_fecha, id_partido):
+#     temporada = get_object_or_404(Temporada, pk=id_temporada)
+#     fecha = get_object_or_404(Fecha, pk=id_fecha)
+#     partido = get_object_or_404(Partido, pk=id_partido)
+
+#     # Obtener o inicializar el resultado del partido
+#     resultado, created = Resultado.objects.get_or_create(id_partido=partido)
+
+#     # Acceso a los equipos
+#     equipo_1 = partido.id_equipo_1
+#     equipo_2 = partido.id_equipo_2
+
+#     # Filtrar jugadores por equipos, temporada, torneo y grupo del partido
+#     jugadores_equipo_1 = Jugador.objects.filter(
+#         id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+#             id_temporada=temporada,
+#             id_torneo=partido.id_torneo,
+#             id_grupo=partido.id_grupo,
+#             id_equipo=equipo_1
+#         ).values('id_jugador')
+#     ).order_by('nombre_jugador')
+
+#     jugadores_equipo_2 = Jugador.objects.filter(
+#         id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+#             id_temporada=temporada,
+#             id_torneo=partido.id_torneo,
+#             id_grupo=partido.id_grupo,
+#             id_equipo=equipo_2
+#         ).values('id_jugador')
+#     ).order_by('nombre_jugador')
+
+#     # Formularios
+#     resultado_form = ResultadoForm(request.POST or None)
+#     jugadores_formularios = {}
+
+#     # Crear formularios de planilla para cada jugador
+#     for jugador in jugadores_equipo_1 | jugadores_equipo_2:
+#         form = PlanillaForm(request.POST or None, prefix=f'jugador_{jugador.id}')
+#         jugadores_formularios[jugador] = form
+
+#     if request.method == 'POST':
+#         # Procesar el formulario de resultado manualmente
+#         if 'resultado_submit' in request.POST and resultado_form.is_valid():
+#             # Obtener los datos del formulario
+#             goles_equipo_1 = resultado_form.cleaned_data.get('goles_equipo_1', 0)
+#             goles_equipo_2 = resultado_form.cleaned_data.get('goles_equipo_2', 0)
+#             penales = resultado_form.cleaned_data.get('penales', False)
+#             penales_equipo_1 = resultado_form.cleaned_data.get('penales_equipo_1', 0)
+#             penales_equipo_2 = resultado_form.cleaned_data.get('penales_equipo_2', 0)
+
+#             # Actualizar o crear el resultado
+#             resultado.goles_equipo_1 = goles_equipo_1
+#             resultado.goles_equipo_2 = goles_equipo_2
+#             resultado.penales = penales
+#             resultado.penales_equipo_1 = penales_equipo_1
+#             resultado.penales_equipo_2 = penales_equipo_2
+#             resultado.save()
+
+#         # Procesar las planillas
+#         if 'planilla_submit' in request.POST:
+#             for jugador, form in jugadores_formularios.items():
+#                 if form.is_valid():
+#                     participo = form.cleaned_data.get('participo', False)
+
+#                     if participo:
+#                         # Solo guardamos la planilla si el jugador participó
+#                         Planilla.objects.create(
+#                             id_partido=partido,
+#                             id_equipo=equipo_1 if jugador in jugadores_equipo_1 else equipo_2,
+#                             id_jugador=jugador,
+#                             goles=form.cleaned_data['goles'] or 0,
+#                             num_camiseta=form.cleaned_data['num_camiseta'] or 0,
+#                             participo=participo,
+#                             tarjeta_amarilla=form.cleaned_data['tarjeta_amarilla'],
+#                             tarjeta_roja=form.cleaned_data['tarjeta_roja'],
+#                             figura=form.cleaned_data['figura']
+#                         )
+#                     else:
+#                         # Si el jugador no participó, no se guarda nada
+#                         pass
+
+#             # Redirigir a la vista de fechas
+#             return redirect('fechas', id_temporada=temporada.id)
+
+#     return render(request, 'administracion/gestionar_partido.html', {
+#         'temporada': temporada,
+#         'fecha': fecha,
+#         'partido': partido,
+#         'equipo_1': equipo_1,
+#         'equipo_2': equipo_2,
+#         'resultado_form': resultado_form,
+#         'jugadores_formularios': jugadores_formularios,
+#         'jugadores_equipo_1': jugadores_equipo_1,
+#         'jugadores_equipo_2': jugadores_equipo_2,
+#     })
+
+
+
+
 
 
 
