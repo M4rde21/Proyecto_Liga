@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+</head>
+<body>
+    
+    <form class="form-inline my-2 my-lg-0 ml-auto" style="margin-right: 20px;">
+        <select id="buscar-entidades" class="form-control" style="width: 300px;"></select>
+    </form>
+
+
+
+
+
+
+
+
+    
+
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Inicializar Select2
+            $('#buscar-entidades').select2({
+                placeholder: 'Buscar jugadores o equipos...',
+                ajax: {
+                    url: "{% url 'buscar_entidades' %}",  // URL de la vista
+                    dataType: 'json',
+                    delay: 250,  // Retraso para optimizar la búsqueda
+                    data: function (params) {
+                        return {
+                            q: params.term  // Enviar término de búsqueda
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            // Redirigir al usuario al seleccionar un resultado
+            $('#buscar-entidades').on('select2:select', function (e) {
+                var data = e.params.data;
+                var id = data.id;
+                if (id.startsWith('jugador-')) {
+                    // Redirigir a la página del jugador
+                    var jugadorId = id.split('-')[1];
+                    window.location.href = `/jugadores/${jugadorId}/`;  // Ajusta la URL según tu configuración
+                } else if (id.startsWith('equipo-')) {
+                    // Redirigir a la página del equipo
+                    var equipoId = id.split('-')[1];
+                    window.location.href = `/equipos/${equipoId}/`;  // Ajusta la URL según tu configuración
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -11,7 +11,7 @@ class TorneoForm(forms.Form):
     nombre_torneo = forms.CharField(label="Nombre del torneo", max_length=100, required=True)
     id_categoria = forms.ModelChoiceField(label="Categoria", queryset=Categoria.objects.all())
     id_tipo_torneo = forms.ModelChoiceField(label="Tipo de Torneo", queryset=TipoTorneo.objects.all())
-    año = forms.IntegerField(label="Año", required=True, min_value=1900, max_value=2100)
+    año = forms.IntegerField(label="Año", required=True, min_value=2024, max_value=2100)
 
     
 
@@ -165,47 +165,7 @@ class ResultadoForm(forms.Form):
         initial=0, 
         required=False
     )
-    penales = forms.BooleanField(
-        label="Penales", 
-        required=False
-    )
-    penales_equipo_1 = forms.IntegerField(
-        label="Goles por penales del equipo 1", 
-        min_value=0, 
-        initial=0, 
-        required=False
-    )
-    penales_equipo_2 = forms.IntegerField(
-        label="Goles por penales del equipo 2", 
-        min_value=0, 
-        initial=0, 
-        required=False
-    )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        penales = cleaned_data.get('penales')
-        penales_equipo_1 = cleaned_data.get('penales_equipo_1', 0)
-        penales_equipo_2 = cleaned_data.get('penales_equipo_2', 0)
-
-        # Validar si se ingresaron goles por penales cuando 'Penales' no está seleccionado
-        if not penales and (penales_equipo_1 or penales_equipo_2):
-            raise forms.ValidationError(
-                "Si 'Penales' no está marcado, los goles por penales deben estar vacíos o en cero."
-            )
-
-        # Validar que ambos goles por penales estén presentes si 'Penales' está marcado
-        if penales:
-            if penales_equipo_1 is None or penales_equipo_2 is None:
-                raise forms.ValidationError(
-                    "Debe ingresar los goles por penales de ambos equipos si se selecciona 'Penales'."
-                )
-        else:
-            # Si no hay penales, asegúrate de que los valores sean 0
-            cleaned_data['penales_equipo_1'] = 0
-            cleaned_data['penales_equipo_2'] = 0
-
-        return cleaned_data
+    
 
     
 

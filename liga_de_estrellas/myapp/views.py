@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden,HttpRequest
 from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador, Fecha, Partido, Resultado, Planilla
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
@@ -12,13 +12,63 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.contrib import messages
 from django.forms import formset_factory, modelformset_factory
-
-
-
+from django.template.loader import get_template,render_to_string
+from xhtml2pdf import pisa
+from django.contrib.sites.shortcuts import get_current_site
+from django.conf import settings
+from django.db.models import Q
 
 def inicio(request):
     return render(request, 'usuario/inicio.html')
 
+def barra(request):
+    return render(request, 'usuario/barra.html')
+
+def buscar_entidades(request):
+    """Vista para realizar búsquedas dinámicas de jugadores y equipos."""
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':  # Verificar si es AJAX
+        termino = request.GET.get('q', '').strip()  # Remover espacios en blanco
+
+        if not termino:
+            return JsonResponse({"results": []})
+        # Buscar en Jugadores
+        jugadores = Jugador.objects.filter(
+            Q(nombre_jugador__icontains=termino) | 
+            Q(apellido_jugador__icontains=termino)|
+            Q(dni_jugador__icontains=termino)
+        ).filter(activo_jugador=True)
+
+        # Buscar en Equipos
+        equipos = Equipo.objects.filter(
+            Q(nombre_equipo__icontains=termino)
+        )
+
+        # Preparar resultados combinados
+        resultados = []
+
+        # Agregar jugadores al resultado
+        resultados.extend([
+            {
+                "id": f"jugador-{jugador.id}",  # Prefijo para diferenciar
+                "text": f"Jugador: {jugador.nombre_jugador} {jugador.apellido_jugador} (DNI: {jugador.dni_jugador})",
+                "image" : jugador.foto_jugador.url if jugador.foto_jugador else ""
+            }
+            for jugador in jugadores
+        ])
+
+        # Agregar equipos al resultado
+        resultados.extend([
+            {
+                "id": f"equipo-{equipo.id}",  # Prefijo para diferenciar
+                "text": f"Equipo: {equipo.nombre_equipo}",
+                "image": equipo.logo_equipo.url if equipo.logo_equipo else ""
+            }
+            for equipo in equipos
+        ])
+
+        return JsonResponse({"results": resultados})
+
+    return JsonResponse({"results": []})
 
 def login_view(request):
     return render(request, 'login.html')
@@ -48,6 +98,31 @@ def resumen(request):
 def lista_jugadores(request):
     jugadores = Jugador.objects.all()
     return render(request, 'administracion/jugadores.html', {'jugadores': jugadores})
+
+
+def buscar_jugadores(request):
+    """Vista para realizar búsquedas dinámicas de jugadores."""
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        termino = request.GET.get('q', '')  # Obtener el término de búsqueda
+        jugadores = Jugador.objects.filter(
+            Q(nombre_jugador__icontains=termino) |  # Buscar por nombre
+            Q(apellido_jugador__icontains=termino) |  # Buscar por apellido
+            Q(dni_jugador__icontains=termino)  # Buscar por DNI
+        ).filter(activo_jugador=True)  # Opcional: Filtrar solo jugadores activos
+        
+        # Preparar resultados para Select2
+        resultados = [
+            {
+                "id": jugador.id,
+                "text": f"{jugador.nombre_jugador} {jugador.apellido_jugador} (DNI: {jugador.dni_jugador})"
+            }
+            for jugador in jugadores
+        ]
+        return JsonResponse({"results": resultados})
+
+    return JsonResponse({"results": []})
+
+
 
 def crear_jugador(request):
     if request.method == 'GET':
@@ -145,21 +220,6 @@ def torneos_adm(request):
     })
 
 
-def crear_torneo(request):
-    form = TorneoForm(request.POST)
-    if form.is_valid():
-
-        torneo = Torneo()
-        torneo.nombre_torneo = form.cleaned_data['nombre_torneo']
-        torneo.id_categoria = form.cleaned_data["id_categoria"]
-        torneo.id_tipo_torneo = form.cleaned_data["id_tipo_torneo"]
-        torneo.año = form.cleaned_data["año"]
-        torneo.save()
-        return redirect('torneos_adm')
-        
-    else:
-        return render(request, 'administracion/crear_torneo.html', {'form': form})
-    return render(request, 'administracion/crear_torneo.html', {'form': form})
 
 
 
@@ -1177,69 +1237,6 @@ def crear_planilla(request, id_temporada, id_fecha, id_partido):
     })
 
 
-# def crear_planilla(request, id_temporada, id_fecha, id_partido):
-#     temporada = get_object_or_404(Temporada, pk=id_temporada)
-#     fecha = get_object_or_404(Fecha, pk=id_fecha)
-#     partido = get_object_or_404(Partido, pk=id_partido)
-#     torneo = temporada.id_torneo
-
-#     # Filtrar jugadores por equipos, temporada, torneo y grupo del partido
-#     jugadores = Jugador.objects.filter(
-#         id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
-#             id_temporada=temporada,
-#             id_torneo=torneo,
-#             id_grupo=partido.id_grupo,
-#         ).values('id_jugador')
-#     ).distinct()
-
-#     # Crear un formset para gestionar los formularios de cada jugador
-#     PlanillaFormSet = formset_factory(PlanillaForm, extra=0)
-#     initial_data = [{'participo': False} for jugador in jugadores]
-#     formset = PlanillaFormSet(initial=initial_data)
-
-#     # Emparejar jugadores con formularios
-#     jugadores_formularios = zip(jugadores, formset)
-
-#     if request.method == 'POST':
-#         formset = PlanillaFormSet(request.POST)
-
-#         if formset.is_valid():
-#             print("Formset válido, iniciando proceso de guardado...")
-#             try:
-#                 for form, jugador in zip(formset, jugadores):
-#                     if form.cleaned_data['participo']:
-#                         print(f"Guardando planilla para el jugador {jugador.nombre_jugador}")
-#                         Planilla.objects.create(
-#                             id_partido=partido,
-#                             id_equipo=TemporadaXTorneoXGrupoXEquipoXJugador.objects.get(
-#                                 id_jugador=jugador,
-#                                 id_temporada=temporada,
-#                                 id_torneo=torneo,
-#                                 id_grupo=partido.id_grupo
-#                             ).id_equipo,
-#                             id_jugador=jugador,
-#                             goles=form.cleaned_data['goles'],
-#                             num_camiseta=form.cleaned_data['num_camiseta'],
-#                             participo=form.cleaned_data['participo'],
-#                             tarjeta_amarilla=form.cleaned_data['tarjeta_amarilla'],
-#                             tarjeta_roja=form.cleaned_data['tarjeta_roja'],
-#                             figura=form.cleaned_data['figura']
-#                         )
-#                 print("Todos los datos se guardaron correctamente.")
-#                 return redirect('fechas', id_temporada=id_temporada)
-#             except Exception as e:
-#                 print(f"Error durante el guardado: {e}")
-#         else:
-#             print("El formset no es válido, errores:", formset.errors)
-
-#     return render(request, 'administracion/crear_planilla.html', {
-#         'temporada': temporada,
-#         'fecha': fecha,
-#         'partido': partido,
-#         'jugadores_formularios': jugadores_formularios,
-#         'formset_errors': formset.errors,
-#     })
-
 
 def gestionar_partido(request, id_temporada, id_fecha, id_partido):
     temporada = get_object_or_404(Temporada, pk=id_temporada)
@@ -1247,12 +1244,7 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
     partido = get_object_or_404(Partido, pk=id_partido)
 
     # Verificar si ya existe un resultado para el partido
-    resultado_existente = Resultado.objects.filter(id_partido=partido).first()
-    if resultado_existente:
-        resultado = resultado_existente
-    else:
-        resultado = Resultado(id_partido=partido)
-        resultado.save()
+    resultado = Resultado.objects.filter(id_partido=partido).first()
 
     # Acceso a los equipos
     equipo_1 = partido.id_equipo_1
@@ -1295,13 +1287,10 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
         form = PlanillaForm(request.POST or None, initial=initial_data, prefix=f'jugador_{jugador.id}')
         jugadores_formularios[jugador] = form
 
-    # Crear formulario para resultado
+    # Crear formulario para resultado si existe, de lo contrario, sin datos iniciales
     initial_resultado = {
-        'goles_equipo_1': resultado.goles_equipo_1,
-        'goles_equipo_2': resultado.goles_equipo_2,
-        'penales': resultado.penales,
-        'penales_equipo_1': resultado.penales_equipo_1,
-        'penales_equipo_2': resultado.penales_equipo_2,
+        'goles_equipo_1': resultado.goles_equipo_1 if resultado else None,
+        'goles_equipo_2': resultado.goles_equipo_2 if resultado else None,
     }
     resultado_form = ResultadoForm(request.POST or None, initial=initial_resultado)
 
@@ -1309,16 +1298,13 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
         # Procesar el formulario de resultado
         if resultado_form.is_valid():
             resultado_data = resultado_form.cleaned_data
+            # Crear o actualizar el resultado solo si el formulario es válido
+            if not resultado:
+                resultado = Resultado(id_partido=partido)
+
             # Actualizar el resultado con los datos del formulario
             resultado.goles_equipo_1 = resultado_data.get('goles_equipo_1', 0)
             resultado.goles_equipo_2 = resultado_data.get('goles_equipo_2', 0)
-            resultado.penales = resultado_data.get('penales', False)
-            if resultado.penales:
-                resultado.penales_equipo_1 = resultado_data.get('penales_equipo_1', 0)
-                resultado.penales_equipo_2 = resultado_data.get('penales_equipo_2', 0)
-            else:
-                resultado.penales_equipo_1 = 0
-                resultado.penales_equipo_2 = 0
             resultado.save()
 
         # Procesar las planillas
@@ -1359,6 +1345,129 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
 
 
 
+def generar_planilla_pdf(request, id_temporada, id_fecha, id_partido):
+    # Obtener temporada, fecha y partido
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    partido = get_object_or_404(Partido, pk=id_partido)
+
+    # Obtener equipos del partido
+    equipo_1 = partido.id_equipo_1
+    equipo_2 = partido.id_equipo_2
+
+    # Obtener jugadores de ambos equipos
+    jugadores_equipo_1 = Jugador.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=partido.id_torneo,
+            id_grupo=partido.id_grupo,
+            id_equipo=equipo_1
+        ).values('id_jugador')
+    ).order_by('apellido_jugador', 'nombre_jugador')
+
+    jugadores_equipo_2 = Jugador.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=partido.id_torneo,
+            id_grupo=partido.id_grupo,
+            id_equipo=equipo_2
+        ).values('id_jugador')
+    ).order_by('apellido_jugador', 'nombre_jugador')
+
+    # Datos para el contexto
+    context = {
+        'equipo_1': equipo_1.nombre_equipo,
+        'equipo_2': equipo_2.nombre_equipo,
+        'jugadores_equipo_1': jugadores_equipo_1,
+        'jugadores_equipo_2': jugadores_equipo_2,
+    }
+
+    # Cargar la plantilla HTML
+    template = get_template('administracion/planillapdf.html')
+    html = template.render(context)
+
+    # Configurar la respuesta HTTP como PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="planilla_partido_{id_partido}.pdf"'
+
+    # Crear el PDF
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('Hubo un error al generar el PDF', status=500)
+    return response
+ 
+
+
+
+
+def generar_pdf_partidosxfecha(request, id_temporada, id_fecha):
+    # Obtener los datos necesarios
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    fecha = get_object_or_404(Fecha, pk=id_fecha)
+    torneo = temporada.id_torneo
+
+    # Filtrar los grupos correspondientes
+    grupos = Grupo.objects.filter(
+        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=torneo
+        ).values('id_grupo')
+    ).distinct()
+
+    # Filtrar los partidos de la fecha
+    partidos = Partido.objects.filter(
+        id_fecha=fecha,
+        id_temporada=temporada,
+        id_grupo__in=grupos
+    ).select_related('id_equipo_1', 'id_equipo_2')
+
+    # Obtener el dominio completo para las URLs absolutas
+    current_site = get_current_site(request)
+    domain = f"{request.scheme}://{current_site.domain}"
+
+    # Procesar las URLs absolutas de los logos
+    partidos_con_logos = []
+    for partido in partidos:
+        logo_equipo_1 = (
+            f"{domain}{partido.id_equipo_1.logo_equipo.url}"
+            if partido.id_equipo_1.logo_equipo else f"{domain}{settings.MEDIA_URL}logos/logo_default.jpg"
+        )
+        logo_equipo_2 = (
+            f"{domain}{partido.id_equipo_2.logo_equipo.url}"
+            if partido.id_equipo_2.logo_equipo else f"{domain}{settings.MEDIA_URL}logos/logo_default.jpg"
+        )
+        partidos_con_logos.append({
+            'fecha_partido': partido.fecha_partido,
+            'hora_partido': partido.hora_partido,
+            'equipo_1': {
+                'nombre': partido.id_equipo_1.nombre_equipo,
+                'logo': logo_equipo_1,
+            },
+            'equipo_2': {
+                'nombre': partido.id_equipo_2.nombre_equipo,
+                'logo': logo_equipo_2,
+            },
+        })
+
+    # Contexto para el PDF
+    context = {
+        'fecha': fecha,
+        'temporada': temporada,
+        'torneo': torneo,
+        'partidos': partidos_con_logos,
+    }
+
+    # Renderizar la plantilla
+    template = get_template('administracion/fecha_pdf.html')
+    html = template.render(context)
+
+    # Crear el PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="partidos_fecha_{id_fecha}.pdf"'
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('Hubo un error al generar el PDF', status=500)
+    return response
 
 
 
@@ -1457,95 +1566,4 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
 #         'jugadores_formularios': jugadores_formularios,
 #         'jugadores_equipo_1': jugadores_equipo_1,
 #         'jugadores_equipo_2': jugadores_equipo_2,
-#     })
-
-
-
-
-
-
-
-
-
-
-
-# def gestion_partido(request, id_temporada, id_fecha, id_partido):
-#     # Obtener la temporada, fecha, y partido
-#     temporada = get_object_or_404(Temporada, pk=id_temporada)
-#     fecha = get_object_or_404(Fecha, pk=id_fecha)
-#     partido = get_object_or_404(Partido, pk=id_partido)
-#     torneo = temporada.id_torneo
-
-#     # Obtener los equipos del partido
-#     equipo_1 = partido.id_equipo_1
-#     equipo_2 = partido.id_equipo_2
-
-#     # Filtrar jugadores por equipos, temporada, torneo y grupo del partido
-#     jugadores = Jugador.objects.filter(
-#         id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
-#             id_temporada=temporada,
-#             id_torneo=torneo,
-#             id_grupo=partido.id_grupo,
-#         ).values('id_jugador')
-#     ).distinct()
-
-#     # Crear el formset para los formularios de Planilla
-#     PlanillaFormSet = formset_factory(PlanillaForm, extra=0)
-
-#     if request.method == 'POST':
-#         resultado_form = ResultadoForm(request.POST)
-#         formset = PlanillaFormSet(request.POST)
-
-#         if resultado_form.is_valid() and formset.is_valid():
-#             # Guardar el resultado
-#             resultado = Resultado(
-#                 id_partido=partido,
-#                 goles_equipo_1=resultado_form.cleaned_data['goles_equipo_1'],
-#                 goles_equipo_2=resultado_form.cleaned_data['goles_equipo_2'],
-#                 penales=resultado_form.cleaned_data['penales'],
-#                 penales_equipo_1=resultado_form.cleaned_data['penales_equipo_1'] if resultado_form.cleaned_data['penales'] else 0,
-#                 penales_equipo_2=resultado_form.cleaned_data['penales_equipo_2'] if resultado_form.cleaned_data['penales'] else 0
-#             )
-#             resultado.save()
-
-#             # Guardar las planillas para los jugadores
-#             for form, jugador in zip(formset, jugadores):
-#                 if form.cleaned_data.get('participo', False):
-#                     Planilla.objects.create(
-#                         id_partido=partido,
-#                         id_equipo=TemporadaXTorneoXGrupoXEquipoXJugador.objects.get(
-#                             id_jugador=jugador,
-#                             id_temporada=temporada,
-#                             id_torneo=torneo,
-#                             id_grupo=partido.id_grupo
-#                         ).id_equipo,
-#                         id_jugador=jugador,
-#                         goles=form.cleaned_data.get('goles', 0),
-#                         num_camiseta=form.cleaned_data.get('num_camiseta', ''),
-#                         participo=form.cleaned_data['participo'],
-#                         tarjeta_amarilla=form.cleaned_data.get('tarjeta_amarilla', False),
-#                         tarjeta_roja=form.cleaned_data.get('tarjeta_roja', False),
-#                         figura=form.cleaned_data.get('figura', False)
-#                     )
-
-#             return redirect('fechas', id_temporada=id_temporada)  # Redirigir a la vista de fechas
-#         else:
-#             # Depuración de errores
-#             print("Errores en resultado_form:", resultado_form.errors.as_json())
-#             print("Errores en formset:", formset.errors)
-#     else:
-#         # Inicializar los formularios en GET
-#         resultado_form = ResultadoForm()
-#         initial_data = [{'participo': False} for _ in jugadores]
-#         formset = PlanillaFormSet(initial=initial_data)
-
-#     return render(request, 'administracion/gestion_partido.html', {
-#         'temporada': temporada,
-#         'fecha': fecha,
-#         'partido': partido,
-#         'equipo_1': equipo_1,
-#         'equipo_2': equipo_2,
-#         'resultado_form': resultado_form,
-#         'formset': formset,
-#         'jugadores_formularios': zip(jugadores, formset),
 #     })

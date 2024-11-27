@@ -21,6 +21,11 @@
             <button>Editar Fecha</button>
         </a>
 
+        <a href="{% url 'fecha_pdf' temporada.id fecha.id %}">
+            <button>generar pdf</button>
+        </a>
+        
+
         <form method="POST" action="{% url 'delete_fecha' temporada.id fecha.id %}" style="display:inline;">
             {% csrf_token %}
             <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta fecha?');">Eliminar Fecha</button>
@@ -58,6 +63,11 @@
                         <a href="{% url 'edit_partido' temporada.id fecha.id partido.id %}">
                             <button>Editar partido</button>
                         </a>
+
+                        <a href="{% url 'planillapdf' temporada.id fecha.id partido.id %}">
+                            <button>Generar pdf</button>
+                        </a>
+
                         <form method="POST" action="{% url 'delete_partido' temporada.id fecha.id partido.id %}">
                             {% csrf_token %}
                             <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este partido?');">Eliminar Partido</button>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Partidos de la Fecha</title>
+    <style>
+       
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1, p {
+            text-align: center;
+        }
+
+        
+        .tabla-container {
+            width: 80%; 
+            margin: 0 auto; 
+        }
+
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        img {
+            width: 50px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .equipo h3 {
+            margin: 5px 0;
+        }
+
+        
+        .col-fecha {
+            width: 15%;
+        }
+
+        .col-hora {
+            width: 5%;
+        }
+
+        .col-resultado {
+            width: 10%;
+        }
+
+        .col-equipo {
+            width: 33%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Partidos de la Fecha</h1>
+    <p><strong>Temporada:</strong> {{ temporada.nombre_temporada }}</p>
+    <p><strong>Torneo:</strong> {{ torneo.nombre_torneo }}</p>
+    <p><strong>Fecha:</strong> {{ fecha.nombre_fecha }}</p>
+
+    <div class="tabla-container">
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-fecha">Fecha del Partido</th>
+                    <th class="col-hora">Hora</th>
+                    <th class="col-equipo">Equipo 1</th>
+                    <th class="col-resultado">Resultado</th>
+                    <th class="col-equipo">Equipo 2</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for partido in partidos %}
+                    <tr>
+                        <td class="col-fecha">{{ partido.fecha_partido }}</td>
+                        <td class="col-hora">{{ partido.hora_partido|time:"H:i" }}</td>
+                        <td class="col-equipo">
+                            <div class="equipo">
+                                <h3>{{ partido.equipo_1.nombre }}</h3>
+                                <img src="{{ partido.equipo_1.logo }}" alt="Logo de {{ partido.equipo_1.nombre }}">
+                            </div>
+                        </td>
+                        <td class="col-resultado">
+                            _
+                        <td class="col-equipo">
+                            <div class="equipo">
+                                <h3>{{ partido.equipo_2.nombre }}</h3>
+                                <img src="{{ partido.equipo_2.logo }}" alt="Logo de {{ partido.equipo_2.nombre }}">
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

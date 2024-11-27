@@ -189,9 +189,7 @@ class Resultado(models.Model):
     id_partido = models.ForeignKey(Partido, on_delete=models.CASCADE, db_column='id_partido', blank=True, null=True)
     goles_equipo_1 = models.IntegerField(blank=True, null=True)
     goles_equipo_2 = models.IntegerField(blank=True, null=True)
-    penales = models.BooleanField(blank=True, default=False)
-    penales_equipo_1 = models.IntegerField(blank=True, null=True)
-    penales_equipo_2 = models.IntegerField(blank=True, null=True)
+   
 
     class Meta:
         db_table = 'resultados'

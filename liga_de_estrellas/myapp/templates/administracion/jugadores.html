@@ -6,12 +6,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jugadores</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
     <h1>JUGADORES</h1>
     <a href="{% url 'crear_jugador' %}">
         <button>CREAR JUGADOR</button>
     </a>
+
+    <!-- Barra de búsqueda con Select2 -->
+    <div>
+        <label for="jugadores-select">Buscar jugadores:</label>
+        <select id="jugadores-select" style="width: 300px;" class="js-example-basic-single"></select>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -53,6 +61,33 @@
         </tbody>
     </table>
 
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#jugadores-select').select2({
+                placeholder: 'Buscar jugadores...',
+                ajax: {
+                    url: "{% url 'buscar_jugadores' %}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term // término de búsqueda
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1 // mínimo de caracteres para iniciar la búsqueda
+            });
+        });
+    </script>
 </body>
 </html>
 {% endblock %}

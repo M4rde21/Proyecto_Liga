@@ -79,3 +79,31 @@ body{
 }
 
 
+.select2-container .select2-dropdown {
+    background-color: #020202; /* Fondo blanco */
+    color: #f7f3f3; /* Texto negro */
+}
+
+.select2-container .select2-results__option {
+    color: #f7f5f5; /* Texto negro */
+}
+
+.select2-container .select2-results__option--highlighted[aria-selected] {
+    background-color: #007bff62; /* Fondo azul para el elemento resaltado */
+    color: #ffffff; /* Texto blanco para el resaltado */
+}
+
+.select2-container--default .select2-selection--single {
+    background-color: #000000; /* Fondo del cuadro de búsqueda */
+    color: #000000; /* Texto negro */
+    border: 1px solid #ced4da; /* Borde */
+    border-radius: 0.25rem; /* Bordes redondeados */
+}
+
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #6c757d; /* Placeholder con color gris */
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #000000; /* Texto negro para el seleccionado */
+}

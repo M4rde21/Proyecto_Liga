@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,9 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{% static 'styles/custom.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
+
 <body>
     <!-- Navegación -->
     <nav class="navbar navbar-expand-lg navbar-custom">
@@ -16,7 +19,7 @@
         <a class="navbar-brand" href="{% url 'inicio' %}">
             <img src="{% static 'images/Logo_Liga_B.png' %}" width="30" height="30" alt="Logo">
         </a>
-        
+
         <!-- Botones de navegación -->
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mr-auto">
@@ -28,20 +31,18 @@
                 </li>
             </ul>
 
-            <!-- Formulario de búsqueda -->
-            <form class="form-inline mx-auto my-2 my-lg-0 w-50">
-                <input class="form-control mr-sm-2 text-white bg-dark border-white w-50" type="search" placeholder="Buscar equipo o jugador" aria-label="Buscar">
-                <button class="btn btn-outline-light my-2 my-sm-0" type="submit">
-                    <i class="fas fa-search"></i>
-                </button>
+            <!-- BARA DE búsqueda -->
+            <form class="form-inline my-2 my-lg-0 ml-auto" style="margin-right: 20px; ">
+                <select id="buscar-entidades" class="form-control" style="width: 300px;"></select>
             </form>
+
 
             <!-- Contacto -->
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link font-weight-bold" href="{% url 'contacto' %}">CONTACTO</a>
                 </li>
-                
+
                 {% if user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link font-weight-bold" href="{% url 'logout' %}">LOGOUT</a>
@@ -52,9 +53,9 @@
                     <a class="nav-link font-weight-bold" href="{% url 'login' %}">LOGIN</a>
                 </li>
                 {% endif %}
-                
-                
-                
+
+
+
             </ul>
         </div>
     </nav>
@@ -69,5 +70,72 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Inicializar Select2
+            $('#buscar-entidades').select2({
+                placeholder: 'Buscar jugadores o equipos...',
+                ajax: {
+                    url: "{% url 'buscar_entidades' %}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term  // Enviar término de búsqueda
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: formatResult, // Personalizar los resultados
+                templateSelection: formatSelection // Personalizar la selección
+            });
+
+            // Función para personalizar los resultados
+            function formatResult(result) {
+                if (!result.image) {
+                    return $('<span>' + result.text + '</span>');
+                }
+                var $result = $(`
+            <div style="display: flex; align-items: center;">
+                <img src="${result.image}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
+                <span>${result.text}</span>
+            </div>
+        `);
+                return $result;
+            }
+
+            // Función para personalizar la selección en el cuadro (opcional)
+            function formatSelection(result) {
+                if (!result.image) {
+                    return result.text;
+                }
+                return $(`<span><img src="${result.image}" style="width: 20px; height: 20px; border-radius: 50%; margin-right: 5px;"> ${result.text}</span>`);
+            }
+
+            // Redirigir al usuario al seleccionar un resultado
+            $('#buscar-entidades').on('select2:select', function (e) {
+                var data = e.params.data;
+                var id = data.id;
+                if (id.startsWith('jugador-')) {
+                    var jugadorId = id.split('-')[1];
+                    window.location.href = `/jugadores/${jugadorId}/`;
+                } else if (id.startsWith('equipo-')) {
+                    var equipoId = id.split('-')[1];
+                    window.location.href = `/equipos/${equipoId}/`;
+                }
+            });
+        });
+
+    </script>
 </body>
+
 </html>

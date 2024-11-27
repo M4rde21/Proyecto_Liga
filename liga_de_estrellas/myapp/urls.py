@@ -5,10 +5,13 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.inicio, name='inicio'),
+    path('barra/', views.barra, name='barra'),
+    path('buscar-entidades/', views.buscar_entidades, name='buscar_entidades'),
     path('login/', views.login, name='login'),
     path('accounts/logout/', views.signout, name='logout'),
     path('resumen/', views.resumen, name='resumen'),
     path('jugadores/', views.lista_jugadores, name='jugadores'),
+    path('buscar-jugadores/', views.buscar_jugadores, name='buscar_jugadores'),
     path('jugadores/crear/', views.crear_jugador, name='crear_jugador'),
     path('jugadores/<int:id_jugador>/', views.editar_jugador, name='editar_jugador'),
     path('jugadores/<int:id_jugador>/eliminar', views.eliminar_jugador, name='eliminar_jugador'),
@@ -58,13 +61,17 @@ urlpatterns = [
     path('fechas/<int:id_temporada>/crear/', views.crear_fecha, name='crear_fecha'),
     path('fechas/<int:id_temporada>/editar/<int:id_fecha>/', views.edit_fecha, name='edit_fecha'),
     path('fechas/<int:id_temporada>/<int:id_fecha>/delete/', views.delete_fecha, name='delete_fecha'),
-    # path('partidos/<int:id_temporada>/<int:id_fecha>', views.partidos, name="partidos"),
+    path('fechas/<int:id_temporada>/<int:id_fecha>/generar_pdf/', views.generar_pdf_partidosxfecha, name='fecha_pdf'),
+
+    
     path('partidos/<int:id_temporada>/<int:id_fecha>/crear/', views.crear_partido, name="crear_partido"),
     path('partidos/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/editar/', views.edit_partido, name='edit_partido'),
     path('partidos/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/eliminar/', views.delete_partido, name='delete_partido'),
+    path('partidos/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/generar_pdf/', views.generar_planilla_pdf, name='planillapdf'),
     path('resultado/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/crear/', views.crear_resultado, name="crear_resultado"),
     path('planilla/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/crear/', views.crear_planilla, name="crear_planilla"),
     path('gestionar_partido/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/', views.gestionar_partido, name='gestionar_partido'),
+    
 
 
 ]
