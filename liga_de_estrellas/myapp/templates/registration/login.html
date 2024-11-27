@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="p-4" style="background-color: black; color: white; border: 2px solid white; border-radius: 10px;">
+
+                <div class="text-center mt-3">
+                    <img src="/static/images/Logo_Liga_B.png" alt="Imagen de Login" style="width: 200px; height: 200px;">
+                </div>
+
+                <div class="text-center my-4">
+                    <h6 class="text-white">Inicie sesión para continuar</h6>
+                </div>
+
+                {% if error %}
+                    <div class="alert alert-danger text-center" role="alert">
+                        {{ error }}
+                    </div>
+                {% endif %}
+
+                <form action="{% url 'login' %}" method="POST">
+                    {% csrf_token %}
+
+                    <!-- Campo de usuario -->
+                    <div class="mb-3">
+                        <input type="text" class="form-control {% if form.username.errors %}is-invalid{% endif %}" " id="username" name="username" placeholder="Nombre de usuario" required>
+                    </div>
+
+                    <!-- Campo de contraseña -->
+                    <div class="mb-3">
+                        <input type="password" class="form-control {% if form.password.errors %}is-invalid{% endif %}" id="password" name="password" placeholder="Contraseña" required>
+                    </div>
+
+                    <div class="d-grid gap-2 text-center">
+                        <button type="submit" class="btn btn-light" style="width: 50%; border-radius: 15px;">INGRESAR</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,44 +1,409 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle del Partido</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body style="background-color: #000; color: #fff;">
+{% extends 'base.html' %}
+{% load static %}
 
-    <div class="container mt-5">
-        <div class="card" style="background-color: #111; border: 1px solid #fff;">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">Detalle del Partido</h3>
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Caja izquierda más grande -->
+        <div class="col-md-8">
+            <div class="card mb-4" style="background-color: #000000; border: 1px solid #fff;">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Resumen</h3>
 
-                <div class="row mb-3">
-                    <div class="col-md-6 text-center">
-                        <h5>{{ partido.id_equipo_1.nombre_equipo }}</h5>
+                    <div class="text-center" style="font-size: 1.3rem; font-weight: bold;">
+                        <p>{{ partido.fecha_partido|date:"d/m/Y" }}</p>
+                        <p>{{ partido.hora_partido|time:"H:i" }}</p>
+                        <p>Predio: {{ partido.id_predio.nombre_predio }}</p>
                     </div>
-                    <div class="col-md-6 text-center">
-                        <h5>{{ partido.id_equipo_2.nombre_equipo }}</h5>
+
+                    <div class="row mb-3 align-items-center">
+                        <!-- Equipo 1 -->
+                        <div class="col-md-5 text-center">
+                            <div style="width: 100px; height: 100px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                {% if partido.id_equipo_1.logo_equipo %}
+                                    <img src="{{ partido.id_equipo_1.logo_equipo.url }}" 
+                                        alt="{{ partido.id_equipo_1.nombre_equipo }}" 
+                                        style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                {% else %}
+                                    <img src="{% static 'img/placeholder-logo.png' %}" 
+                                        alt="Sin Logo" 
+                                        style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                {% endif %}
+                            </div>
+                            <h5 style="margin-top: 10px;">{{ partido.id_equipo_1.nombre_equipo }}</h5>
+                        </div>
+                    
+                        <!-- Resultado Real -->
+                        <div class="col-md-2 text-center">
+                            {% if resultado %}
+                                <h2 style="font-size: 2.5rem; font-weight: bold;">
+                                    {{ resultado.goles_equipo_1 }} - {{ resultado.goles_equipo_2 }}
+                                </h2>
+                            {% else %}
+                                <h2 style="font-size: 2.5rem; font-weight: bold;"> - </h2>
+                            {% endif %}
+                        </div>
+                    
+                        <!-- Equipo 2 -->
+                        <div class="col-md-5 text-center">
+                            <div style="width: 100px; height: 100px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                {% if partido.id_equipo_2.logo_equipo %}
+                                    <img src="{{ partido.id_equipo_2.logo_equipo.url }}" 
+                                        alt="{{ partido.id_equipo_2.nombre_equipo }}" 
+                                        style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                {% else %}
+                                    <img src="{% static 'img/placeholder-logo.png' %}" 
+                                        alt="Sin Logo" 
+                                        style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                {% endif %}
+                            </div>
+                            <h5 style="margin-top: 10px;">{{ partido.id_equipo_2.nombre_equipo }}</h5>
+                        </div>
                     </div>
-                </div>
+                    
+                    <!-- Figura del Partido -->
+                    <div class="row mt-4">
+                        <h4 class="card-title text-center w-100">Figura del Partido</h4>
+                        <div class="col-12 d-flex justify-content-center">
+                            <div class="d-flex flex-column align-items-center">
+                                {% if figura_equipo_1_jugador %}
+                                    <img src="{{ figura_equipo_1_jugador.foto_jugador.url }}" 
+                                        alt="{{ figura_equipo_1_jugador.nombre_jugador }}" 
+                                        style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 10px;">
+                                    <p style="font-size: 1.2rem; font-weight: bold;">
+                                        {{ figura_equipo_1_jugador.nombre_jugador }} {{ figura_equipo_1_jugador.apellido_jugador }}
+                                    </p>
+                                {% elif figura_equipo_2_jugador %}
+                                    <img src="{{ figura_equipo_2_jugador.foto_jugador.url }}" 
+                                        alt="{{ figura_equipo_2_jugador.nombre_jugador }}" 
+                                        style="width: 8px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 10px;">
+                                    <p style="font-size: 1.2rem; font-weight: bold;">
+                                        {{ figura_equipo_2_jugador.nombre_jugador }} {{ figura_equipo_2_jugador.apellido_jugador }}
+                                    </p>
+                                {% else %}
+                                    <p style="font-size: 1.2rem; font-weight: bold;">Sin Figura</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="text-center mb-3">
-                    <h4>Resultado: {{ partido.resultado }}</h4>
-                </div>
-
-                <div class="text-center">
-                    <p>Fecha: {{ partido.fecha_partido|date:"d/m/Y" }}</p>
-                    <p>Hora: {{ partido.hora_partido|time:"H:i" }}</p>
-                </div>
-
-                <div class="text-center mt-4">
-                    <a href="{% url 'temporada_detalles' partido.id_temporada.id_temporada %}" class="btn btn-light">
-                        Volver a la Temporada
-                    </a>
+                    <!-- Jugadores Participantes -->
+                    <div class="row mt-4">
+                        {% if planilla_equipo_1|length > 0 or planilla_equipo_2|length > 0 %}
+                            <!-- Jugadores del Equipo 1 -->
+                            <div class="col-md-6 d-flex flex-column align-items-start">
+                                <h4 class="text-center w-100" style="color: #fff;">{{ partido.id_equipo_1.nombre_equipo }}</h4>
+                                <ul class="list-group w-100">
+                                    {% for planilla in planilla_equipo_1 %}
+                                        <li class="list-group-item d-flex justify-content-start align-items-center" style="background-color: #000000; color: #fff;">
+                                            <div class="mr-3">
+                                                {% if planilla.id_jugador.foto_jugador %}
+                                                    <img src="{{ planilla.id_jugador.foto_jugador.url }}" alt="{{ planilla.id_jugador.nombre_jugador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                {% else %}
+                                                    <img src="{% static 'images/default-avatar.png' %}" alt="Foto no disponible" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                {% endif %}
+                                            </div>
+                                            {{ planilla.id_jugador.nombre_jugador }} {{ planilla.id_jugador.apellido_jugador }}
+                                            <!-- Mostrar imágenes de tarjetas amarillas, rojas y goles a la derecha -->
+                                            <div class="ml-auto d-flex justify-content-end">
+                                                <!-- Mostrar tarjetas amarillas -->
+                                                {% if planilla.tarjeta_amarilla %}
+                                                    <img src="{% static 'images/TARJETAS_AMARILLAS.PNG' %}" alt="Tarjeta Amarilla" style="width: 20px; height: 20px; margin-left: 5px;">
+                                                {% endif %}
+                                                <!-- Mostrar tarjetas rojas -->
+                                                {% if planilla.tarjeta_roja %}
+                                                    <img src="{% static 'images/TARJETAS_ROJAS.PNG' %}" alt="Tarjeta Roja" style="width: 20px; height: 20px; margin-left: 5px;">
+                                                {% endif %}
+                                                <!-- Mostrar goles -->
+                                                {% if planilla.goles %}
+                                                    <img src="{% static 'images/Goles_convertidos.png' %}" alt="Gol" style="width: 20px; height: 20px; margin-left: 5px;">
+                                                    <strong style="margin-left: 5px;">{{ planilla.goles }}</strong>
+                                                {% endif %}
+                                            </div>
+                                        </li>
+                                    {% empty %}
+                                        <li class="list-group-item" style="background-color: #000000; color: #fff;">
+                                            Sin jugadores registrados
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                    
+                            <!-- Jugadores del Equipo 2 -->
+                            <div class="col-md-6 d-flex flex-column align-items-end">
+                                <h4 class="text-center w-100" style="color: #fff;">{{ partido.id_equipo_2.nombre_equipo }}</h4>
+                                <ul class="list-group w-100">
+                                    {% for planilla in planilla_equipo_2 %}
+                                        <li class="list-group-item d-flex justify-content-end align-items-center" style="background-color: #000000; color: #fff;">
+                                            <!-- Mostrar imágenes de goles y tarjetas amarillas, rojas a la izquierda -->
+                                            <div class="mr-auto d-flex justify-content-start">
+                                                <!-- Mostrar goles -->
+                                                {% if planilla.goles %}
+                                                    <strong style="margin-right: 5px;">{{ planilla.goles }}</strong>
+                                                    <img src="{% static 'images/Goles_convertidos.png' %}" alt="Gol" style="width: 20px; height: 20px; margin-right: 5px;">
+                                                {% endif %}
+                                                <!-- Mostrar tarjetas amarillas -->
+                                                {% if planilla.tarjeta_amarilla %}
+                                                    <img src="{% static 'images/TARJETAS_AMARILLAS.PNG' %}" alt="Tarjeta Amarilla" style="width: 20px; height: 20px; margin-right: 5px;">
+                                                {% endif %}
+                                                <!-- Mostrar tarjetas rojas -->
+                                                {% if planilla.tarjeta_roja %}
+                                                    <img src="{% static 'images/TARJETAS_ROJAS.PNG' %}" alt="Tarjeta Roja" style="width: 20px; height: 20px; margin-right: 5px;">
+                                                {% endif %}
+                                            </div>
+                                            {{ planilla.id_jugador.nombre_jugador }} {{ planilla.id_jugador.apellido_jugador }}
+                                            <div class="ml-3">
+                                                {% if planilla.id_jugador.foto_jugador %}
+                                                    <img src="{{ planilla.id_jugador.foto_jugador.url }}" alt="{{ planilla.id_jugador.nombre_jugador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                {% else %}
+                                                    <img src="{% static 'images/default-avatar.png' %}" alt="Foto no disponible" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                {% endif %}
+                                            </div>
+                                        </li>
+                                    {% empty %}
+                                        <li class="list-group-item" style="background-color: #000000; color: #fff;">
+                                            Sin jugadores registrados
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
                 </div>
             </div>
         </div>
+
+        <!-- Caja derecha más pequeña -->
+        <div class="col-md-4">
+            <div class="card mb-4" style="background-color: #000000; border: 1px solid #fff;">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-3" style="color: #fff;">
+                        Enfrentamientos 
+                    </h3>
+                    <canvas id="grafico-victorias" width="400" height="200"></canvas>
+                    <h6 class="card-title text-center">Últimos enfrentamientos</h6>
+                    <div class="table-responsive" style="margin: 0; display: flex; justify-content: center;">
+                        {% if enfrentamientos_partidos %}
+                            <table class="table table-dark" style="margin: 0; border-collapse: collapse; width: 100%; text-align: center;">
+                                <tbody>
+                                    {% for partido in enfrentamientos_partidos %}
+                                        <tr>
+                                            <!-- Columna del Equipo 1 -->
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-end; align-items: center;"> 
+                                                    {{ partido.equipo_1 }}
+                                                    {% if partido.equipo_1_logo %}
+                                                        <img src="{{ partido.equipo_1_logo }}" alt="{{ partido.equipo_1 }}" style="width: 20px; height: 20px; margin-left: 5px;">
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+            
+                                            <!-- Columna con el resultado -->
+                                            <td style="font-size: 0.8rem; white-space: nowrap; background-color: #000; color: white; font-weight: bold;"> 
+                                                <div style="display: flex; justify-content: center;">
+                                                    {{ partido.goles_equipo_1 }} - {{ partido.goles_equipo_2 }}
+                                                </div>
+                                                {% if partido.penales %}
+                                                    <div style="font-size: 0.7rem; color: #f5f5f5;">
+                                                        (Penales: {{ partido.penales_equipo_1 }} - {{ partido.penales_equipo_2 }})
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+            
+                                            <!-- Columna del Equipo 2 -->
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                                                    {% if partido.equipo_2_logo %}
+                                                        <img src="{{ partido.equipo_2_logo }}" alt="{{ partido.equipo_2 }}" style="width: 20px; height: 20px; margin-right: 5px;">
+                                                    {% endif %}
+                                                    {{ partido.equipo_2 }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="card-text text-center">No hay partidos con resultados disponibles para esta temporada.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Sección del historial de los últimos 5 partidos del equipo 1 -->
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body" style="padding: 15px;">
+                    <h4 class="card-title text-center">Últimos 5 Partidos de {{ partido.id_equipo_1.nombre_equipo }}</h4>
+                    <div class="table-responsive" style="margin: 0; display: flex; justify-content: center;">
+                        {% if historial_equipo_1 %}
+                            <table class="table table-dark" style="margin: 0; border-collapse: collapse; width: 100%; text-align: center;">
+                                <tbody>
+                                    {% for partido in historial_equipo_1 %}
+                                        <tr>
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-end; align-items: center;">
+                                                    {{ partido.equipo_1 }}
+                                                    {% if partido.equipo_1_logo %}
+                                                        <img src="{{ partido.equipo_1_logo }}" alt="{{ partido.equipo_1 }}" style="width: 20px; height: 20px; margin-left: 5px;">
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td style="font-size: 0.8rem; white-space: nowrap; background-color: #000; color: white; font-weight: bold;">
+                                                <div style="display: flex; justify-content: center;">
+                                                    {{ partido.goles_equipo_1 }} - {{ partido.goles_equipo_2 }}
+                                                </div>
+                                                {% if partido.penales %}
+                                                    <div style="font-size: 0.7rem; color: #f5f5f5;">
+                                                        (Penales: {{ partido.penales_equipo_1 }} - {{ partido.penales_equipo_2 }})
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                                                    {% if partido.equipo_2_logo %}
+                                                        <img src="{{ partido.equipo_2_logo }}" alt="{{ partido.equipo_2 }}" style="width: 20px; height: 20px; margin-right: 5px;">
+                                                    {% endif %}
+                                                    {{ partido.equipo_2 }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="card-text text-center">No hay partidos disponibles para este equipo.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección del historial de los últimos 5 partidos del equipo 2 -->
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body" style="padding: 15px;">
+                    <h4 class="card-title text-center">Últimos 5 Partidos de {{ partido.id_equipo_2.nombre_equipo }}</h4>
+                    <div class="table-responsive" style="margin: 0; display: flex; justify-content: center;">
+                        {% if historial_equipo_2 %}
+                            <table class="table table-dark" style="margin: 0; border-collapse: collapse; width: 100%; text-align: center;">
+                                <tbody>
+                                    {% for partido in historial_equipo_2 %}
+                                        <tr>
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-end; align-items: center;">
+                                                    {{ partido.equipo_1 }}
+                                                    {% if partido.equipo_1_logo %}
+                                                        <img src="{{ partido.equipo_1_logo }}" alt="{{ partido.equipo_1 }}" style="width: 20px; height: 20px; margin-left: 5px;">
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td style="font-size: 0.8rem; white-space: nowrap; background-color: #000; color: white; font-weight: bold;">
+                                                <div style="display: flex; justify-content: center;">
+                                                    {{ partido.goles_equipo_1 }} - {{ partido.goles_equipo_2 }}
+                                                </div>
+                                                {% if partido.penales %}
+                                                    <div style="font-size: 0.7rem; color: #f5f5f5;">
+                                                        (Penales: {{ partido.penales_equipo_1 }} - {{ partido.penales_equipo_2 }})
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                                                    {% if partido.equipo_2_logo %}
+                                                        <img src="{{ partido.equipo_2_logo }}" alt="{{ partido.equipo_2 }}" style="width: 20px; height: 20px; margin-right: 5px;">
+                                                    {% endif %}
+                                                    {{ partido.equipo_2 }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="card-text text-center">No hay partidos disponibles para este equipo.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        
+        
+        
+        
+        
     </div>
 
-</body>
-</html>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    var ctxVictorias = document.getElementById('grafico-victorias').getContext('2d');
+
+    // Nombres de los equipos pasados desde la vista
+    var equipo_1_nombre = "{{ partido.id_equipo_1.nombre_equipo }}";  // Nombre del equipo 1
+    var equipo_2_nombre = "{{ partido.id_equipo_2.nombre_equipo }}";  // Nombre del equipo 2
+
+    // Victorias para cada equipo
+    var victorias_equipo_1 = {{ victorias_equipo_1|default:0 }};  // Victorias del equipo 1
+    var victorias_equipo_2 = {{ victorias_equipo_2|default:0 }};  // Victorias del equipo 2
+
+    // Definir los datos de Victorias con conjuntos separados
+    var dataVictorias = {
+        labels: ['Victorias'],  // Categoría general
+        datasets: [
+            {
+                label: equipo_1_nombre,  // Nombre del equipo 1 como etiqueta
+                data: [victorias_equipo_1],  // Datos para el equipo 1
+                backgroundColor: '#0033cc',  // Color del equipo 1
+                borderColor: '#0033cc',  // Borde del equipo 1
+                borderWidth: 1
+            },
+            {
+                label: equipo_2_nombre,  // Nombre del equipo 2 como etiqueta
+                data: [victorias_equipo_2],  // Datos para el equipo 2
+                backgroundColor: '#ff0000',  // Color del equipo 2
+                borderColor: '#ff0000',  // Borde del equipo 2
+                borderWidth: 1
+            }
+        ]
+    };
+
+    // Gráfico de Victorias
+    var chartVictorias = new Chart(ctxVictorias, {
+        type: 'bar',  // Tipo de gráfico: barras
+        data: dataVictorias,
+        options: {
+            responsive: true,
+            indexAxis: 'y',  // Barra horizontal
+            scales: {
+                x: {
+                    beginAtZero: true,  // Iniciar eje x desde cero
+                    max: Math.max(victorias_equipo_1, victorias_equipo_2) + 1,  // Asegurar que el eje cubra el rango de valores
+                    title: {
+                        display: true,
+                        text: 'Victorias'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Total'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    enabled: true  // Activar tooltips
+                }
+            }
+        }
+    });
+</script>
+
+
+
+{% endblock %}

@@ -30,13 +30,16 @@
                             </div>
                         </div>
                         <!-- Botón de ingreso alineado a la derecha con texto en negrita -->
-                        <a href="{% url 'temporada_detalles' temporada.id_temporada %}" class="btn btn-light" style="font-weight: bold;">Ingresar</a>
+                        <a href="{% url 'temporada_detalles' id_torneo=temporada.id_torneo.id id_temporada=temporada.id %}" class="btn btn-light" style="font-weight: bold;">Ingresar</a>
                     </div>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p class="text-white">No hay temporadas disponibles para este torneo.</p>
+    <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+        <p class="text-white text-center">No hay temporadas disponibles para este torneo.</p>
+    </div>
     {% endif %}
 </div>
+
 {% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'administracion/base2.html' %}
+{% block content %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Reglamento</title>
+</head>
+<body>
+    <h1>CREAR NUEVO REGLAMENTO</h1>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form action="{% url 'reglamentos_crear' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="submit">CONFIRMAR</button>
+    </form>
+    <a href="{% url 'reglamentos_lista' %}">
+        <button>VOLVER</button>
+    </a>
+</body>
+</html>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        <h1 class="text-center mb-4">ASIGNAR PREMIO INDIVIDUAL</h1>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3 text-center">
+                <label for="premio_individual" class="form-label" style="display: block; margin-bottom: 10px">Seleccione un Premio:</label>
+                <select name="premio_individual" id="premio_individual" class="form-select" required 
+                        style="width: 100%; background-color: black; color: white; border: 2px solid white; border-radius: 5px; padding: 10px;">
+                    <option value="" disabled selected>Seleccione un premio...</option>
+                    {% for premio in premios_disponibles %}
+                        <option value="{{ premio.id }}" style="background-color: black; color: white;">
+                            {{ premio.nombre_premio_individual }}
+                        </option>
+                    {% empty %}
+                        <option value="" disabled>No hay premios disponibles</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success">CONFIRMAR</button>
+                <a href="{% url 'equipo_importado' temporada.id zona.id equipo.id %}" class="btn btn-danger" >CANCELAR</a>
+            </div>
+        </form>
+        {% if messages %}
+            <ul class="mt-3 text-center" style="list-style: none; padding: 0;">
+                {% for message in messages %}
+                    <li style="color: #f0ad4e;">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        <h1 class="text-center mb-4">IMPORTAR EQUIPO A: {{ zona.nombre_grupo }}</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3 text-center">
+                <label for="equipo" class="form-label" style="display: block; margin-bottom: 10px;">Seleccione un equipo:</label>
+                <select name="equipo" id="equipo" class="form-select" 
+                        style="width: 100%; background-color: black; color: white; border: 2px solid white; border-radius: 5px; padding: 10px;">
+                        <option value="" disabled selected>Seleccione un equipo...</option>
+                    {% for equipo in equipos %}
+                        <option value="{{ equipo.id }}" style="background-color: black; color: white;">{{ equipo.nombre_equipo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success">IMPORTAR EQUIPO</button>
+                <a href="{% url 'zonas' temporada.id %}" class="btn btn-danger">VOLVER</a>
+            </div>
+        </form>
+        {% if messages %}
+            <ul class="mt-3 text-center" style="list-style: none; padding: 0;">
+                {% for message in messages %}
+                    <li style="color: #f0ad4e;">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

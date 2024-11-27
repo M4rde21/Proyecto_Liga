@@ -1,0 +1,63 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<style>
+    body {
+    overflow-x: hidden;
+}
+</style>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container">
+    <form method="post" action="{% url 'crear_temporada' %}" class="w-100" style="max-width: 100%; margin: 20px auto; background-color: black; border: 2px solid white; border-radius: 5px; padding: 20px;">
+        {% csrf_token %}
+        <h1 style="color: white; text-transform: uppercase; text-align: center; margin-bottom: 50px;">Crear Temporada</h1>
+        
+        <div class="row">
+            <!-- Campo Nombre de la Temporada -->
+            <div class="form-group col-md-6">
+                <label for="nombre_temporada" style="color: white; text-align: center; display: block;">Nombre de la temporada:</label>
+                <input type="text" id="nombre_temporada" name="nombre_temporada" class="form-control" maxlength="100" required style="background-color: black; color: white; border: 1px solid white;">
+            </div>
+
+            <!-- Campo Torneo -->
+            <div class="form-group col-md-6">
+                <label for="id_torneo" style="color: white; text-align: center; display: block;">Torneo:</label>
+                <select id="id_torneo" name="id_torneo" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                    {% for torneo in form.fields.id_torneo.queryset %}
+                        <option value="{{ torneo.id }}">
+                            {{ torneo.nombre_torneo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Campo Fecha de Inicio -->
+            <div class="form-group col-md-6">
+                <label for="fecha_inicio" style="color: white; text-align: center; display: block;">Fecha de Inicio:</label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+            </div>
+
+            <!-- Campo Fecha Final -->
+            <div class="form-group col-md-6">
+                <label for="fecha_final" style="color: white; text-align: center; display: block;">Fecha Final:</label>
+                <input type="date" id="fecha_final" name="fecha_final" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                Guardar
+            </button>
+            <a href="{% url 'temporadas_adm' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

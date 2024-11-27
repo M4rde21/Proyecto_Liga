@@ -1,0 +1,42 @@
+<div class="partidos">
+    {% if fechas_y_partidos %}
+        <ul class="list-group text-center" id="listaPartidos">
+            {% for fecha, partidos in fechas_y_partidos %}
+                <li class="list-group-item fecha-item" data-fecha="{{ fecha.nombre_fecha }}">
+                    <ul class="list-group mt-2">
+                        {% for partido in partidos %}
+                        <li class="list-group-item">
+                            <a class="partido-link" href="{% url 'detalle_partido' partido.id %}">
+                                <div class="row">
+                                    <!-- Fecha -->
+                                    <div class="col-md-2">{{ partido.fecha|date:"d/m/Y" }}</div>
+                                    <!-- Hora -->
+                                    <div class="col-md-2">{{ partido.hora|time:"H:i" }}</div>
+                                    <!-- Equipo 1 -->
+                                    <div class="col-md-2 d-flex justify-content-end">
+                                        <span>{{ partido.equipo_1.nombre_equipo }}</span>
+                                        {% if partido.equipo_1.logo_equipo %}
+                                            <img src="{{ partido.equipo_1.logo_equipo.url }}" alt="{{ partido.equipo_1.nombre_equipo }}" style="max-height: 20px; margin-right: 5px; margin-left: 5px;">
+                                        {% endif %}
+                                    </div>
+                                    <!-- Resultado -->
+                                    <div class="col-md-2 text-center">{{ partido.resultado }}</div>
+                                    <!-- Equipo 2 -->
+                                    <div class="col-md-2 d-flex justify-content-start">
+                                        {% if partido.equipo_2.logo_equipo %}
+                                            <img src="{{ partido.equipo_2.logo_equipo.url }}" alt="{{ partido.equipo_2.nombre_equipo }}" style="max-height: 20px; margin-left: 5px; margin-right: 5px;">
+                                        {% endif %}
+                                        <span>{{ partido.equipo_2.nombre_equipo }}</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-center">No hay partidos disponibles esta temporada.</p>
+    {% endif %}
+</div>

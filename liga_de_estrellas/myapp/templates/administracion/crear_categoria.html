@@ -1,0 +1,39 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container">
+    <form method="post" action="{% url 'crear_categoria' %}" class="w-100" style="max-width: 100%; margin: 20px auto; background-color: black; border: 2px solid white; border-radius: 5px; padding: 20px;">
+        {% csrf_token %}
+        <h1 style="color: white; text-transform: uppercase; text-align: center; margin-bottom: 50px;">Crear Categoría</h1>
+        
+        <div class="row">
+            <!-- Campo Nombre de la Categoría -->
+            <div class="form-group col-md-12">
+                <label for="id_nombre_categoria" style="color: white; text-align: center; display: block;">Nombre de la Categoría:</label>
+                <input 
+                    type="text" 
+                    id="id_nombre_categoria" 
+                    name="nombre_categoria" 
+                    class="form-control" 
+                    value="{{ form.nombre_categoria.value|default_if_none:'' }}" 
+                    required 
+                    maxlength="100" 
+                    style="background-color: black; color: white; border: 1px solid white;">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                Guardar
+            </button>
+            <a href="{% url 'categorias_adm' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

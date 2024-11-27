@@ -1,0 +1,48 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+
+        <div class="text-center mb-4">
+            <h1 style="text-transform: uppercase;">Editar Categoría</h1>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'edit_categoria' categoria.id %}" class="w-100" style="max-width: 100%; margin: auto;">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_nombre_categoria" style="color: white; text-align: center; display: block;">Nombre de la Categoría:</label>
+                <input 
+                    type="text" 
+                    id="id_nombre_categoria" 
+                    name="nombre_categoria" 
+                    class="form-control" 
+                    value="{{ form.nombre_categoria.value|default_if_none:'' }}" 
+                    required 
+                    maxlength="100" 
+                    style="background-color: black; color: white; border: 1px solid white;">
+            </div>
+
+            <div class="d-flex justify-content-center mt-4">
+                <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                    Guardar
+                </button>
+                <a href="{% url 'categorias_adm' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<style>
+    body {
+        overflow-x: hidden;
+    }
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        <div class="text-center mb-4">
+            <h4>Temporadas</h4>
+            <!-- Botón para crear temporada -->
+            <a href="{% url 'crear_temporada' %}" class="btn btn-success font-weight-bold">
+                CREAR TEMPORADA
+            </a>
+        </div>
+
+        <!-- Tabla de temporadas -->
+        <table class="table table-dark text-center" style="background-color: black; border: none;">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Torneo</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Final</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for temporada in temporadas %}
+                <tr>
+                    <td>{{ temporada.nombre_temporada }}</td>
+                    <td>{{ temporada.id_torneo.nombre_torneo }}</td>
+                    <td>{{ temporada.fecha_inicio|date:"d/m/Y" }}</td>
+                    <td>{{ temporada.fecha_final|date:"d/m/Y" }}</td>
+                    <td>
+                        <!-- Botón para gestionar temporada -->
+                        <a href="{% url 'zonas' temporada.id %}" class="btn btn-primary btn-sm">
+                            <i class="fa fa-cogs"></i>
+                        </a>
+                        <!-- Botón para editar temporada -->
+                        <a href="{% url 'edit_temporada' temporada.id %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <!-- Botón para eliminar temporada -->
+                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#confirmDeleteModal{{ temporada.id }}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+
+
+                        <!-- Modal de confirmación de eliminación -->
+                        <div class="modal fade" id="confirmDeleteModal{{ temporada.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="confirmDeleteModalLabel" style="color: white;">Confirmar Eliminación</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body" style="color: white;">
+                                        ¿Estás seguro de que deseas eliminar este torneo?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                        <form action="{% url 'delete_temporada' temporada.id %}" method="post" id="deleteForm{{ temporada.id }}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Scripts de Bootstrap -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+{% endblock %}

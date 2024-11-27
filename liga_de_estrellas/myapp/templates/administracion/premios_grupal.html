@@ -1,0 +1,36 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+<h1>Premios Grupal</h1>
+
+
+<form action="{% url 'crear_premio_grupal' %}" method="get" style="display:inline;">
+    <button type="submit">Crear nuevo Premio grupal</button>
+</form>
+
+<ul>
+    {% for premio in premios %}
+    <li>
+        <p><strong>Nombre:</strong> {{ premio.nombre_premio_grupal }}</p>
+        
+        {% if premio.foto_premio_grupal %}
+            <img src="{{ premio.foto_premio_grupal.url }}" alt="Foto de {{premio.foto_premio_grupal }}" style="width: 50px; height: auto">
+        {% else %}
+            <img src="{{ MEDIA_URL }}premio_grupal/premio_grupal_default.png"alt="Foto no disponible" style="width: 50px; height: auto;">
+        {% endif %}
+        
+        <form action="{% url 'edit_premio_grupal' premio.id %}" method="get" style="display:inline;">
+            <button type="submit">Modificar</button>
+        </form>
+
+        
+        <form action="{% url 'delete_premio_grupal' premio.id %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este premio?');" >Eliminar</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

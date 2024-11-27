@@ -10,22 +10,37 @@
                 <div class="card-body d-flex align-items-start">
                     <!-- Caja blanca cuadrada a la izquierda -->
                     <div class="card" style="background-color: #fff; border: 1px solid #ccc; color: #000; width: 100px; height: 100px; margin-right: 15px;">
-                        <div class="card-body d-flex align-items-center justify-content-center">
-                            <!-- Puedes agregar contenido aquí si es necesario -->
+                        <div class="card-body d-flex align-items-center justify-content-center" style="padding: 0;">
+                            <!-- Imagen del logo del equipo -->
+                            {% if logo_equipo %}
+                                <img src="{{ logo_equipo.url }}" alt="{{ nombre_equipo }}" style="max-width: 80%; max-height: 80%; object-fit: contain;">
+                            {% else %}
+                                <p style="text-align: center; font-size: 12px;">Sin logo</p>
+                            {% endif %}
                         </div>
                     </div>
                     
                     <div class="flex-grow-1">
-                        <h3 class="card-title">{{ nombre_equipo }}</h3> <!-- Mostrar el nombre del equipo -->
-                        <h5 class="card-title">Entrenador del Equipo</h5>
+                        <h4 class="card-title" style="text-transform: uppercase;">{{ nombre_equipo }}</h4> <!-- Mostrar el nombre del equipo -->
+                        <h6 class="card-title">Entrenador del Equipo:</h6>
                         {% if entrenador %}
-                            <p class="card-text">{{ entrenador.apellido_entrenador }}, {{ entrenador.nombre_entrenador }}</p>
+                            <h6 class="card-text" style="text-transform: uppercase;">
+                                {% if entrenador.foto_entrenador %}
+                                    <!-- Mostrar la foto del entrenador si está disponible -->
+                                    <img src="{{ entrenador.foto_entrenador.url }}" alt="Foto de {{ entrenador.nombre_entrenador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                {% else %}
+                                    <!-- Foto por defecto si no tiene foto -->
+                                    <img src="{% static 'default-avatar.png' %}" alt="Avatar por defecto" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                {% endif %}
+                                {{ entrenador.nombre_entrenador }} {{ entrenador.apellido_entrenador }}
+                            </h6>
                         {% else %}
                             <p class="card-text">No hay delegado asignado.</p>
                         {% endif %}
                     </div>
                 </div>
             </div>
+            
             <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
                 <div class="card-body">
                     <h3 class="card-title text-center">Plantel</h3>
@@ -40,10 +55,14 @@
                             {% for jugador in jugadores %}
                             <tr>
                                 <td>
-                                    <!-- Envolvemos el nombre del jugador en un enlace -->
-                                    <a href="{% url 'jugador_detalles' jugador.id_jugador equipo.id_equipo temporada.id_temporada %}" style="color: white; text-decoration: none;">
-                                        {{ jugador.apellido_jugador }}, {{ jugador.nombre_jugador }}
-                                    </a>
+                                    <div class="d-flex align-items-center">
+                                        <!-- Foto del jugador -->
+                                        <img src="{{ jugador.foto_jugador.url }}" alt="{{ jugador.nombre_jugador }}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-right: 10px;">
+                                        <!-- Nombre del jugador con enlace -->
+                                        <a href="{% url 'jugador_detalles' jugador.id temporada_id equipo_id %}" style="color: white; text-decoration: none;">
+                                            {{ jugador.nombre_jugador }} {{ jugador.apellido_jugador }}
+                                        </a>
+                                    </div>
                                 </td>
                                 <td class="text-center">{{ jugador.calcular_edad }}</td>
                             </tr>
@@ -56,6 +75,8 @@
                     </table>
                 </div>
             </div>
+            
+            
             
             <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
                 <div class="card-body text-center">
@@ -111,9 +132,23 @@
                                 <tbody>
                                     {% for alta in altas %}
                                         <tr>
-                                            <td style="text-align: left;">{{ alta.id_jugador.apellido_jugador }}, {{ alta.id_jugador.nombre_jugador }} </td>
+                                            <td style="text-align: left;">
+                                                {% if alta.id_jugador.foto_jugador %}
+                                                    <img src="{{ alta.id_jugador.foto_jugador.url }}" alt="{{ alta.id_jugador.nombre_jugador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%; margin-right: 5px;">
+                                                {% else %}
+                                                    <img src="ruta/a/imagen/default.jpg" alt="Foto no disponible" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-right: 5px;">
+                                                {% endif %}
+                                                {{ alta.id_jugador.nombre_jugador }} {{ alta.id_jugador.apellido_jugador }}
+                                            </td>
                                             <td style="text-align: left;">{{ alta.fecha_transferencia }}</td>
-                                            <td style="text-align: left;">{{ alta.id_equipo_actual.nombre_equipo }}</td>
+                                            <td style="text-align: left;">
+                                                {% if alta.id_equipo_actual.logo_equipo %}
+                                                    <img src="{{ alta.id_equipo_actual.logo_equipo.url }}" alt="{{ alta.id_equipo_actual.nombre_equipo }}" style="width: 30px; height: 30px; object-fit: contain; margin-right: 5px;">
+                                                {% else %}
+                                                    <img src="ruta/a/imagen/default_logo.jpg" alt="Logo no disponible" style="width: 30px; height: 30px; object-fit: contain; margin-right: 5px;">
+                                                {% endif %}
+                                                {{ alta.id_equipo_actual.nombre_equipo }}
+                                            </td>
                                         </tr>
                                     {% empty %}
                                         <tr>
@@ -122,7 +157,7 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        
+                    
                             <h5 style="color: white;">Bajas</h5>
                             <table class="table table-striped" style="color: white;">
                                 <thead>
@@ -135,9 +170,23 @@
                                 <tbody>
                                     {% for baja in bajas %}
                                         <tr>
-                                            <td style="text-align: left;">{{ baja.id_jugador.apellido_jugador }}, {{ baja.id_jugador.nombre_jugador }}</td>
+                                            <td style="text-align: left;">
+                                                {% if baja.id_jugador.foto_jugador %}
+                                                    <img src="{{ baja.id_jugador.foto_jugador.url }}" alt="{{ baja.id_jugador.nombre_jugador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%; margin-right: 5px;">
+                                                {% else %}
+                                                    <img src="ruta/a/imagen/default.jpg" alt="Foto no disponible" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-right: 5px;">
+                                                {% endif %}
+                                                {{ baja.id_jugador.nombre_jugador }} {{ baja.id_jugador.apellido_jugador }}
+                                            </td>
                                             <td style="text-align: left;">{{ baja.fecha_transferencia }}</td>
-                                            <td style="text-align: left;">{{ baja.id_equipo_nuevo.nombre_equipo }}</td>
+                                            <td style="text-align: left;">
+                                                {% if baja.id_equipo_nuevo.logo_equipo %}
+                                                    <img src="{{ baja.id_equipo_nuevo.logo_equipo.url }}" alt="{{ baja.id_equipo_nuevo.nombre_equipo }}" style="width: 30px; height: 30px; object-fit: contain; margin-right: 5px;">
+                                                {% else %}
+                                                    <img src="ruta/a/imagen/default_logo.jpg" alt="Logo no disponible" style="width: 30px; height: 30px; object-fit: contain; margin-right: 5px;">
+                                                {% endif %}
+                                                {{ baja.id_equipo_nuevo.nombre_equipo }}
+                                            </td>
                                         </tr>
                                     {% empty %}
                                         <tr>
@@ -148,6 +197,7 @@
                             </table>
                         </div>
                     </div>
+                    
                 </div>
             </div>
             
@@ -157,10 +207,38 @@
         <div class="col-md-4">
             <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
                 <div class="card-body">
-                    <h3 class="card-title text-center">Caja 4</h3>
-                    <p class="card-text text-center">Contenido de la caja 4</p>
+                    <h3 class="card-title text-center">Siguiente Partido</h3>
+                    {% if partido_destacado %}
+                        <div class="text-center">
+                            <!-- Contenedor con logos, fecha y hora -->
+                            <div class="d-flex justify-content-center align-items-center">
+                                <!-- Logo del equipo 1 -->
+                                <div class="text-center">
+                                    {% if partido_destacado.id_equipo_1.logo_equipo %}
+                                        <img src="{{ partido_destacado.id_equipo_1.logo_equipo.url }}" alt="{{ partido_destacado.id_equipo_1.nombre_equipo }}" style="max-height: 60px;">
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Fecha y hora en el centro -->
+                                <div class="text-center mx-4">
+                                    <p><strong>{{ partido_destacado.fecha_partido|date:"d/m/Y" }}</strong></p>
+                                    <p><strong>{{ partido_destacado.hora_partido|time:"H:i" }}</strong></p>
+                                </div>
+                                
+                                <!-- Logo del equipo 2 -->
+                                <div class="text-center">
+                                    {% if partido_destacado.id_equipo_2.logo_equipo %}
+                                        <img src="{{ partido_destacado.id_equipo_2.logo_equipo.url }}" alt="{{ partido_destacado.id_equipo_2.nombre_equipo }}" style="max-height: 60px;">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-center">No hay partidos programados próximamente para este equipo.</p>
+                    {% endif %}
                 </div>
             </div>
+            
         
             <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
                 <div class="card-body" style="padding: 15px;"> <!-- Mantener padding normal -->
@@ -171,21 +249,39 @@
                             <table class="table table-dark" style="margin: 0; border-collapse: collapse; width: 100%; text-align: center;"> <!-- Eliminar margen y centrar texto -->
                                 <tbody>
                                     {% for partido in historial_partidos %}
-                                    <tr>
-                                        <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;"> <!-- Fondo negro, texto blanco y negrita -->
-                                            <div style="display: flex; justify-content: flex-end;"> <!-- Alinear a la derecha -->
-                                                {{ partido.equipo_1 }}
-                                            </div>
-                                        </td>
-                                        <td class="text-center" style="font-size: 0.8rem; white-space: nowrap; background-color: #000; color: white; font-weight: bold;"> <!-- Fondo negro, texto blanco y negrita -->
-                                            <div style="font-size: 0.7rem; white-space: nowrap;">{{ partido.resultado }}</div>
-                                        </td>
-                                        <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;"> <!-- Fondo negro, texto blanco y negrita -->
-                                            <div style="display: flex; justify-content: flex-start;"> <!-- Alinear a la izquierda -->
-                                                {{ partido.equipo_2 }}
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        <tr>
+                                            <!-- Columna del Equipo 1 -->
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-end;"> 
+                                                    {{ partido.equipo_1 }}
+                                                    {% if partido.equipo_1_logo %}
+                                                        <img src="{{ partido.equipo_1_logo.url }}" alt="{{ partido.equipo_1 }}" style="width: 20px; height: 20px; margin-left: 5px;"> <!-- Logo del equipo 1 -->
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+            
+                                            <!-- Columna con el resultado -->
+                                            <td style="font-size: 0.8rem; white-space: nowrap; background-color: #000; color: white; font-weight: bold;"> 
+                                                <div style="display: flex; justify-content: center;">
+                                                    {{ partido.goles_equipo_1 }} - {{ partido.goles_equipo_2 }} <!-- Mostrar resultado -->
+                                                </div>
+                                                {% if partido.penales %}
+                                                    <div style="font-size: 0.7rem; color: #f5f5f5;">
+                                                        (Penales: {{ partido.penales_equipo_1 }} - {{ partido.penales_equipo_2 }})
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+            
+                                            <!-- Columna del Equipo 2 -->
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-start;">
+                                                    {% if partido.equipo_2_logo %}
+                                                        <img src="{{ partido.equipo_2_logo.url }}" alt="{{ partido.equipo_2 }}" style="width: 20px; height: 20px; margin-right: 5px;"> <!-- Logo del equipo 2 -->
+                                                    {% endif %}
+                                                    {{ partido.equipo_2 }} <!-- Nombre del equipo 2 -->
+                                                </div>
+                                            </td>
+                                        </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -195,6 +291,9 @@
                     </div>
                 </div>
             </div>
+            
+            
+            
             <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
                 <div class="card-body">
                     <h3 class="card-title text-center">Estadísticas</h3> <!-- Título centrado -->
@@ -260,24 +359,37 @@
                     <div id="ranking-section">
                         <!-- Sección de Goleadores -->
                         <div id="goleadores-section" class="ranking-section">
-                            {% if ranking_jugadores %}
+                            {% if ranking_goleadores %}
                                 <div class="table-responsive">
+                                    <style>
+                                        .table-goleadores th, .table-goleadores td {
+                                            font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                            white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                            overflow: hidden; /* Oculta el desbordamiento del texto */
+                                            text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                        }
+                                    </style>
                                     <table class="table table-goleadores">
                                         <thead>
                                             <tr class="text-white">
                                                 <th class="text-center" style="width: 5%;">POS</th>
-                                                <th style="width: 50%;">JUGADOR</th>
+                                                <th style="width: 35%;">JUGADOR</th>
                                                 <th class="text-center" style="width: 20%;">TOTAL</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for jugador in ranking_jugadores %}
+                                            {% for item in ranking_goleadores %}
                                                 <tr class="text-white">
                                                     <td class="text-center">{{ forloop.counter }}</td>
                                                     <td>
-                                                        {{ jugador.id_jugador__apellido_jugador }}, {{ jugador.id_jugador__nombre_jugador }}
+                                                        {% if item.jugador.foto_jugador %}
+                                                            <img src="{{ item.jugador.foto_jugador.url }}" alt="Foto de {{ item.jugador.nombre_jugador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                        {% else %}
+                                                            <img src="{% static 'default-avatar.png' %}" alt="Avatar por defecto" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                        {% endif %}
+                                                        {{ item.jugador.nombre_jugador }} {{ item.jugador.apellido_jugador }}
                                                     </td>
-                                                    <td class="text-center">{{ jugador.total_goles }}</td>
+                                                    <td class="text-center">{{ item.total_goles }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -289,11 +401,20 @@
                                 </div>
                             {% endif %}
                         </div>
+                        
                     
                         <!-- Sección de Máximos Figuras -->
                         <div id="figuras-section" class="ranking-section d-none">
                             {% if ranking_figuras %}
                                 <div class="table-responsive">
+                                    <style>
+                                        .table-figuras th, .table-figuras td {
+                                            font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                            white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                            overflow: hidden; /* Oculta el desbordamiento del texto */
+                                            text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                        }
+                                    </style>
                                     <table class="table table-figuras">
                                         <thead>
                                             <tr class="text-white">
@@ -303,13 +424,21 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for figura in ranking_figuras %}
+                                            {% for item in ranking_figuras %}
                                                 <tr class="text-white">
                                                     <td class="text-center">{{ forloop.counter }}</td>
                                                     <td>
-                                                        {{ figura.id_jugador__apellido_jugador }}, {{ figura.id_jugador__nombre_jugador }}
+                                                        <!-- Mostrar foto del jugador si tiene, o una foto por defecto -->
+                                                        {% if item.jugador.foto_jugador %}
+                                                            <img src="{{ item.jugador.foto_jugador.url }}" alt="Foto de {{ item.jugador.nombre_jugador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                        {% else %}
+                                                            <img src="{% static 'default-avatar.png' %}" alt="Avatar por defecto" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                        {% endif %}
+                                                        
+                                                        <!-- Mostrar nombre y apellido del jugador -->
+                                                        {{ item.jugador.nombre_jugador }} {{ item.jugador.apellido_jugador }}
                                                     </td>
-                                                    <td class="text-center">{{ figura.total_figuras }}</td>
+                                                    <td class="text-center">{{ item.total_figuras }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -324,8 +453,16 @@
             
                         <!-- Sección de Tarjetas Amarillas -->
                         <div id="tarjetas-amarillas-section" class="ranking-section d-none">
-                            {% if tarjetas_amarillas %}
+                            {% if ranking_tarjetas_amarillas %}
                                 <div class="table-responsive">
+                                    <style>
+                                        .table-tarjetas-amarillas th, .table-tarjetas-amarillas td {
+                                            font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                            white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                            overflow: hidden; /* Oculta el desbordamiento del texto */
+                                            text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                        }
+                                    </style>
                                     <table class="table table-tarjetas-amarillas">
                                         <thead>
                                             <tr class="text-white">
@@ -335,13 +472,21 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for tarjeta in tarjetas_amarillas %}
+                                            {% for item in ranking_tarjetas_amarillas %}
                                                 <tr class="text-white">
                                                     <td class="text-center">{{ forloop.counter }}</td>
                                                     <td>
-                                                        {{ tarjeta.id_jugador__apellido_jugador }}, {{ tarjeta.id_jugador__nombre_jugador }}
+                                                        <!-- Mostrar foto del jugador si tiene, o una foto por defecto -->
+                                                        {% if item.jugador.foto_jugador %}
+                                                            <img src="{{ item.jugador.foto_jugador.url }}" alt="Foto de {{ item.jugador.nombre_jugador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                        {% else %}
+                                                            <img src="{% static 'default-avatar.png' %}" alt="Avatar por defecto" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                        {% endif %}
+                                                        
+                                                        <!-- Mostrar nombre y apellido del jugador -->
+                                                        {{ item.jugador.nombre_jugador }} {{ item.jugador.apellido_jugador }}
                                                     </td>
-                                                    <td class="text-center">{{ tarjeta.total_amarillas }}</td>
+                                                    <td class="text-center">{{ item.total_tarjetas_amarillas }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -353,11 +498,21 @@
                                 </div>
                             {% endif %}
                         </div>
+                        
+                        
             
                         <!-- Sección de Tarjetas Rojas -->
                         <div id="tarjetas-rojas-section" class="ranking-section d-none">
-                            {% if tarjetas_rojas %}
+                            {% if ranking_tarjetas_rojas %}
                                 <div class="table-responsive">
+                                    <style>
+                                        .table-tarjetas-rojas th, .table-tarjetas-rojas td {
+                                            font-size: 12px; /* Ajusta el tamaño de la fuente */
+                                            white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+                                            overflow: hidden; /* Oculta el desbordamiento del texto */
+                                            text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es demasiado largo */
+                                        }
+                                    </style>
                                     <table class="table table-tarjetas-rojas">
                                         <thead>
                                             <tr class="text-white">
@@ -367,13 +522,21 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for tarjeta in tarjetas_rojas %}
+                                            {% for item in ranking_tarjetas_rojas %}
                                                 <tr class="text-white">
                                                     <td class="text-center">{{ forloop.counter }}</td>
                                                     <td>
-                                                        {{ tarjeta.id_jugador__apellido_jugador }}, {{ tarjeta.id_jugador__nombre_jugador }}
+                                                        <!-- Mostrar foto del jugador si tiene, o una foto por defecto -->
+                                                        {% if item.jugador.foto_jugador %}
+                                                            <img src="{{ item.jugador.foto_jugador.url }}" alt="Foto de {{ item.jugador.nombre_jugador }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                        {% else %}
+                                                            <img src="{% static 'default-avatar.png' %}" alt="Avatar por defecto" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                                        {% endif %}
+                                                        
+                                                        <!-- Mostrar nombre y apellido del jugador -->
+                                                        {{ item.jugador.nombre_jugador }} {{ item.jugador.apellido_jugador }}
                                                     </td>
-                                                    <td class="text-center">{{ tarjeta.total_rojas }}</td>
+                                                    <td class="text-center">{{ item.total_tarjetas_rojas }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -387,7 +550,57 @@
                         </div>
                     </div>
                 </div>
+                
             </div>
+
+            <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
+                <div class="card-body" style="padding: 20px;">
+                    <h3 class="card-title text-center">Premios</h3>
+            
+                    {% if premios_equipos %}
+                        <ul class="list-group" style="list-style-type: none; padding-left: 0; margin: 0;">
+                            {% for premio in premios_equipos %}
+                                <li class="list-group-item" style="background-color: #000; color: white; border: none; margin: 0; padding: 10px;">
+                                    <div class="row">
+                                        <!-- Columna para el nombre del premio -->
+                                        <div class="col-md-12 text-center">
+                                            <h2 style="font-size: 1.2rem; text-transform: uppercase;">
+                                                {{ premio.id_premio_grupal.nombre_premio_grupal }}
+                                            </h2>
+                                        </div>
+            
+                                        <!-- Columna para la foto del premio -->
+                                        <div class="col-md-6 text-center" style="margin-top: 10px;">
+                                            <img src="{{ premio.id_premio_grupal.foto_premio_grupal.url }}" 
+                                                alt="{{ premio.id_premio_grupal.nombre_premio_grupal }}" 
+                                                class="img-fluid" style="max-height: 75px; border: none;">
+                                        </div>
+            
+                                        <!-- Columna para las veces ganado, con el número debajo del texto -->
+                                        <div class="col-md-6" style="display: flex; flex-direction: column; justify-content: center; margin-top: 10px;">
+                                            <p style="font-size: 0.8rem; text-align: center;">Veces ganado:</p>
+                                            <p style="font-size: 1.4rem; font-weight: bold; text-align: center;">
+                                                {{ premio.total_premios }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </li>
+            
+                                {% if not forloop.last %}
+                                    <li style="height: 1px; background-color: white; margin: 0;"></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center">Este equipo no ha recibido premios grupales.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            
+            
+            
+            
             
             <script>
                 function cambiarRanking(direction) {

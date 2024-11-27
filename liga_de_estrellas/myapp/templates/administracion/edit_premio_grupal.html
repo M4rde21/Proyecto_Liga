@@ -1,0 +1,20 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+
+
+<h1>{{ premio.nombre_premio_grupal }}</h1>
+
+{{error}}
+
+<form method="POST" action="{% url 'edit_premio_grupal' premiogrupal.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+<form action="{% url 'premios_grupal' %}" method="get" style="display:inline;">
+    <button type="submit" >Volver atrás</button>
+</form>
+
+
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'administracion/base2.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traspasos</title>
+</head>
+<body>
+    <h1>Traspasos</h1>
+    <a href="{% url 'traspasos_crear' %}">
+        <button>NUEVO TRASPASO</button>
+    </a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Nombre del Jugador</th>
+                <th>Último Equipo</th>
+                <th>Nuevo Equipo</th>
+                <th>Fecha</th>
+                <th></th>
+                <th></th>
+            </tr>
+            <tbody>
+                {% for traspaso in traspasos %}
+                <tr>
+                    <td>
+                        {% if traspaso.id_jugador.foto_jugador %}
+                            <img src="{{ traspaso.id_jugador.foto_jugador.url }}" alt="Foto de {{ traspaso.id_jugador.nombre_jugador }}" style="width: 50px; height: auto;">
+                        {% else %}
+                            <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width: 50px; height: auto;">
+                        {% endif %}
+                    </td>
+                    <td>{{ traspaso.id_jugador.nombre_jugador }} {{ traspaso.id_jugador.apellido_jugador }}</td>
+                    <td>{{ traspaso.id_equipo_actual.nombre_equipo }}</td>
+                    <td>{{ traspaso.id_equipo_nuevo.nombre_equipo }}</td>
+                    <td>{{ traspaso.fecha_transferencia|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="{% url 'traspasos_editar' traspaso.id %}">
+                            <button>Editar</button>
+                        </a>
+                    </td>
+                    <td>
+                        <form action="{% url 'traspasos_eliminar' traspaso.id %}" method="POST">
+                            {% csrf_token %}
+                            <button>Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </thead>
+    </table>
+</body>
+</html>
+{% endblock %}

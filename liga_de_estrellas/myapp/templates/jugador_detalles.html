@@ -8,20 +8,26 @@
             <!-- Caja 1 -->
             <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
                 <div class="card-body d-flex align-items-start">
-                    <!-- Caja blanca cuadrada a la izquierda -->
+                    <!-- Foto del jugador -->
                     <div class="card" style="background-color: #fff; border: 1px solid #ccc; color: #000; width: 100px; height: 100px; margin-right: 15px;">
-                        <div class="card-body d-flex align-items-center justify-content-center">
-                            <!-- Puedes agregar contenido aquí si es necesario -->
+                        <div class="card-body d-flex align-items-center justify-content-center" style="padding: 0;">
+                            {% if jugador.foto_jugador %}
+                                <img src="{{ jugador.foto_jugador.url }}" alt="Foto de {{ jugador.nombre_jugador }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <span style="font-size: 12px; text-align: center;">Sin foto</span>
+                            {% endif %}
                         </div>
                     </div>
-                    
+                
+                    <!-- Detalles del jugador -->
                     <div class="flex-grow-1">
-                        <h3 class="card-title">{{ apellido_mayus }}, {{ nombre_mayus }}</h3>
+                        <h3 class="card-title" style="text-transform: uppercase;">{{ jugador.nombre_jugador }} {{ jugador.apellido_jugador }}</h3>
                         <h6 class="card-title">Fecha de Nacimiento: {{ jugador.fecha_nac_jugador|date:"d / m / Y" }}</h6>
                         <h6 class="card-title">Edad: {{ jugador.calcular_edad }}</h6>
                     </div>
                 </div>
             </div>
+            
             
 
             <!-- Caja 2 -->
@@ -120,11 +126,30 @@
                                 {% for traspaso in traspasos %}
                                 <tr>
                                     <td class="text-center" style="vertical-align: middle;">{{ traspaso.fecha_transferencia }}</td>
-                                    <td class="text-center" style="vertical-align: middle;">{{ traspaso.id_equipo_actual.nombre_equipo }}</td>
-                                    <td class="text-center" style="vertical-align: middle;"> <!-- Columna para la imagen -->
-                                        <img src="{% static 'images/traspaso.png' %}" alt="Imagen del traspaso" style="width: 25px; height: auto;"> <!-- Ajusta la URL y el tamaño según tus necesidades -->
+                                    <!-- Último equipo -->
+                                    <td class="text-center" style="vertical-align: middle;">
+                                        <div class="d-flex align-items-center">
+                                            {% if traspaso.id_equipo_actual.logo_equipo %}
+                                                <img src="{{ traspaso.id_equipo_actual.logo_equipo.url }}" alt="{{ traspaso.id_equipo_actual.nombre_equipo }}" style="width: 30px; height: auto; margin-right: 10px;">
+                                            {% endif %}
+                                            {{ traspaso.id_equipo_actual.nombre_equipo }}
+                                        </div>
                                     </td>
-                                    <td class="text-center" style="vertical-align: middle;">{{ traspaso.id_equipo_nuevo.nombre_equipo }}</td>
+                                
+                                    <!-- Imagen de traspaso -->
+                                    <td class="text-center" style="vertical-align: middle;">
+                                        <img src="{% static 'images/traspaso.png' %}" alt="Imagen del traspaso" style="width: 25px; height: auto;">
+                                    </td>
+                                
+                                    <!-- Nuevo equipo -->
+                                    <td class="text-center" style="vertical-align: middle;">
+                                        <div class="d-flex align-items-center">
+                                            {% if traspaso.id_equipo_nuevo.logo_equipo %}
+                                                <img src="{{ traspaso.id_equipo_nuevo.logo_equipo.url }}" alt="{{ traspaso.id_equipo_nuevo.nombre_equipo }}" style="width: 30px; height: auto; margin-right: 10px;">
+                                            {% endif %}
+                                            {{ traspaso.id_equipo_nuevo.nombre_equipo }}
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -151,25 +176,26 @@
                             <table class="table table-dark" style="margin: 0; border-collapse: collapse; width: 100%; text-align: center;"> <!-- Eliminar margen y centrar texto -->
                                 <tbody>
                                     {% for partido in historial_partidos %}
-                                    <tr>
-                                        <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;"> 
-                                            <div style="display: flex; justify-content: flex-end;"> 
-                                                {{ partido.id_equipo_1 }} <!-- Cambia esto según cómo obtienes el nombre del equipo -->
-                                            </div>
-                                        </td>
-                                        <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white; font-weight: bold;"> 
-                                            <div style="display: flex; justify-content: center;"> 
-                                                {% for resultado in partido.resultados_set.all %}
-                                                    {{ resultado.goles_equipo_1 }} - {{ resultado.goles_equipo_2 }}
-                                                {% endfor %}
-                                            </div>
-                                        </td>
-                                        <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;"> 
-                                            <div style="display: flex; justify-content: flex-start;"> 
-                                                {{ partido.id_equipo_2 }} <!-- Cambia esto según cómo obtienes el nombre del equipo -->
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        <tr>
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-end;"> 
+                                                    {{ partido.equipo_1 }}
+                                                    <img src="{{ partido.equipo_1_logo.url }}" alt="{{ partido.equipo_1 }}" style="width: 20px; height: 20px; margin-left: 5px;"> <!-- Nombre del equipo 1 -->
+                                                </div>
+                                            </td>
+                                            <td style="font-size: 0.8rem; white-space: nowrap; background-color: #000; color: white; font-weight: bold;"> 
+                                                <div style="display: flex; justify-content: center;">
+                                                    <!-- Aquí mostramos el resultado del partido -->
+                                                    {{ partido.goles_equipo_1 }} - {{ partido.goles_equipo_2 }}
+                                                </div>
+                                            </td>
+                                            <td style="font-size: 0.7rem; white-space: nowrap; background-color: #000; color: white;">
+                                                <div style="display: flex; justify-content: flex-start;">
+                                                    <img src="{{ partido.equipo_2_logo.url }}" alt="{{ partido.equipo_2 }}" style="width: 20px; height: 20px; margin-right: 5px;">
+                                                    {{ partido.equipo_2 }} <!-- Nombre del equipo 2 -->
+                                                </div>
+                                            </td>
+                                        </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -177,6 +203,7 @@
                             <p class="card-text text-center">No hay partidos disponibles para este jugador en la temporada.</p> <!-- Centrar mensaje -->
                         {% endif %}
                     </div>
+                    
                 </div>
             </div>
             
@@ -218,35 +245,38 @@
             <!-- Caja 7 -->
             <div class="card mb-3" style="background-color: #000; border: 1px solid white; color: white;">
                 <div class="card-body" style="padding: 20px;">
-                    <h3 class="card-title text-center">Premios Individuales</h3>
+                    <h3 class="card-title text-center">Premios</h3>
             
                     {% if premios_individuales %}
-                        <ul class="list-group">
+                        <ul class="list-group" style="list-style-type: none; padding-left: 0; margin: 0;">
                             {% for premio in premios_individuales %}
-                                <li class="list-group-item" style="background-color: #000; color: white; border: none;">
+                                <li class="list-group-item" style="background-color: #000; color: white; border: none; margin: 0; padding: 10px;">
                                     <div class="row">
-                                        <!-- Columna para la foto del premio -->
-                                        <div class="col-md-4 text-center">
-                                            <img src="{{ premio.id_premio_individual__foto_premio_individual }}" 
-                                                alt="{{ premio.id_premio_individual__nombre_premio_individual }}" 
-                                                class="img-fluid" style="max-height: 100px;">
+                                        <!-- Columna para el nombre del premio -->
+                                        <div class="col-md-12 text-center">
+                                            <h2 style="font-size: 1.2rem; text-transform: uppercase;">
+                                                {{ premio.id_premio_individual.nombre_premio_individual }}
+                                            </h2>
                                         </div>
             
-                                        <!-- Columna para el nombre del premio, torneo y temporada -->
-                                        <div class="col-md-8" style="font-size: 0.9rem;">
-                                            <h5 style="font-size: 1.2rem;">
-                                                {{ premio.id_premio_individual__nombre_premio_individual }}
-                                            </h5>
-                                            <p style="font-size: 0.9rem;">
-                                                {{ premio.id_torneo__nombre_torneo }} - {{ premio.id_temporada__nombre_temporada }}
+                                        <!-- Columna para la foto del premio -->
+                                        <div class="col-md-6 text-center" style="margin-top: 10px;">
+                                            <img src="{{ premio.id_premio_individual.foto_premio_individual.url }}" 
+                                                alt="{{ premio.id_premio_individual.nombre_premio_individual }}" 
+                                                class="img-fluid" style="max-height: 75px; border: none;">
+                                        </div>
+            
+                                        <!-- Columna para las veces ganado, con el número debajo del texto -->
+                                        <div class="col-md-6" style="display: flex; flex-direction: column; justify-content: center; margin-top: 10px;">
+                                            <p style="font-size: 1rem; text-align: center;">Veces ganado:</p>
+                                            <p style="font-size: 1.4rem; font-weight: bold; text-align: center;">
+                                                {{ premio.total_premios }}
                                             </p>
-                                            <p style="font-size: 0.9rem;">Veces ganado: {{ premio.total_premios }}</p>
                                         </div>
                                     </div>
                                 </li>
             
                                 {% if not forloop.last %}
-                                    <!-- Línea divisoria blanca entre premios -->
                                     <li style="height: 1px; background-color: white; margin: 0;"></li>
                                 {% endif %}
                             {% endfor %}
@@ -256,6 +286,9 @@
                     {% endif %}
                 </div>
             </div>
+            
+            
+            
             
         </div>
     </div>

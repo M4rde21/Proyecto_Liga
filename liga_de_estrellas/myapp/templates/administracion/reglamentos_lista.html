@@ -1,0 +1,48 @@
+{% extends 'administracion/base2.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reglamentos Lista</title>
+</head>
+<body>
+    <h1>Reglamentos</h1>
+    <a href="{% url 'reglamentos_crear' %}">
+        <button>NUEVO REGLAMENTO</button>
+    </a>
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                <th>Nombre del Reglamento</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reglamento in reglamentos %}
+            <tr>
+                <td>
+                    <img src="{{ MEDIA_URL }}reglamentos/foto_pdf.png" alt="" style="width: 50px; height: auto;">
+                </td>
+                <td>{{ reglamento.nombre_reglamento }}</td>
+                <td>
+                    <a href="{% url 'reglamentos_editar' reglamento.id %}">
+                        <button>EDITAR</button>
+                    </a>
+                </td>
+                <td>
+                    <form action="{% url 'reglamentos_eliminar' reglamento.id %}" method="POST">
+                        {% csrf_token %}
+                        <button>ELIMINAR</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+{% endblock %}

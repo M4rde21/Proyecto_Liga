@@ -1,0 +1,199 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<style>
+body {
+    overflow-x: hidden;
+}
+
+.zona-section .btn {
+    margin-right: 10px; /* Separa un poco los íconos */
+}
+
+.equipos-importados {
+    display: flex;
+    flex-wrap: wrap; /* En caso de que los logos no quepan, se ajusten */
+    gap: 15px; /* Espacio entre los logos */
+    justify-content: center; /* Centra los logos en el contenedor */
+    margin-top: 20px; /* Espacio adicional para separar los logos */
+}
+
+.equipos-importados img {
+    width: 80px;
+    height: 80px;
+}
+
+/* Línea de separación entre los íconos y el título */
+.zona-section .acciones {
+    border-top: 1px solid white;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        
+        <!-- Título de la Temporada y Torneo enmarcado -->
+        <div class="text-center">
+            <h4>{{ temporada.nombre_temporada }}</h4>
+            <h6>{{ temporada.id_torneo.nombre_torneo }}</h6>
+        </div>
+        
+        <!-- Botones Zonas y Fixture en blanco -->
+        <div class="text-center mb-2">
+            <a href="{% url 'zonas' temporada.id %}" class="font-weight-bold mx-2" style="color: white;">
+                ZONAS
+            </a>
+            <a href="{% url 'fechas' temporada.id %}" class="font-weight-bold mx-2" style="color: white;">
+                FIXTURE
+            </a>
+        </div>
+
+        <!-- Botón Crear Zona debajo de los botones Zonas y Fixture -->
+        <div class="text-center mb-4">
+            <button class="btn btn-success" data-toggle="modal" data-target="#crearZonaModal">
+                CREAR ZONA
+            </button>
+        </div>
+
+        <!-- Modal para Crear Zona -->
+        <div class="modal fade" id="crearZonaModal" tabindex="-1" role="dialog" aria-labelledby="crearZonaModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
+                    <div class="modal-header justify-content-center">
+                        <h5 class="modal-title" id="crearZonaModalLabel" style="color: white;">CREAR ZONA</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="{% url 'zona_crear' temporada.id %}">
+                            {% csrf_token %}
+                            
+                            <!-- Campo Nombre de la Zona -->
+                            <div class="form-group text-center">
+                                <label for="id_nombre_grupo" style="color: white; display: block;">Nombre de la Zona</label>
+                                <input type="text" class="form-control" id="id_nombre_grupo" name="nombre_grupo" required style="background-color:black; color: white">
+                            </div>
+
+                            <!-- Botón de confirmación centrado -->
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success mt-3">CONFIRMAR</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zonas y Equipos -->
+        {% for zona in zonas %}
+            <div class="zona-section mt-4 p-3" style="border: 1px solid white; border-radius: 10px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <!-- Título de la Zona -->
+                    <h3 style="text-align: center; width: 100%;">{{ zona.nombre_grupo }}</h3>
+
+                    <!-- Botones de Acción en Iconos -->
+                    <div class="d-flex align-items-center">
+                        <a href="{% url 'importar_equipos_zona' temporada.id zona.id %}" title="Importar Equipo" class="btn btn-success btn-sm">
+                            <i class="fa fa-plus"></i>
+                        </a>
+                        <!-- Botón de editar que abre el modal -->
+                        <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editarZonaModal{{ zona.id }}" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        
+                        <!-- Modal de Edición de Zona -->
+                        <div class="modal fade" id="editarZonaModal{{ zona.id }}" tabindex="-1" role="dialog" aria-labelledby="editarZonaModalLabel{{ zona.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
+                                    <div class="modal-header justify-content-center">
+                                        <h5 class="modal-title" id="editarZonaModalLabel{{ zona.id }}" style="color: white;">EDITAR ZONA</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form method="post" action="{% url 'zona_editar' temporada.id zona.id %}">
+                                            {% csrf_token %}
+                                            
+                                            <!-- Campo Nombre de la Zona -->
+                                            <div class="form-group text-center">
+                                                <label for="id_nombre_grupo" style="color: white; display: block;">Nombre de la Zona</label>
+                                                <input type="text" class="form-control" id="id_nombre_grupo" name="nombre_grupo" value="{{ zona.nombre_grupo }}" required style="background-color:black; color: white">
+                                            </div>
+
+                                            <!-- Botón de confirmación centrado -->
+                                            <div class="text-center">
+                                                <button type="submit" class="btn btn-warning mt-3">GUARDAR CAMBIOS</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botón para eliminar zona con modal -->
+                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#confirmDeleteModal{{ zona.id }}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+
+                        <!-- Modal de confirmación de eliminación de zona -->
+                        <div class="modal fade" id="confirmDeleteModal{{ zona.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="confirmDeleteModalLabel" style="color: white;">Confirmar Eliminación</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body" style="color: white;">
+                                        ¿Estás seguro de que deseas eliminar esta zona?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                        <form action="{% url 'zona_eliminar' temporada.id zona.id %}" method="post" id="deleteForm{{ zona.id }}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Línea de separación entre los íconos y el título -->
+                <div class="acciones"></div>
+
+                <!-- Lista de Equipos Importados -->
+                <div class="equipos-importados">
+                    {% if zona.equipos_importados %}
+                        {% for equipo_id in zona.equipos_importados %}
+                            {% for equipo in equipos %}
+                                {% if equipo.id == equipo_id %}
+                                    <a href="{% url 'equipo_importado' temporada.id zona.id equipo.id %}" class="d-flex flex-column align-items-center" style="color: white; text-decoration: none;">
+                                        {% if equipo.logo_equipo %}
+                                            <img src="{{ equipo.logo_equipo.url }}" alt="{{ equipo.nombre_equipo }} Logo" class="mb-2">
+                                        {% else %}
+                                            <img src="{{ MEDIA_URL }}default-logo.png" alt="Logo por defecto" class="mb-2">
+                                        {% endif %}
+                                        <span>{{ equipo.nombre_equipo }}</span>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <p>No hay equipos importados para esta zona.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

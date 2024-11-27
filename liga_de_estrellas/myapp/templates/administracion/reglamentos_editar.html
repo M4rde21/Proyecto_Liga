@@ -1,0 +1,24 @@
+{% extends 'administracion/base2.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Reglamento</title>
+</head>
+<body>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="submit">GUARDAR</button>
+    </form>
+    <a href="{% url 'reglamentos_lista' %}">
+        <button>CANCELAR</button>
+    </a>
+</body>
+</html>
+{% endblock %}
