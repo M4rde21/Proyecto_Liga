@@ -1,58 +1,113 @@
 {% extends 'administracion/base2.html' %}
 
 {% block content %}
-<h1>Gestionar Partido</h1>
-
-<!-- Mostrar equipo 1 -->
-<div class="equipo">
-    <h2>{{ equipo_1.nombre_equipo }}</h2>
-    {% if equipo_1.logo_equipo %}
-        <img src="{{ equipo_1.logo_equipo.url }}" alt="Logo de {{ equipo_1.nombre_equipo }}" style="width: 100px;">
-    {% else %}
-        <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 100px;">
-    {% endif %}
-</div>
-
-<!-- Mostrar equipo 2 -->
-<div class="equipo">
-    <h2>{{ equipo_2.nombre_equipo }}</h2>
-    {% if equipo_2.logo_equipo %}
-        <img src="{{ equipo_2.logo_equipo.url }}" alt="Logo de {{ equipo_2.nombre_equipo }}" style="width: 100px;">
-    {% else %}
-        <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 100px;">
-    {% endif %}
-</div>
-
-<form method="POST">
-    {% csrf_token %}
-    
-    <!-- Formulario de resultado -->
-    <h2>Resultado</h2>
-    <div id="resultadoForm">
-        {{ resultado_form.as_p }}
-    </div>
-
-    <!-- Formularios de planilla -->
-    <h2>Planilla</h2>
-    {% for jugador, form in jugadores_formularios.items %}
-        <div class="jugador">
-            <h3>{{ jugador.nombre_jugador }} {{ jugador.apellido_jugador }}</h3>
-            {% if jugador.foto_jugador %}
-                <img src="{{ jugador.foto_jugador.url }}" alt="Foto de {{ jugador.nombre_jugador }}" style="width: 50px; height: auto;">
-            {% else %}
-                <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width: 50px; height: auto;">
-            {% endif %}
-            <div class="formulario">
-                {{ form.as_p }}
-            </div>
+<div class="container">
+    <div class="p-4 mx-auto"
+        style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        <!-- Título del partido -->
+        <div class="text-center">
+            <h4>{{ temporada.nombre_temporada }}</h4>
+            <h6>{{ temporada.id_torneo.nombre_torneo }}</h6>
+            <h5>{{ fecha.nombre_fecha }}</h5>
         </div>
-    {% endfor %}
 
-    <button type="submit">Guardar Todo</button>
-</form>
-<form action="{% url 'fechas' temporada.id %}" method="get" style="display:inline;">
-    
-    <button type="submit" >Volver atrás</button>
-</form>
+        <!-- Información de los equipos -->
+        <div class="equipo">
+            <h2>{{ equipo_1.nombre_equipo }}</h2>
+            {% if equipo_1.logo_equipo %}
+            <img src="{{ equipo_1.logo_equipo.url }}" alt="Logo de {{ equipo_1.nombre_equipo }}" style="width: 100px;">
+            {% else %}
+            <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 100px;">
+            {% endif %}
+        </div>
+
+        <div class="equipo">
+            <h2>{{ equipo_2.nombre_equipo }}</h2>
+            {% if equipo_2.logo_equipo %}
+            <img src="{{ equipo_2.logo_equipo.url }}" alt="Logo de {{ equipo_2.nombre_equipo }}" style="width: 100px;">
+            {% else %}
+            <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 100px;">
+            {% endif %}
+        </div>
+
+        <h2 class="text-center">Resultado</h2>
+        <!-- Formulario principal -->
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Formulario de resultado -->
+            <h2>Resultado</h2>
+            <div id="resultadoForm">
+                {{ resultado_form.as_p }}
+            </div>
+
+            <!-- Tabla para la planilla -->
+            <!-- Tabla para la planilla del equipo 1 -->
+            <h2>Planilla - {{ equipo_1.nombre_equipo }}</h2>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Jugador</th>
+                        <th>Foto</th>
+                        <th>Formulario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for jugador, form in jugadores_formularios_equipo_1 %}
+                    <tr>
+                        <td>{{ jugador.nombre_jugador }} {{ jugador.apellido_jugador }}</td>
+                        <td>
+                            {% if jugador.foto_jugador %}
+                            <img src="{{ jugador.foto_jugador.url }}" alt="Foto de {{ jugador.nombre_jugador }}"
+                                style="width: 50px; height: auto;">
+                            {% else %}
+                            <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible"
+                                style="width: 50px; height: auto;">
+                            {% endif %}
+                        </td>
+                        <td>{{ form.as_p }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Tabla para la planilla del equipo 2 -->
+            <h2>Planilla - {{ equipo_2.nombre_equipo }}</h2>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Jugador</th>
+                        <th>Foto</th>
+                        <th>Formulario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for jugador, form in jugadores_formularios_equipo_2 %}
+                    <tr>
+                        <td>{{ jugador.nombre_jugador }} {{ jugador.apellido_jugador }}</td>
+                        <td>
+                            {% if jugador.foto_jugador %}
+                            <img src="{{ jugador.foto_jugador.url }}" alt="Foto de {{ jugador.nombre_jugador }}"
+                                style="width: 50px; height: auto;">
+                            {% else %}
+                            <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible"
+                                style="width: 50px; height: auto;">
+                            {% endif %}
+                        </td>
+                        <td>{{ form.as_p }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+            <button type="submit">Guardar Todo</button>
+        </form>
+
+        <!-- Botón para volver atrás -->
+        <form action="{% url 'fechas' temporada.id %}" method="get" style="display:inline;">
+            <button type="submit">Volver atrás</button>
+        </form>
+    </div>
+</div>
 {% endblock %}
-

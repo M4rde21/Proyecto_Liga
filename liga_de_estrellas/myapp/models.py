@@ -7,18 +7,8 @@ class Categoria(models.Model):
     def __str__(self):
         return self.nombre_categoria
 
-    
 
-class Entrenador(models.Model):
-    nombre_entrenador = models.CharField(max_length=100)
-    apellido_entrenador = models.CharField(max_length=100)
-    dni_entrenador = models.CharField(unique=True, max_length=20)
-    fecha_nac_entrenador = models.DateField()
-    foto_entrenador = models.ImageField(upload_to="fotos_jugador/", blank=True, null=True)
 
-    def __str__(self):
-        return self.nombre_entrenador + ' ' + self.apellido_entrenador
-    
 class Equipo(models.Model):
     nombre_equipo = models.CharField(max_length=100)
     logo_equipo = models.ImageField(upload_to="logos/", blank=True, null=True)
@@ -26,6 +16,22 @@ class Equipo(models.Model):
     
     def __str__(self):
         return self.nombre_equipo
+
+
+
+
+class Entrenador(models.Model):
+    nombre_entrenador = models.CharField(max_length=100)
+    apellido_entrenador = models.CharField(max_length=100)
+    dni_entrenador = models.CharField(unique=True, max_length=20)
+    fecha_nac_entrenador = models.DateField()
+    foto_entrenador = models.ImageField(upload_to="fotos_jugador/", blank=True, null=True)
+    id_equipo = models.ForeignKey(Equipo, on_delete=models.SET_NULL, null=True, blank=True, db_column='id_equipo')
+
+    def __str__(self):
+        return self.nombre_entrenador + ' ' + self.apellido_entrenador
+    
+
     
 class Jugador(models.Model):
     nombre_jugador = models.CharField(max_length=100)
@@ -234,3 +240,11 @@ class TemporadaXTorneoXGrupoXEquipoXJugador(models.Model):
     class Meta:
         db_table = 'temporadas_x_torneos_x_grupos_x_equipos_x_jugadores'
 
+
+
+class Reglamento(models.Model):
+    nombre_reglamento = models.CharField(max_length=100, unique=True, blank=False, null=False)
+    archivo_reglamento = models.FileField(upload_to="reglamentos/", null=False, blank=False)
+    
+    class Meta: 
+        db_table = 'reglamentos'

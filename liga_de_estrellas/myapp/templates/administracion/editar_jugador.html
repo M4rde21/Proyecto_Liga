@@ -1,22 +1,119 @@
 {% extends 'administracion/base2.html' %}
+{% load static %}
+
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Jugador</title>
-</head>
-<body>
-    {{error}}
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{form.as_p}}
-        <button>GUARDAR</button>
-    </form>
-    <a href="{% url 'jugadores' %}">
-        <button>CANCELAR</button>
-    </a>
-</body>
-</html>
+<style>
+    body {
+    overflow-x: hidden;
+}
+</style>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container-fluid mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; border: 2px solid white; border-radius: 10px;">
+        <div class="text-center mb-4">
+            <h1>EDITAR JUGADOR</h1>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger text-center">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                <!-- Contenedor de previsualización de la foto del jugador -->
+                <div class="col-md-4 text-center">
+                    <div class="image-preview mx-auto" style="width: 150px; height: 150px; border-radius: 50%; background-color: white; overflow: hidden;">
+                        {% if foto_url %}
+                            <img id="fotoPreview" src="{{ foto_url }}" alt="Previsualización de la foto" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <img id="fotoPreview" src="{% static 'media/fotos_jugador/jugador_default.png' %}" alt="Previsualización de la foto" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                    </div>
+                    <div class="mt-3">
+                        <label for="foto_jugador" class="btn btn-primary">
+                            Seleccionar Foto
+                            <input type="file" id="foto_jugador" name="foto_jugador" class="d-none" accept="image/*" onchange="previewFoto(event)">
+                        </label>
+                    </div>
+                    <!-- Checkbox para borrar la foto -->
+                    {% if jugador.foto_jugador %}
+                    <div class='form-group mt-3'>
+                        <label for='borrar_foto' class='text-white d-flex align-items-center' style='cursor: pointer; margin-left: 70px;'>
+                            <input type='checkbox' id='borrar_foto' name='borrar_foto' style='margin-right: 10px;'>
+                            Borrar Foto Actual
+                        </label>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Sección de Inputs -->
+                <div class="col-md-8 mx-auto">
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label for="nombre_jugador" class="text-white">Nombre del Jugador:</label>
+                            <input type="text" id="nombre_jugador" name="nombre_jugador" class="form-control" style="background-color: black; color: white; border: 1px solid white;" value="{{ jugador.nombre_jugador }}" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="apellido_jugador" class="text-white">Apellido del Jugador:</label>
+                            <input type="text" id="apellido_jugador" name="apellido_jugador" class="form-control" style="background-color: black; color: white; border: 1px solid white;" value="{{ jugador.apellido_jugador }}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class='form-group col-md-6'>
+                            <label for='dni_jugador' class='text-white'>DNI:</label>
+                            <input type='text' id='dni_jugador' name='dni_jugador' class='form-control' style='background-color: black; color: white; border: 1px solid white;' value='{{ jugador.dni_jugador }}' required>
+                        </div>
+                        <div class='form-group col-md-6'>
+                            <label for='fecha_nac_jugador' class='text-white'>Fecha de Nacimiento:</label>
+                            <input type='date' id='fecha_nac_jugador' name='fecha_nac_jugador' class='form-control' style='background-color: black; color: white; border: 1px solid white;' value='{{ jugador.fecha_nac_jugador|date:"Y-m-d" }}' required>
+                        </div>
+                    </div>
+                    <div class='row'>
+                        <div class='form-group col-md-6'>
+                            <label for='activo_jugador' class='text-white'>Activo:</label>
+                            <select id='activo_jugador' name='activo_jugador' class='form-control' style='background-color: black; color: white; border: 1px solid white;' required>
+                                <option value=True {% if jugador.activo_jugador %}selected{% endif %}>Sí</option>
+                                <option value=False {% if not jugador.activo_jugador %}selected{% endif %}>No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Botones de Guardar y Cancelar -->
+            <div class='d-flex justify-content-center mt-3'>
+                <button type='submit' class='btn btn-success mx-2' style='width: 150px;'>Guardar</button>
+                <a href='{% url 'jugadores' %}' class='btn btn-danger mx-2' style='width: 150px;'>Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Previsualización de la imagen seleccionada
+function previewFoto(event) {
+    const fotoPreview = document.getElementById('fotoPreview');
+    const file = event.target.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fotoPreview.src = e.target.result;
+            fotoPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // Si no hay archivo, mostrar imagen por defecto
+        fotoPreview.src = '{% static "media/fotos_jugador/jugador_default.png" %}'; // Cambia esto a tu ruta por defecto
+    }
+}
+</script>
+
 {% endblock %}

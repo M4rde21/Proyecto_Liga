@@ -1,37 +1,35 @@
 {% extends 'administracion/base2.html' %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cambiar Equipo</title>
-</head>
-<body>
-    <h1>Cambiar equipo</h1>
-    <form action="{% url 'equipo_importado_cambiar' temporada zona equipo %}" method="post">
-        {% csrf_token %}
-        <label for="equipo">Selecciona un nuevo equipo:</label>
-        <select name="equipo" id="equipo">
-            {% for equipo_nuevo in equipos %}
-                <option value="{{ equipo_nuevo.id }}" {% if equipo_nuevo.id == relacion.id_equipo.id %}selected{% endif %}>
-                    {{ equipo_nuevo.nombre_equipo }}
-                </option>
-            {% endfor %}
-        </select>
-        <button type="submit">Actualizar equipo</button>
-    </form>
-    <a href="{% url 'equipo_importado' temporada zona equipo %}">
-        <button>Cancelar</button>
-    </a>
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-</body>
-</html>
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        <h1 class="text-center mb-4">CAMBIAR EQUIPO</h1>
+        <form action="{% url 'equipo_importado_cambiar' temporada zona equipo %}" method="post">
+            {% csrf_token %}
+            <div class="mb-3 text-center">
+                <label for="equipo" class="form-label" style="display: block; margin-bottom: 10px">Selecciona un nuevo equipo:</label>
+                <select name="equipo" id="equipo" class="form-select" 
+                        style="width: 100%; background-color: black; color: white; border: 2px solid white; border-radius: 5px; padding: 10px;">
+                    {% for equipo_nuevo in equipos %}
+                        <option value="{{ equipo_nuevo.id }}" {% if equipo_nuevo.id == relacion.id_equipo.id %}selected{% endif %} 
+                                style="background-color: black; color: white;">
+                            {{ equipo_nuevo.nombre_equipo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success">ACTUALIZAR EQUIPO</button>
+                <a href="{% url 'equipo_importado' temporada zona equipo %}" class="btn btn-danger" >CANCELAR</a>
+            </div>
+        </form>
+        {% if messages %}
+            <ul class="mt-3 text-center" style="list-style: none; padding: 0;">
+                {% for message in messages %}
+                    <li style="color: #f0ad4e;">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

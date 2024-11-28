@@ -1,51 +1,81 @@
 {% extends 'administracion/base2.html' %}
+
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>Delegados</h1>
-    <a href="{% url 'entrenador_crear' %}">
-        <button>NUEVO DELEGADO</button>
-    </a>
-    <table>
-        <thead>
-            <tr>
-                <th>Foto</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>DNI</th>
-                <th>Fecha de Nacimiento</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entrenador in entrenadores %}
-            <tr>
-                <td>
-                    {% if entrenador.foto_entrenador %}
-                        <img src="{{ entrenador.foto_entrenador.url }}" alt="Foto de {{ entrenador.nombre_entrenador }}" style="width: 50px; height: auto;">
-                    {% else %}
-                        <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width: 50px; height: auto;">
-                    {% endif %}
-                </td>
-                <td>{{ entrenador.nombre_entrenador }}</td>
-                <td>{{ entrenador.apellido_entrenador }}</td>
-                <td>{{ entrenador.dni_entrenador }}</td>
-                <td>{{ entrenador.fecha_nac_entrenador }}</td>
-                <td>
-                    <a href="{% url 'entrenador_editar' entrenador.id %}">
-                        <button>Editar</button>
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
+<style>
+    body {
+        overflow-x: hidden;
+    }
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+
+        <div class="text-center mb-4">
+            <h1>DELEGADOS</h1>
+            <a href="{% url 'entrenador_crear' %}">
+                <button class="btn btn-success">
+                    <i class="fas fa-plus"></i> 
+                    CREAR DELEGADO
+                </button>
+            </a>
+        </div>
+
+        <table class="table table-dark text-center" style="background-color: black; border: none;">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>DNI</th>
+                    <th>Fecha de Nacimiento</th>
+                    <th>Equipo que Dirige</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entrenador in entrenadores %}
+                <tr>
+                    <td>
+                        {% if entrenador.foto_entrenador %}
+                            <img src="{{ entrenador.foto_entrenador.url }}" alt="Foto de {{ entrenador.nombre_entrenador }}" style="width: 50px; height: 50px;">
+                        {% else %}
+                            <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width: 50px; height: 50px;">
+                        {% endif %}
+                    </td>
+                    <td>{{ entrenador.nombre_entrenador }}</td>
+                    <td>{{ entrenador.apellido_entrenador }}</td>
+                    <td>{{ entrenador.dni_entrenador }}</td>
+                    <td>{{ entrenador.fecha_nac_entrenador|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if entrenador.id_equipo %}
+                            {% if entrenador.id_equipo.logo_equipo %}
+                                <img src="{{ entrenador.id_equipo.logo_equipo.url }}" alt="Logo de {{ entrenador.id_equipo.nombre_equipo }}" style="width: 30px; height: auto;"> <!-- Ajuste de tamaño -->
+                            {% else %}
+                                <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="" style="width: 30px; height: auto;"> <!-- Ajuste de tamaño -->
+                            {% endif %}
+                            <br> <!-- Salto de línea -->
+                            <span style="font-size: 12px;">{{ entrenador.id_equipo.nombre_equipo }}</span> <!-- Tamaño de texto reducido -->
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        <a href="{% url 'entrenador_editar' entrenador.id %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i> 
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 {% endblock %}

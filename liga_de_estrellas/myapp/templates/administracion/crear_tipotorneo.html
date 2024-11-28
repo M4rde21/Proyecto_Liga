@@ -1,17 +1,34 @@
 {% extends 'administracion/base2.html' %}
 
 {% block content %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 60%; border: 2px solid white; border-radius: 10px;">
+        <div class="text-center mb-4">
+            <h1 style="color: white; text-transform: uppercase;">Crear Tipo de Torneo</h1>
+        </div>
+        <form method="post" action="{% url 'crear_tipotorneo' %}">
+            {% csrf_token %}
+            <div class="row">
+                <!-- Campo Nombre del Tipo de Torneo -->
+                <div class="form-group col-md-12">
+                    <label for="nombre_tipotorneo" style="color: white; text-align: center; display: block;">Nombre del Tipo de Torneo:</label>
+                    <input type="text" id="nombre_tipotorneo" name="nombre_tipotorneo" class="form-control" maxlength="100" required style="background-color: black; color: white; border: 1px solid white;">
+                </div>
+            </div>
 
-<h1>Crear Tipo de Torneo</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-    </form>
-    <form action="{% url 'tipotorneos_adm' %}" method="get" style="display:inline;">
-        <button type="submit" >Volver atrás</button>
-    </form>
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                    Guardar
+                </button>
+                <a href="{% url 'tipotorneos_adm' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
 
 {% endblock %}
-

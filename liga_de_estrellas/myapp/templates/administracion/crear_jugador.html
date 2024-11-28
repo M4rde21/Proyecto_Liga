@@ -1,23 +1,113 @@
 {% extends 'administracion/base2.html' %}
-{% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear jugador</title>
-</head>
-<body>
-    {{error}}
-    <form action="/jugadores/crear/" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{form.as_p}}
-        <button type="submit">CONFIRMAR</button>
-    </form>
-    <a href="{% url 'jugadores' %}">
-        <button>VOLVER</button>
-    </a>
-</body>
-</html>
-{% endblock %}
+{% load static %}
 
+{% block content %}
+<style>
+    body {
+        overflow-x: hidden;
+    }
+</style>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container-fluid mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; border: 2px solid white; border-radius: 10px;">
+        <div class="text-center mb-4">
+            <h1>CREAR JUGADOR</h1>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger text-center">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="/jugadores/crear/" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <div style="width: 150px; height: 150px; border-radius: 50%; border: 2px solid white; margin: auto; overflow: hidden;">
+                        <!-- Asignar el id 'fotoPreview' y mostrar la imagen por defecto desde el inicio -->
+                        <img src="{% static 'media/fotos_jugador/jugador_default.png' %}" id="fotoPreview" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+
+                    <div class="mt-2">
+                        <label for="foto_jugador" class="btn btn-primary">Elegir Foto</label>
+                        <input type="file" name="foto_jugador" id="foto_jugador" accept="image/*" onchange="previewFoto(event)" style="display: none;">
+                    </div>
+                    <button type="button" class="btn btn-warning mt-2" onclick="clearImage()">Limpiar Imagen</button>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label for="nombre_jugador" style="color: white;">Nombre del Jugador:</label>
+                            <input type="text" id="nombre_jugador" name="nombre_jugador" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="apellido_jugador" style="color: white;">Apellido del Jugador:</label>
+                            <input type="text" id="apellido_jugador" name="apellido_jugador" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label for="dni_jugador" style="color: white;">DNI:</label>
+                            <input type="text" id="dni_jugador" name="dni_jugador" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="fecha_nac_jugador" style='color: white;'>Fecha de Nacimiento:</label>
+                            <input type="date" id="fecha_nac_jugador" name="fecha_nac_jugador" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label for="activo_jugador" style="color: white;">Activo:</label>
+                            <select id="activo_jugador" name="activo_jugador" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                                <option value="True">Sí</option>
+                                <option value="False">No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>             
+            </div>
+
+            <!-- Botones de Guardar y Cancelar -->
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">Guardar</button>
+                <a href="{% url 'jugadores' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Función para previsualizar la imagen seleccionada
+function previewFoto(event) {
+    const fotoPreview = document.getElementById('fotoPreview');
+    const file = event.target.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fotoPreview.src = e.target.result;
+            fotoPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // Si no hay archivo, mostrar imagen por defecto
+        fotoPreview.src = '{% static "media/fotos_jugador/jugador_default.png" %}'; // Cambia esto a tu ruta por defecto
+    }
+}
+
+// Función para limpiar la imagen
+function clearImage() {
+    const fotoPreview = document.getElementById('fotoPreview');
+    const fileInput = document.getElementById('foto_jugador');
+
+    fotoPreview.src = "{% static 'media/fotos_jugador/jugador_default.png' %}"; // Restaurar imagen por defecto
+    fileInput.value = ""; // Limpiar el campo de archivo
+}
+</script>
+
+{% endblock %}

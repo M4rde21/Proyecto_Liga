@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planilla del Partido</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .titulo {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .partido-info {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .jugadores {
+            margin-top: 30px;
+        }
+        .jugadores table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .jugadores th, .jugadores td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+        .jugadores th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="titulo">
+        Planilla del Partido
+    </div>
+
+    <div class="partido-info">
+        <p><strong>Fecha:</strong> {{ fecha }}</p>
+        <p><strong>Partido:</strong> {{ equipo_1 }} vs {{ equipo_2 }}</p>
+    </div>
+
+    <div class="jugadores">
+        <h3>Jugadores de {{ equipo_1 }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for jugador in jugadores_equipo_1 %}
+                    <tr>
+                        <td>{{ jugador.nombre_jugador }}</td>
+                        <td>{{ jugador.apellido_jugador }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Jugadores de {{ equipo_2 }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for jugador in jugadores_equipo_2 %}
+                    <tr>
+                        <td>{{ jugador.nombre_jugador }}</td>
+                        <td>{{ jugador.apellido_jugador }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

@@ -197,3 +197,23 @@ class PlanillaForm(forms.Form):
         return cleaned_data
     
 
+
+class CrearReglamentoForm(forms.Form):
+    nombre_reglamento = forms.CharField(label="Nombre de Reglamento", max_length=100, required=True)
+    archivo_reglamento = forms.FileField(label="Subir Reglamento", required=False)
+    
+    def clean_archivo_reglamento(self):
+        archivo = self.cleaned_data.get('archivo_reglamento')
+        if archivo: 
+            if not archivo.name.endswith('.pdf'):
+                raise ValidationError("Solo se permiten archivos en formato PDF.")
+        return archivo
+
+
+class CrearTraspasoForm(forms.Form):
+    id_jugador = forms.ModelChoiceField(label="Nombre del Jugador", queryset=Jugador.objects.all(), required=True)
+    id_equipo_actual = forms.ModelChoiceField(label="Ultimo Equipo", queryset=Equipo.objects.all(), required=True)
+    id_equipo_nuevo = forms.ModelChoiceField(label="Nuevo Equipo", queryset=Equipo.objects.all(), required=True)
+    fecha_transferencia = forms.DateField(
+        label="Fecha del Traspaso", widget=forms.DateInput(attrs={'type': 'date'}), input_formats=['%Y-%m-%d'], required=True
+        )

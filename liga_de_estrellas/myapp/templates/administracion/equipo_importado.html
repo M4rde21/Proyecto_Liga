@@ -1,55 +1,280 @@
 {% extends 'administracion/base2.html' %}
-
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipo Importado</title>
-</head>
-<body>
-    <a href="{% url 'zonas' temporada.id %}">
-        <button>Volver</button>
-    </a>
-    <h1>{{ equipo.nombre_equipo }}</h1>
-    <div>
-        {% if equipo.logo_equipo %}
-            <img src="{{ equipo.logo_equipo.url }}" alt="Logo de {{ equipo.nombre_equipo }}" width="150" height="150">
-        {% else %}
-            <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" width="150" height="150">
-        {% endif %}
+<style>
+    body {
+        overflow-x: hidden;
+    }
+    .team-logo {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+    }
+    .rounded-circle {
+        display: block;
+        margin: 0 auto;
+    }
+    .team-name {
+        text-align: center;
+        margin-top: 10px;
+    }
+    .no-bullets {
+        list-style: none;
+        padding: 0;
+        text-align: center;
+    }
+    .button-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .left-button {
+        margin-right: auto; /* Alinea el botón Volver a la izquierda */
+    }
+    .table th, .table td {
+        text-align: center;
+    }
+    .title-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .section-title {
+        margin-bottom: 0;
+    }
+    hr {
+        border: none;
+        height: 2px;
+        background-color: white;
+        margin-top: 10px;
+    }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        
+        <div class="button-group">
+            <a href="{% url 'zonas' temporada.id %}" class="btn btn-secondary btn-sm left-button">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{% url 'equipo_importado_cambiar' temporada.id zona.id equipo.id %}" class="btn-sm" style="background-color: brown;">
+                <i class="fas fa-sync" style="color: white;"></i>
+            </a>
+            <a href="{% url 'asignar_premio_grupal' temporada.id zona.id equipo.id %}" class="btn-sm" style="background-color: black; border: 1px solid yellow;">
+                <i class="fas fa-trophy" style="color: yellow;"></i>
+            </a>
+        
+            <!-- El formulario de eliminación con el modal de confirmación -->
+            <form action="{% url 'equipo_importado_eliminado' temporada.id zona.id equipo.id %}" method="post" style="display:inline;" id="deleteForm{{ equipo.id }}">
+                {% csrf_token %}
+                <!-- Botón de eliminación que abre el modal -->
+                <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal{{ equipo.id }}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </form>
+        
+            <!-- Modal de confirmación -->
+            <div class="modal fade" id="deleteModal{{ equipo.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel{{ equipo.id }}" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel{{ equipo.id }}">Confirmación de eliminación</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Estás seguro de que deseas eliminar este equipo?
+                        </div>
+                        <div class="modal-footer">
+                            <!-- Botón para cerrar el modal sin eliminar -->
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <!-- Botón para confirmar la eliminación, que enviará el formulario -->
+                            <button type="button" class="btn btn-danger" onclick="document.getElementById('deleteForm{{ equipo.id }}').submit();">Confirmar eliminación</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+
+        <!-- Team Logo and Name -->
+        <div class="text-center">
+            {% if equipo.logo_equipo %}
+                <img src="{{ equipo.logo_equipo.url }}" alt="Logo de {{ equipo.nombre_equipo }}" class="rounded-circle team-logo">
+            {% else %}
+                <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" class="rounded-circle team-logo">
+            {% endif %}
+            <div class="team-name">
+                <h1>{{ equipo.nombre_equipo }}</h1>
+            </div>
+        </div>
+
+        <!-- PLANTEL Section -->
+        <div class="zona-section mt-4 p-3" style="border: 1px solid white; border-radius: 10px;">
+            <div class="title-container">
+                <h2 class="section-title text-center flex-grow-1">PLANTEL</h2>
+                <div class="button-group">
+                    <a href="{% url 'importar_jugador_equipo' temporada.id zona.id equipo.id %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-user-plus"></i>
+                    </a>
+                </div>
+            </div>
+            <hr>
+            <table class="table table-dark text-center" style="background-color: black; border: none;">
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>DNI</th>
+                        <th>Fecha de Nacimiento</th>
+                        <th>Premio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for relacion in jugadores_importados %}
+                    <tr>
+                        <td>
+                            {% if relacion.id_jugador.foto_jugador %}
+                                <img src="{{ relacion.id_jugador.foto_jugador.url }}" alt="Foto de {{ relacion.id_jugador.nombre_jugador }}" style="width:50px; height:auto;">
+                            {% else %}
+                                <img src="{{ MEDIA_URL }}fotos_jugador/jugador_default.png" alt="Foto no disponible" style="width:50px; height:auto;">
+                            {% endif %}
+                        </td>
+                        <td>{{ relacion.id_jugador.nombre_jugador }}</td>
+                        <td>{{ relacion.id_jugador.apellido_jugador }}</td>
+                        <td>{{ relacion.id_jugador.dni_jugador }}</td>
+                        <td>{{ relacion.id_jugador.fecha_nac_jugador|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if relacion.premios %}
+                                <div class="premios" style="position: relative;">
+                                    {% for premio_obj in relacion.premios %}
+                                        <div class="premio" style="display:inline-block; text-align:center; margin-right:5px;">
+                                            <img src="{{ premio_obj.id_premio_individual.foto_premio_individual.url }}" alt="{{ premio_obj.id_premio_individual.nombre_premio_individual }}" style="width:40px; height:auto;" />
+                                        </div>
+                                    {% endfor %}
+                                    <!-- Botón de eliminar premio -->
+                                    <!-- Alineación a la derecha -->
+                                    <!-- Formulario de Eliminación -->
+<form action="{% url 'eliminar_premio_individual' temporada.id zona.id equipo.id relacion.id_jugador.id %}" method="POST" style="position:absolute; right:-10px; top:10px;">
+    {% csrf_token %}
+    
+    <!-- Botón de Eliminación que dispara el modal -->
+    <button type="button" class="btn btn-danger btn-circle" data-toggle="modal" data-target="#confirmDeleteModal{{ relacion.id_jugador.id }}" 
+        style="width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:0;">
+        <i class="fas fa-times" style="font-size: 10px;"></i> <!-- Icono más pequeño -->
+    </button>
+</form>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="confirmDeleteModal{{ relacion.id_jugador.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel{{ relacion.id_jugador.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="background-color: black; border-radius: 20px; border: 2px solid white;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteModalLabel{{ relacion.id_jugador.id }}" style="color: white;">Confirmar Eliminación</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="color: white;">
+                ¿Estás seguro de que deseas eliminar este premio individual?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <!-- Formulario de Eliminación de Premio -->
+                <form action="{% url 'eliminar_premio_individual' temporada.id zona.id equipo.id relacion.id_jugador.id %}" method="POST" id="deleteForm{{ relacion.id_jugador.id }}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
     </div>
+</div>
 
-    <a href="{% url 'equipo_importado_cambiar' temporada.id zona.id equipo.id %}">
-        <button>Cambiar equipo</button>
-    </a>
+                                </div>
+                            {% else %}
+                            {% endif %}
+                        </td>
 
-    <form action="{% url 'equipo_importado_eliminado' temporada.id zona.id equipo.id %}" method="post" style="display: inline;">
-        {% csrf_token %}
-        <button type="submit">Eliminar</button>
-    </form>
+                        <!-- Acciones -->
+                        <td>
+                            <div class="d-flex justify-content-center">
+                                <a href="{% url 'asignar_premio_individual' relacion.id_temporada.id relacion.id_grupo.id relacion.id_equipo.id relacion.id_jugador.id %}" class="btn btn-warning btn-sm mr-1">
+                                    <i class="fas fa-award"></i>
+                                </a>
+                                
+                                <!-- El formulario de eliminación con el modal de confirmación -->
+                                <form action="{% url 'eliminar_jugador_equipo' temporada.id zona.id equipo.id relacion.id_jugador.id %}" method="POST" style="display:inline;" id="deleteFormPlayer{{ relacion.id_jugador.id }}">
+                                    {% csrf_token %}
+                                    <!-- Botón de eliminación que abre el modal -->
+                                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModalPlayer{{ relacion.id_jugador.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            
+                                <!-- Modal de confirmación con un ID único para este jugador -->
+                                <div class="modal fade" id="deleteModalPlayer{{ relacion.id_jugador.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabelPlayer{{ relacion.id_jugador.id }}" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabelPlayer{{ relacion.id_jugador.id }}">Confirmación de eliminación</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                ¿Estás seguro de que deseas eliminar a este jugador del equipo?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <!-- Botón para cerrar el modal sin eliminar -->
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                                <!-- Botón para confirmar la eliminación, que enviará el formulario -->
+                                                <button type="button" class="btn btn-danger" onclick="document.getElementById('deleteFormPlayer{{ relacion.id_jugador.id }}').submit();">Confirmar eliminación</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>                            
+                        </td>
 
-    <h2>PLANTEL</h2>
-    <a href="{% url 'importar_jugador_equipo' temporada.id zona.id equipo.id %}">
-        <button>Importar jugador</button>
-    </a>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8">No hay jugadores importados para este equipo.</td></tr>
+                    {% endfor %}
+                </tbody> 
+            </table> 
+        </div>
 
-    <h3>Jugadores Importados:</h3>
-    <ul>
-        {% if jugadores_importados.exists %}
-            {% for jugador in jugadores_importados %}
-                <li>
-                    Nombre: {{ jugador.id_jugador.nombre_jugador }}, 
-                    Apellido: {{ jugador.id_jugador.apellido_jugador }},
-                    DNI: {{ jugador.id_jugador.dni_jugador }},
-                    Fecha de Nacimiento: {{ jugador.id_jugador.fecha_nac_jugador }}
-                </li>
-            {% endfor %}
-        {% else %}
-            <li>No hay jugadores importados para este equipo.</li>
-        {% endif %}
-    </ul>
-</body>
-</html>
+        <!-- PREMIOS Section -->
+        <div class="zona-section mt-4 p-3 text-center" style="border: 1px solid white; border-radius: 10px;">
+            <div class="title-container d-flex justify-content-between align-items-center">
+                <h3 class="section-title text-center flex-grow-1">PREMIOS DEL EQUIPO</h3>
+                <form action="{% url 'eliminar_premio_grupal' temporada.id zona.id equipo.id %}" method="POST" class="text-center">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+            <hr>
+            {% if premios_asignados %}
+                <ul class="no-bullets">
+                    {% for premio in premios_asignados %}
+                        <li>
+                            <img src="{{ premio.id_premio_grupal.foto_premio_grupal.url }}" alt="{{ premio.id_premio_grupal.nombre_premio_grupal }}" style="width: 100px; height: auto;"><br>
+                            <strong>{{ premio.id_premio_grupal.nombre_premio_grupal }}</strong>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No se han asignado premios a este equipo.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

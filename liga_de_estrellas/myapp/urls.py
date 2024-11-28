@@ -36,11 +36,19 @@ urlpatterns = [
     path('zonas/<int:id_temporada>', views.zonas, name='zonas'),
     path('zonas/<int:id_temporada>/crear', views.zona_crear, name='zona_crear'),
     path('zonas/<int:id_temporada>/editar/<int:id_zona>/', views.zona_editar, name='zona_editar'),
+    path('zonas/<int:id_temporada>/<int:id_zona>/delete', views.zona_eliminar, name='zona_eliminar'),
     path('zonas/<int:id_temporada>/<int:id_zona>/importar_equipos/', views.importar_equipos_zona, name='importar_equipos_zona'),
     path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/', views.equipo_importado, name='equipo_importado'),
     path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/cambiar', views.equipo_importado_cambiar, name='equipo_importado_cambiar'),
+    path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/asignar_premio', views.asignar_premio_grupal, name='asignar_premio_grupal'),
+    path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/delete_premio_grupal', views.eliminar_premio_grupal, name='eliminar_premio_grupal'),
+    path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/jugador/<int:id_jugador>/asignar_premio_individual', views.asignar_premio_individual, name='asignar_premio_individual'),
+    path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/jugador/<int:id_jugador>/delete_premio_individual', views.eliminar_premio_individual, name='eliminar_premio_individual'),
     path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/delete', views.equipo_importado_eliminado, name='equipo_importado_eliminado'),
-    path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/importar_jugador_equipo', views.importar_jugador_equipo, name='importar_jugador_equipo'),
+    path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/importar_jugador_equipo', views.importar_jugador_equipo,
+    name='importar_jugador_equipo'),
+    path('zonas/<int:id_temporada>/<int:id_zona>/equipo_importado/<int:id_equipo>/eliminar_jugador_equipo/<int:id_jugador>', views.eliminar_jugador_equipo, name='eliminar_jugador_equipo'),
+    
     path('categorias_adm/', views.categorias_adm, name='categorias_adm'),
     path('crear_categoria/', views.crear_categoria, name='crear_categoria'),
     path('categorias_adm/<int:id_categoria>/', views.edit_categoria, name='edit_categoria'),
@@ -61,8 +69,8 @@ urlpatterns = [
     path('fechas/<int:id_temporada>/crear/', views.crear_fecha, name='crear_fecha'),
     path('fechas/<int:id_temporada>/editar/<int:id_fecha>/', views.edit_fecha, name='edit_fecha'),
     path('fechas/<int:id_temporada>/<int:id_fecha>/delete/', views.delete_fecha, name='delete_fecha'),
-    path('fechas/<int:id_temporada>/<int:id_fecha>/generar_pdf/', views.generar_pdf_partidosxfecha, name='fecha_pdf'),
-
+    
+    path('generar_planillas_pdf/<int:id_temporada>/<int:id_fecha>/', views.generar_planillas_pdf, name='generar_planillas_pdf'),
     
     path('partidos/<int:id_temporada>/<int:id_fecha>/crear/', views.crear_partido, name="crear_partido"),
     path('partidos/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/editar/', views.edit_partido, name='edit_partido'),
@@ -71,7 +79,26 @@ urlpatterns = [
     path('resultado/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/crear/', views.crear_resultado, name="crear_resultado"),
     path('planilla/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/crear/', views.crear_planilla, name="crear_planilla"),
     path('gestionar_partido/<int:id_temporada>/<int:id_fecha>/<int:id_partido>/', views.gestionar_partido, name='gestionar_partido'),
+    path('traspasos/', views.traspasos, name='traspasos'),
+    path('traspasos/crear', views.traspasos_crear, name='traspasos_crear'),
+    path('traspasos/editar/<int:id_traspaso>/', views.traspasos_editar, name='traspasos_editar'),
+    path('traspasos/eliminar/<int:id_traspaso>/', views.traspasos_eliminar, name='traspasos_eliminar'),
+    path('resumen_adm/', views.resumen_adm, name='resumen_adm'),
+    path('reglamentos_lista/', views.reglamentos_lista, name='reglamentos_lista'),
+    path('reglamentos/crear', views.reglamentos_crear, name='reglamentos_crear'),
+    path('reglamentos/editar/<int:id_reglamento>/', views.reglamentos_editar, name='reglamentos_editar'),
+    path('reglamentos/eliminar/<int:id_reglamento>/', views.reglamentos_eliminar, name='reglamentos_eliminar'),
     
+
+
+    
+    path('torneos/', views.mostrar_torneos, name='mostrar_torneos'),
+    path('torneo/<int:id_torneo>/temporadas/', views.lista_temporadas, name='lista_temporadas'),
+    path('torneo/<int:id_torneo>/temporada/<int:id_temporada>/', views.temporada_detalles, name='temporada_detalles'),
+    path('torneo/<int:id_torneo>/temporada/<int:temporada_id>/partido/<int:partido_id>/', views.partido_detalles, name='partido_detalles'),
+    path('equipo/<int:equipo_id>/temporada/<int:temporada_id>/', views.equipo_perfil, name='equipo_perfil'),
+    path('jugador/<int:jugador_id>/detalle/<int:temporada_id>/<int:equipo_id>/', views.jugador_detalles, name='jugador_detalles'),
+
 
 
 ]

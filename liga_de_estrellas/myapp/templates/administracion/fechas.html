@@ -1,86 +1,279 @@
 {% extends 'administracion/base2.html' %}
 
 {% block content %}
-<h1>{{ temporada.nombre_temporada }}</h1>
-<h2>{{ temporada.id_torneo.nombre_torneo }}</h2>
 
-<a href="{% url 'crear_fecha' temporada.id %}">
-    <button>Crear nueva Fecha</button>
-</a>
+<style>
+    body {
+        overflow-x: hidden;
+    }
 
-<ul>
-    {% for fecha in fechas %}
-    <li>
-        <h3>{{ fecha.nombre_fecha }}</h3>
+    .zona-section .btn {
+        margin-right: 10px;
+        /* Separa un poco los íconos */
+    }
 
-        <a href="{% url 'crear_partido' temporada.id fecha.id %}">
-            <button>Crear partido</button>
-        </a>
+    .partido-lista {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid white;
+        padding: 10px 0;
+        color: white;
+    }
 
-        <a href="{% url 'edit_fecha' temporada.id fecha.id %}">
-            <button>Editar Fecha</button>
-        </a>
+    .partido-lista img {
+        width: 50px;
+        height: 50px;
+        margin-right: 20px;
+    }
 
-        <a href="{% url 'fecha_pdf' temporada.id fecha.id %}">
-            <button>generar pdf</button>
-        </a>
-        
+    .acciones button {
+        margin-right: 5px;
+    }
+</style>
 
-        <form method="POST" action="{% url 'delete_fecha' temporada.id fecha.id %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar esta fecha?');">Eliminar Fecha</button>
-        </form>
+<div class="container mt-5">
+    <div class="p-4 mx-auto"
+        style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
 
-        
-        {% if fecha.partidos_listados %}
-            <ul>
-                {% for partido in fecha.partidos_listados %}
-                    <li>
-                        <p>{{ partido.fecha_partido }} - {{ partido.hora_partido|time:"H:i" }}</p>
-                        <div>
-                            <h4>Equipo 1: {{ partido.id_equipo_1.nombre_equipo }}</h4>
-                            {% if partido.id_equipo_1.logo_equipo %}
-                                <img src="{{ partido.id_equipo_1.logo_equipo.url }}" alt="{{ partido.id_equipo_1.nombre_equipo }} Logo" width="50" height="50">
-                            {% else %}
-                                <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 50px; height: auto;">
-                            {% endif %}
-                        </div>
-                        <div>
-                            <h4>Equipo 2: {{ partido.id_equipo_2.nombre_equipo }}</h4>
-                            {% if partido.id_equipo_2.logo_equipo %}
-                                <img src="{{ partido.id_equipo_2.logo_equipo.url }}" alt="{{ partido.id_equipo_2.nombre_equipo }} Logo" width="50" height="50">
-                            {% else %}
-                                <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" style="width: 50px; height: auto;">
-                            {% endif %}
-                        </div>
-                        <p>{% if partido.destacado %}<strong>Partido Destacado</strong>{% endif %}</p>
-                        
-                      
-                        <a href="{% url 'gestionar_partido' temporada.id fecha.id partido.id %}">
-                            <button>Gestionar partido</button>
-                        </a>
+        <!-- Título de la Temporada y Torneo -->
+        <div class="text-center">
+            <h4>{{ temporada.nombre_temporada }}</h4>
+            <h6>{{ temporada.id_torneo.nombre_torneo }}</h6>
+        </div>
 
-                        <a href="{% url 'edit_partido' temporada.id fecha.id partido.id %}">
-                            <button>Editar partido</button>
-                        </a>
+        <!-- Botones Zonas y Fixture -->
+        <div class="text-center mb-2">
+            <a href="{% url 'zonas' temporada.id %}" class="font-weight-bold mx-2" style="color: white;">ZONAS</a>
+            <a href="{% url 'fechas' temporada.id %}" class="font-weight-bold mx-2"
+                style="color: white; text-decoration: underline; text-decoration-thickness: 2px;">FIXTURE</a>
+        </div>
 
-                        <a href="{% url 'planillapdf' temporada.id fecha.id partido.id %}">
-                            <button>Generar pdf</button>
-                        </a>
+        <!-- Botón para abrir el Modal de Crear Fecha -->
+        <div class="text-center mb-4">
+            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#crearFechaModal">
+                CREAR FECHA
+            </button>
+        </div>
 
-                        <form method="POST" action="{% url 'delete_partido' temporada.id fecha.id partido.id %}">
+        <!-- Modal de Crear Fecha -->
+        <div class="modal fade" id="crearFechaModal" tabindex="-1" role="dialog" aria-labelledby="crearFechaModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content"
+                    style="background-color: black; border-radius: 20px; border: 2px solid white;">
+                    <div class="modal-header justify-content-center">
+                        <h5 class="modal-title" id="crearFechaModalLabel" style="color: white;">CREAR FECHA</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="{% url 'crear_fecha' temporada.id %}">
                             {% csrf_token %}
-                            <button type="submit" onclick="return confirm('¿Estás seguro de que deseas borrar este partido?');">Eliminar Partido</button>
 
+                            <!-- Campo Nombre de la Fecha -->
+                            <div class="form-group text-center">
+                                <label for="id_nombre_fecha_crear" style="color: white; display: block;">Nombre de la
+                                    Fecha</label>
+                                <input type="text" class="form-control" id="id_nombre_fecha_crear" name="nombre_fecha"
+                                    required style="background-color:black; color: white">
+                            </div>
+
+                            <!-- Botón de confirmación centrado -->
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success mt-3">CONFIRMAR</button>
+                            </div>
                         </form>
-                    </li>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fechas -->
+        {% for fecha in fechas %}
+        <div class="zona-section mt-4 p-3" style="border: 1px solid white; border-radius: 10px;">
+            <div class="d-flex justify-content-between align-items-center">
+                <!-- Título de la Fecha -->
+                <h3 style="text-align: center; width: 100%; margin-left: 130px;">{{ fecha.nombre_fecha }}</h3>
+
+                <!-- Botones de Acción en Iconos -->
+                <div class="d-flex align-items-center">
+                    <!-- Botón para crear partido -->
+                    <a href="{% url 'crear_partido' temporada.id fecha.id %}" title="Crear Partido"
+                        class="btn btn-success btn-sm">
+                        <i class="fa fa-plus"></i>
+                    </a>
+
+                    <a href="{% url 'generar_planillas_pdf' temporada.id fecha.id %}" title="generar pdf"
+                        class="btn btn-success btn-sm">
+                        <i class="fa fa-plus"></i>
+                    </a>
+
+                    <!-- Botón de editar que abre el modal -->
+                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal"
+                        data-target="#editarFechaModal{{ fecha.id }}" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+
+                    <!-- Modal de Edición de Fecha -->
+                    <div class="modal fade" id="editarFechaModal{{ fecha.id }}" tabindex="-1" role="dialog"
+                        aria-labelledby="editarFechaModalLabel{{ fecha.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content"
+                                style="background-color: black; border-radius: 20px; border: 2px solid white;">
+                                <div class="modal-header justify-content-center">
+                                    <h5 class="modal-title" id="editarFechaModalLabel{{ fecha.id }}"
+                                        style="color: white;">EDITAR FECHA</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="post" action="{% url 'edit_fecha' temporada.id fecha.id %}">
+                                        {% csrf_token %}
+
+                                        <!-- Campo Nombre de la Fecha -->
+                                        <div class="form-group text-center">
+                                            <label for="id_nombre_fecha" style="color: white; display: block;">Nombre de
+                                                la Fecha</label>
+                                            <input type="text" class="form-control" id="id_nombre_fecha"
+                                                name="nombre_fecha" value="{{ fecha.nombre_fecha }}" required
+                                                style="background-color:black; color: white">
+                                        </div>
+
+                                        <!-- Botón de confirmación centrado -->
+                                        <div class="text-center">
+                                            <button type="submit" class="btn btn-warning mt-3">GUARDAR CAMBIOS</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón para eliminar fecha con modal -->
+                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal"
+                        data-target="#confirmDeleteFechaModal{{ fecha.id }}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+
+                    <!-- Modal de confirmación de eliminación de fecha -->
+                    <div class="modal fade" id="confirmDeleteFechaModal{{ fecha.id }}" tabindex="-1" role="dialog"
+                        aria-labelledby="confirmDeleteFechaModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content"
+                                style="background-color: black; border-radius: 20px; border: 2px solid white;">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="confirmDeleteFechaModalLabel" style="color: white;">
+                                        Confirmar Eliminación</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body" style="color: white;">
+                                    ¿Estás seguro de que deseas eliminar esta fecha?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-dismiss="modal">Cancelar</button>
+                                    <form action="{% url 'delete_fecha' temporada.id fecha.id %}" method="post"
+                                        id="deleteFormFecha{{ fecha.id }}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Listado de Partidos -->
+            {% if fecha.partido_set.all %}
+            <div class="mt-3">
+                {% for partido in fecha.partido_set.all %}
+                <div class="partido-lista">
+                    <!-- Fecha y Hora -->
+                    <div>
+                        {{ partido.fecha_partido|date:"d/m/Y" }}
+                    </div>
+
+                    <div>
+                        {{ partido.hora_partido|time:"H:i" }}
+                    </div>
+
+                    <!-- Equipo 1 -->
+                    <div class="d-flex align-items-center">
+                        <span>{{ partido.id_equipo_1.nombre_equipo }}</span>
+                        {% if partido.id_equipo_1.logo_equipo %}
+                        <img src="{{ partido.id_equipo_1.logo_equipo.url }}"
+                            alt="{{ partido.id_equipo_1.nombre_equipo }} Logo" class="mr-2" style="margin-left: 20px;">
+                        {% else %}
+                        <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" class="mr-2">
+                        {% endif %}
+
+                    </div>
+
+                    <!-- Resultado -->
+                    <div class="resultado d-flex align-items-center">
+                        <strong>
+                            {% if partido.resultado_set.exists %}
+                                {{ partido.resultado_set.first.goles_equipo_1 }} - {{ partido.resultado_set.first.goles_equipo_2 }}
+                            {% else %}
+                                <span>-</span>
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <!-- Equipo 2 -->
+                    <div class="d-flex align-items-center" id="equipo2">
+
+                        {% if partido.id_equipo_2.logo_equipo %}
+                        <img src="{{ partido.id_equipo_2.logo_equipo.url }}"
+                            alt="{{ partido.id_equipo_2.nombre_equipo }} Logo" class="ml-2">
+                        {% else %}
+                        <img src="{{ MEDIA_URL }}logos/logo_default.jpg" alt="Logo no disponible" class="ml-2">
+                        {% endif %}
+                        <span>{{ partido.id_equipo_2.nombre_equipo }}</span>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="acciones">
+                        <a href="{% url 'gestionar_partido' temporada.id fecha.id partido.id %}"
+                            class="btn btn-info btn-sm" title="Gestionar Partido">
+                            <i class="fa fa-cogs"></i>
+                        </a>
+                        <a href="{% url 'edit_partido' temporada.id fecha.id partido.id %}"
+                            class="btn btn-warning btn-sm" title="Editar Partido">
+                            <i class="fas fa-edit"></i>
+                        </a>
+
+                        <a href="{% url 'planillapdf' temporada.id fecha.id partido.id %}"
+                            class="btn btn-warning btn-sm" title="generar planilla">
+                            <i class="fas fa-edit"></i>
+                        </a>
+
+                        <form method="POST" action="{% url 'delete_partido' temporada.id fecha.id partido.id %}"
+                            style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('¿Estás seguro de que deseas borrar este partido?');">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
-        {% else %}
-            <p>No hay partidos programados para esta fecha.</p>
-        {% endif %}
-    </li>
-    {% endfor %}
-</ul>
+            </div>
+            {% else %}
+            <p class="text-center">No hay partidos programados para esta fecha.</p>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+    </div>
+</div>
 
 {% endblock %}

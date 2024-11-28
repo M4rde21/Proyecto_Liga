@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden,HttpRequest
-from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador, Fecha, Partido, Resultado, Planilla
+from .models import Equipo, Torneo, Temporada, Categoria,TipoTorneo, Jugador, Equipo, Entrenador, PremiosGrupal, PremiosIndividual, Grupo, TemporadaXTorneoXGrupoXEquipoXJugador, Fecha, Partido, Resultado, Planilla, Reglamento,PremioEquipo, PremioJugador, TablaDePosicion,Traspaso
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
-from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm,CrearZonaForm, CrearFechaForm, CrearPartidoForm, ResultadoForm, PlanillaForm
+from .forms import TorneoForm, TemporadasForm, CategoriasForm,TipoTorneoForm, CrearJugadorForm, CrearEquipoForm, CrearEntrenadorForm, CrearPremioGrupalForm, CrearPremioIndividualForm,CrearZonaForm, CrearFechaForm, CrearPartidoForm, ResultadoForm, PlanillaForm, CrearReglamentoForm, CrearTraspasoForm
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -16,10 +16,34 @@ from django.template.loader import get_template,render_to_string
 from xhtml2pdf import pisa
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q,Sum, F, Case, When, IntegerField,Count, Exists, OuterRef
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from datetime import datetime, date, time, timedelta
+from collections import defaultdict
+from django.utils.timezone import now
+from io import BytesIO
+from zipfile import ZipFile
+
+
+
+
+
 
 def inicio(request):
-    return render(request, 'usuario/inicio.html')
+    cantidad_jugadores = Jugador.objects.count()
+    cantidad_equipos = Equipo.objects.count()
+    total_goles = Planilla.objects.aggregate(total_goles=Sum('goles'))['total_goles'] or 0
+    cantidad_equipos_campeones = PremioEquipo.objects.filter(id_premio_grupal=1).count()
+    partidos_jugados = Resultado.objects.count()
+    return render(request, 'usuario/inicio.html', {
+        'cantidad_jugadores': cantidad_jugadores,
+        'cantidad_equipos': cantidad_equipos,
+        'total_goles': total_goles,
+        'cantidad_equipos_campeones': cantidad_equipos_campeones,
+        'partidos_jugados': partidos_jugados,
+    })
+
 
 def barra(request):
     return render(request, 'usuario/barra.html')
@@ -72,6 +96,8 @@ def buscar_entidades(request):
 
 def login_view(request):
     return render(request, 'login.html')
+
+
 
      
 def signout(request):
@@ -215,9 +241,13 @@ def crear_torneo(request):
    
 def torneos_adm(request):
     torneos = Torneo.objects.all()
-    return render(request, 'administracion/torneos_adm.html', {
-        'torneos': torneos
-    })
+
+    context = {
+        'torneos': torneos,
+    }
+    
+    return render(request, 'administracion/torneos_adm.html', context)
+
 
 
 
@@ -271,9 +301,23 @@ def crear_temporada(request):
 
 def temporadas_adm(request):
     temporadas = Temporada.objects.all()
-    return render(request, 'administracion/temporadas_adm.html', {
-        'temporadas': temporadas
-    })
+    form_crear = TemporadasForm()  # Formulario para el modal de creación
+
+    # Añadir un formulario de edición para cada temporada al queryset
+    for temporada in temporadas:
+        temporada.form_editar = TemporadasForm(initial={
+            'nombre_temporada': temporada.nombre_temporada,
+            'id_torneo': temporada.id_torneo,
+            'fecha_inicio': temporada.fecha_inicio,
+            'fecha_final': temporada.fecha_final,
+        })
+        
+    context = {
+        'temporadas': temporadas,
+        'form_crear': form_crear,
+    }
+    
+    return render(request, 'administracion/temporadas_adm.html', context)
 
 
 def edit_temporada(request, id_temporada):
@@ -370,6 +414,14 @@ def zona_editar(request, id_temporada, id_zona):
 
 
 
+def zona_eliminar(request, id_temporada, id_zona):
+    zona = get_object_or_404(Grupo, pk=id_zona, id_temporada=id_temporada)
+    if request.method == 'POST':
+        zona.delete()
+        return redirect('zonas', id_temporada=id_temporada)
+
+
+
 def importar_equipos_zona(request, id_temporada, id_zona):
     temporada = get_object_or_404(Temporada, pk=id_temporada)
     zona = get_object_or_404(Grupo, pk=id_zona, id_temporada=temporada)
@@ -410,30 +462,47 @@ def equipo_importado(request, id_temporada, id_zona, id_equipo):
         id_temporada=id_temporada,
         id_grupo=id_zona,
         id_equipo=id_equipo
-    ).first()  # Usamos first() para obtener solo el primer resultado o None
+    ).first()
 
     if relacion is None:
-        # Manejar el caso en que no se encontró la relación
         return render(request, 'administracion/error.html', {
             'mensaje': 'No se encontró la relación entre la temporada, la zona y el equipo especificados.'
         })
 
     equipo = relacion.id_equipo 
-    equipos = Equipo.objects.all()  # Obtener todos los equipos disponibles
-    
+    equipos = Equipo.objects.all()
+
     # Obtener todos los jugadores importados para este equipo
     jugadores_importados = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
         id_temporada=id_temporada,
         id_grupo=id_zona,
+        id_equipo=equipo,
+        id_jugador__isnull=False
+    ).select_related('id_jugador')
+
+    for jugador in jugadores_importados:
+        jugador.premios = PremioJugador.objects.filter(
+            id_temporada=id_temporada,
+            id_torneo=relacion.id_temporada.id_torneo,
+            id_jugador=jugador.id_jugador  # Esto asegura que solo se obtienen los premios de ese jugador específico
+        ).select_related('id_premio_individual')
+
+
+
+    # Mantener la consulta de premios asignados al equipo
+    premios_asignados = PremioEquipo.objects.filter(
+        id_temporada=id_temporada,
+        id_torneo=relacion.id_temporada.id_torneo,
         id_equipo=equipo
-    ).select_related('id_jugador')  # Usamos select_related para obtener los jugadores
+    )
 
     return render(request, 'administracion/equipo_importado.html', {
         'equipo': equipo,
         'temporada': relacion.id_temporada,
         'zona': relacion.id_grupo,
         'equipos': equipos,
-        'jugadores_importados': jugadores_importados
+        'jugadores_importados': jugadores_importados,
+        'premios_asignados': premios_asignados,  # Premios asignados al equipo
     })
 
 
@@ -553,8 +622,169 @@ def importar_jugador_equipo(request, id_temporada, id_zona, id_equipo):
     })
 
 
+def eliminar_jugador_equipo(request, id_temporada, id_zona, id_equipo, id_jugador):
+    # Obtener la temporada y el jugador
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    jugador = get_object_or_404(Jugador, pk=id_jugador)
+
+    # Buscar y eliminar todas las relaciones del jugador con el equipo en todas las zonas de la misma temporada
+    relaciones = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_temporada=temporada,
+        id_equipo=id_equipo,
+        id_jugador=jugador
+    )
+
+    if relaciones.exists():
+        relaciones.delete()
+        # Mostrar un mensaje de éxito
+        messages.success(request, 'El jugador ha sido eliminado de todas las zonas en las que el equipo está presente para la temporada actual.')
+    else:
+        messages.error(request, 'No se encontró la relación del jugador en las zonas del equipo para la temporada actual.')
+
+    # Redirigir a la página de equipo importado
+    return redirect(reverse('equipo_importado', args=[id_temporada, id_zona, id_equipo]))
 
 
+def asignar_premio_grupal(request, id_temporada, id_zona, id_equipo):
+    # Obtener los objetos necesarios
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    equipo = get_object_or_404(Equipo, pk=id_equipo)
+    torneo = temporada.id_torneo  # Obtener el torneo a través de la temporada
+    zona = get_object_or_404(Grupo, pk=id_zona)
+
+    # Obtener los premios grupales disponibles
+    premios_disponibles = PremiosGrupal.objects.all()
+
+    if request.method == 'POST':
+        premio_id = request.POST.get('premio_grupal')
+        premio_grupal = get_object_or_404(PremiosGrupal, pk=premio_id)
+
+        # Verificar si el equipo ya tiene asignado un premio grupal
+        tiene_premio_grupal = PremioEquipo.objects.filter(
+            id_temporada=temporada,
+            id_torneo=torneo,
+            id_equipo=equipo,
+            id_premio_grupal__isnull=False  # Verifica cualquier premio grupal
+        ).exists()
+
+        if tiene_premio_grupal:
+            messages.error(request, 'El equipo ya tiene un premio grupal asignado y no puede recibir más.')
+        else:
+            # Crear la asignación de premio al equipo
+            PremioEquipo.objects.create(
+                id_premio_grupal=premio_grupal,
+                id_temporada=temporada,
+                id_torneo=torneo,
+                id_equipo=equipo
+            )
+            messages.success(request, 'Premio asignado correctamente al equipo.')
+
+            # Redirigir de vuelta a la URL del equipo importado, incluyendo id_zona
+            return redirect(reverse('equipo_importado', args=[id_temporada, id_zona, id_equipo]))
+
+    return render(request, 'administracion/asignar_premio_grupal.html', {
+        'temporada': temporada,
+        'torneo': torneo,
+        'equipo': equipo,
+        'zona': zona,
+        'premios_disponibles': premios_disponibles
+    })
+
+
+def eliminar_premio_grupal(request, id_temporada, id_zona, id_equipo):
+    # Obtener los objetos necesarios
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    equipo = get_object_or_404(Equipo, pk=id_equipo)
+    torneo = temporada.id_torneo  # Obtener el torneo a través de la temporada
+    zona = get_object_or_404(Grupo, pk=id_zona)
+
+    # Filtrar y eliminar todos los premios grupales asignados al equipo en la temporada y torneo especificados
+    premios_a_eliminar = PremioEquipo.objects.filter(
+        id_temporada=temporada,
+        id_torneo=torneo,
+        id_equipo=equipo
+    )
+
+    if premios_a_eliminar.exists():
+        premios_a_eliminar.delete()
+    else:
+        pass
+
+    # Redirigir de vuelta a la URL del equipo importado, incluyendo id_zona
+    return redirect(reverse('equipo_importado', args=[id_temporada, id_zona, id_equipo]))
+
+
+def asignar_premio_individual(request, id_temporada, id_zona, id_equipo, id_jugador):
+    # Obtener los objetos necesarios basados en los argumentos proporcionados
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    equipo = get_object_or_404(Equipo, pk=id_equipo)
+    jugador = get_object_or_404(Jugador, pk=id_jugador)
+    zona = get_object_or_404(Grupo, pk=id_zona)
+
+    # Continuar con la lógica para asignar un premio al jugador
+    premios_disponibles = PremiosIndividual.objects.all()
+
+    if request.method == 'POST':
+        premio_id = request.POST.get('premio_individual')
+        premio_individual = get_object_or_404(PremiosIndividual, pk=premio_id)
+
+        # Verificar cuántos premios ya tiene el jugador
+        num_premios_asignados = PremioJugador.objects.filter(
+            id_temporada=temporada,
+            id_torneo=temporada.id_torneo,
+            id_jugador=jugador
+        ).count()
+
+        if num_premios_asignados >= 2:
+            messages.error(request, 'El jugador ya tiene el máximo de 2 premios asignados.')
+        else:
+            # Verificar si el premio ya fue asignado al jugador
+            existe_premio = PremioJugador.objects.filter(
+                id_temporada=temporada,
+                id_torneo=temporada.id_torneo,
+                id_jugador=jugador,
+                id_premio_individual=premio_individual
+            ).exists()
+
+            if existe_premio:
+                messages.error(request, 'Este premio ya ha sido asignado al jugador.')
+            else:
+                # Crear la asignación de premio al jugador
+                PremioJugador.objects.create(
+                    id_premio_individual=premio_individual,
+                    id_temporada=temporada,
+                    id_torneo=temporada.id_torneo,
+                    id_jugador=jugador
+                )
+                messages.success(request, 'Premio asignado correctamente al jugador.')
+                return redirect(reverse('equipo_importado', args=[id_temporada, id_zona, id_equipo]))
+
+    return render(request, 'administracion/asignar_premio_individual.html', {
+        'temporada': temporada,
+        'equipo': equipo,
+        'jugador': jugador,
+        'zona': zona,
+        'premios_disponibles': premios_disponibles
+    })
+
+def eliminar_premio_individual(request, id_temporada, id_zona, id_equipo, id_jugador):
+    # Obtener los objetos necesarios a partir de los IDs pasados en la URL
+    jugador = get_object_or_404(Jugador, pk=id_jugador)
+    temporada = get_object_or_404(Temporada, pk=id_temporada)
+    zona = get_object_or_404(Grupo, pk=id_zona)
+    equipo = get_object_or_404(Equipo, pk=id_equipo)
+
+    # Eliminar todos los premios asignados a este jugador
+    premios = PremioJugador.objects.filter(id_jugador=jugador)
+
+    if premios.exists():
+        premios.delete()  # Eliminar todos los premios del jugador
+        messages.success(request, 'Todos los premios del jugador han sido eliminados correctamente.')
+    else:
+        messages.info(request, 'El jugador no tiene premios asignados.')
+
+    # Redirigir a la página del equipo importado con los parámetros correctos
+    return redirect(reverse('equipo_importado', args=[id_temporada, id_zona, id_equipo]))
 
 
 
@@ -1272,9 +1502,9 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
     # Formularios existentes de planillas
     planillas_existentes = Planilla.objects.filter(id_partido=partido)
 
-    # Crear formularios para planillas
-    jugadores_formularios = {}
-    for jugador in jugadores_equipo_1 | jugadores_equipo_2:
+    # Crear formularios para cada jugador del equipo 1
+    jugadores_formularios_equipo_1 = []
+    for jugador in jugadores_equipo_1:
         planilla_jugador = planillas_existentes.filter(id_jugador=jugador).first()
         initial_data = {
             'goles': planilla_jugador.goles if planilla_jugador else 0,
@@ -1285,7 +1515,22 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
             'figura': planilla_jugador.figura if planilla_jugador else False,
         }
         form = PlanillaForm(request.POST or None, initial=initial_data, prefix=f'jugador_{jugador.id}')
-        jugadores_formularios[jugador] = form
+        jugadores_formularios_equipo_1.append((jugador, form))  # Emparejamos jugador con formulario
+
+    # Crear formularios para cada jugador del equipo 2
+    jugadores_formularios_equipo_2 = []
+    for jugador in jugadores_equipo_2:
+        planilla_jugador = planillas_existentes.filter(id_jugador=jugador).first()
+        initial_data = {
+            'goles': planilla_jugador.goles if planilla_jugador else 0,
+            'num_camiseta': planilla_jugador.num_camiseta if planilla_jugador else '',
+            'participo': planilla_jugador.participo if planilla_jugador else False,
+            'tarjeta_amarilla': planilla_jugador.tarjeta_amarilla if planilla_jugador else False,
+            'tarjeta_roja': planilla_jugador.tarjeta_roja if planilla_jugador else False,
+            'figura': planilla_jugador.figura if planilla_jugador else False,
+        }
+        form = PlanillaForm(request.POST or None, initial=initial_data, prefix=f'jugador_{jugador.id}')
+        jugadores_formularios_equipo_2.append((jugador, form))  # Emparejamos jugador con formulario
 
     # Crear formulario para resultado si existe, de lo contrario, sin datos iniciales
     initial_resultado = {
@@ -1298,17 +1543,14 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
         # Procesar el formulario de resultado
         if resultado_form.is_valid():
             resultado_data = resultado_form.cleaned_data
-            # Crear o actualizar el resultado solo si el formulario es válido
             if not resultado:
                 resultado = Resultado(id_partido=partido)
-
-            # Actualizar el resultado con los datos del formulario
             resultado.goles_equipo_1 = resultado_data.get('goles_equipo_1', 0)
             resultado.goles_equipo_2 = resultado_data.get('goles_equipo_2', 0)
             resultado.save()
 
         # Procesar las planillas
-        for jugador, form in jugadores_formularios.items():
+        for jugador, form in jugadores_formularios_equipo_1 + jugadores_formularios_equipo_2:
             if form.is_valid():
                 participo = form.cleaned_data.get('participo', False)
                 if participo:
@@ -1336,10 +1578,11 @@ def gestionar_partido(request, id_temporada, id_fecha, id_partido):
         'equipo_1': equipo_1,
         'equipo_2': equipo_2,
         'resultado_form': resultado_form,
-        'jugadores_formularios': jugadores_formularios,
-        'jugadores_equipo_1': jugadores_equipo_1,
-        'jugadores_equipo_2': jugadores_equipo_2,
+        'jugadores_formularios_equipo_1': jugadores_formularios_equipo_1,
+        'jugadores_formularios_equipo_2': jugadores_formularios_equipo_2,
     })
+
+
 
 
 
@@ -1400,170 +1643,1278 @@ def generar_planilla_pdf(request, id_temporada, id_fecha, id_partido):
 
 
 
-def generar_pdf_partidosxfecha(request, id_temporada, id_fecha):
-    # Obtener los datos necesarios
+def generar_planillas_pdf(request, id_temporada, id_fecha):
+    # Obtener temporada y fecha
     temporada = get_object_or_404(Temporada, pk=id_temporada)
     fecha = get_object_or_404(Fecha, pk=id_fecha)
-    torneo = temporada.id_torneo
+    # Obtener todos los partidos para esa fecha
+    partidos = Partido.objects.filter(id_fecha=fecha)
 
-    # Filtrar los grupos correspondientes
-    grupos = Grupo.objects.filter(
-        id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
-            id_temporada=temporada,
-            id_torneo=torneo
-        ).values('id_grupo')
-    ).distinct()
+    # Verificar que los partidos de la fecha se están obteniendo correctamente
+    print(f"Partidos encontrados: {partidos.count()}")  # Esto debería devolver el número correcto de partidos
 
-    # Filtrar los partidos de la fecha
-    partidos = Partido.objects.filter(
-        id_fecha=fecha,
-        id_temporada=temporada,
-        id_grupo__in=grupos
-    ).select_related('id_equipo_1', 'id_equipo_2')
+    # Crear un buffer en memoria para el ZIP
+    zip_buffer = BytesIO()
+    with ZipFile(zip_buffer, 'w') as zip_file:
+        # Generar los PDFs para cada partido y agregar al ZIP
+        for partido in partidos:
+            equipo_1 = partido.id_equipo_1
+            equipo_2 = partido.id_equipo_2
 
-    # Obtener el dominio completo para las URLs absolutas
-    current_site = get_current_site(request)
-    domain = f"{request.scheme}://{current_site.domain}"
+            jugadores_equipo_1 = Jugador.objects.filter(
+                id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+                    id_temporada=temporada,
+                    id_torneo=partido.id_torneo,
+                    id_grupo=partido.id_grupo,
+                    id_equipo=equipo_1
+                ).values('id_jugador')
+            ).order_by('apellido_jugador', 'nombre_jugador')
 
-    # Procesar las URLs absolutas de los logos
-    partidos_con_logos = []
-    for partido in partidos:
-        logo_equipo_1 = (
-            f"{domain}{partido.id_equipo_1.logo_equipo.url}"
-            if partido.id_equipo_1.logo_equipo else f"{domain}{settings.MEDIA_URL}logos/logo_default.jpg"
-        )
-        logo_equipo_2 = (
-            f"{domain}{partido.id_equipo_2.logo_equipo.url}"
-            if partido.id_equipo_2.logo_equipo else f"{domain}{settings.MEDIA_URL}logos/logo_default.jpg"
-        )
-        partidos_con_logos.append({
-            'fecha_partido': partido.fecha_partido,
-            'hora_partido': partido.hora_partido,
-            'equipo_1': {
-                'nombre': partido.id_equipo_1.nombre_equipo,
-                'logo': logo_equipo_1,
-            },
-            'equipo_2': {
-                'nombre': partido.id_equipo_2.nombre_equipo,
-                'logo': logo_equipo_2,
-            },
-        })
+            jugadores_equipo_2 = Jugador.objects.filter(
+                id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+                    id_temporada=temporada,
+                    id_torneo=partido.id_torneo,
+                    id_grupo=partido.id_grupo,
+                    id_equipo=equipo_2
+                ).values('id_jugador')
+            ).order_by('apellido_jugador', 'nombre_jugador')
 
-    # Contexto para el PDF
-    context = {
-        'fecha': fecha,
-        'temporada': temporada,
-        'torneo': torneo,
-        'partidos': partidos_con_logos,
-    }
+            # Datos para el contexto de la plantilla
+            context = {
+                'equipo_1': equipo_1.nombre_equipo,
+                'equipo_2': equipo_2.nombre_equipo,
+                'jugadores_equipo_1': jugadores_equipo_1,
+                'jugadores_equipo_2': jugadores_equipo_2,
+                'fecha': fecha,
+            }
 
-    # Renderizar la plantilla
-    template = get_template('administracion/fecha_pdf.html')
-    html = template.render(context)
+            # Cargar la plantilla HTML para el PDF
+            template = get_template('administracion/planillapdf.html')
+            html = template.render(context)
 
-    # Crear el PDF
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="partidos_fecha_{id_fecha}.pdf"'
-    pisa_status = pisa.CreatePDF(html, dest=response)
-    if pisa_status.err:
-        return HttpResponse('Hubo un error al generar el PDF', status=500)
+            # Crear el PDF en un buffer en memoria
+            pdf_buffer = BytesIO()
+            pisa_status = pisa.CreatePDF(html, dest=pdf_buffer)
+            if pisa_status.err:
+                return HttpResponse('Hubo un error al generar el PDF', status=500)
+
+            # Guardar el PDF en el archivo ZIP
+            zip_file.writestr(f'planilla_partido_{partido.id}.pdf', pdf_buffer.getvalue())
+
+    # Volver al inicio del buffer del ZIP para leerlo
+    zip_buffer.seek(0)
+
+    # Configurar la respuesta HTTP como un archivo ZIP
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename="planillas_partidos.zip"'
     return response
 
 
+def reglamentos_lista(request):
+    reglamentos = Reglamento.objects.all()
+    return render(request, 'administracion/reglamentos_lista.html', {'reglamentos': reglamentos})
+
+def reglamentos_crear(request):
+    if request.method == 'GET':
+        return render(request, 'administracion/reglamentos_crear.html', {
+            'form': CrearReglamentoForm()
+        })
+    else: 
+        form = CrearReglamentoForm(request.POST, request.FILES)
+        if form.is_valid():
+            nombre_reglamento = form.cleaned_data['nombre_reglamento']
+            if Reglamento.objects.filter(nombre_reglamento=nombre_reglamento).exists():
+                return render(request, 'administracion/reglamentos_crear.html', {
+                    'form': form,
+                    'error': 'Ya existe un reglamento con este nombre'
+                })
+                
+            reglamento = Reglamento(
+                nombre_reglamento = nombre_reglamento,
+                archivo_reglamento = form.cleaned_data['archivo_reglamento']
+            )
+            reglamento.save()
+            
+            return redirect('reglamentos_lista')
+        else:
+            return render(request, 'administracion/reglamentos_crear.html', {
+                'form': form,
+                'error': 'Datos no validos, vuelve a intentar'
+            })
+            
+            
+def reglamentos_editar(request, id_reglamento):
+    reglamento = get_object_or_404(Reglamento, pk=id_reglamento)
+    
+    if request.method == 'GET':
+        form = CrearReglamentoForm(initial={
+            'nombre_reglamento': reglamento.nombre_reglamento,
+            'archivo_reglamento': reglamento.archivo_reglamento
+        })
+        return render(request, 'administracion/reglamentos_editar.html', {'form': form, 'reglamento': reglamento})
+    
+    else:
+        form = CrearReglamentoForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            nombre_reglamento = form.cleaned_data['nombre_reglamento']
+            if Reglamento.objects.filter(nombre_reglamento=nombre_reglamento).exclude(pk=id_reglamento).exists():
+                return render(request, 'administracion/reglamentos_editar.html', {
+                    'form': form,
+                    'reglamento': reglamento,
+                    'error': 'Ya existe un reglamento con este nombre.'
+                })
+            
+            reglamento.nombre_reglamento = nombre_reglamento
+            if 'archivo_reglamento' in request.FILES:
+                reglamento.archivo_reglamento = form.cleaned_data['archivo_reglamento']
+            elif form.cleaned_data['archivo_reglamento'] is None:
+                pass
+            else:
+                reglamento.archivo_reglamento.delete(save=False)
+                reglamento.archivo_reglamento = None
+            
+            reglamento.save()
+            return redirect('reglamentos_lista') 
+        else:
+            return render(request, 'administracion/reglamentos_editar.html', {
+                'form': form,
+                'reglamento': reglamento,
+                'error': 'Por favor introduce datos válidos.'
+            })
+
+            
+
+def reglamentos_eliminar(request, id_reglamento):
+    reglamento = get_object_or_404(Reglamento, pk=id_reglamento)
+    if request.method == 'POST':
+        reglamento.delete()
+        return redirect('reglamentos_lista')
 
 
-# def gestionar_partido(request, id_temporada, id_fecha, id_partido):
-#     temporada = get_object_or_404(Temporada, pk=id_temporada)
-#     fecha = get_object_or_404(Fecha, pk=id_fecha)
-#     partido = get_object_or_404(Partido, pk=id_partido)
 
-#     # Obtener o inicializar el resultado del partido
-#     resultado, created = Resultado.objects.get_or_create(id_partido=partido)
+def resumen_adm(request):
+    return render(request, 'administracion/resumen_adm.html')
 
-#     # Acceso a los equipos
-#     equipo_1 = partido.id_equipo_1
-#     equipo_2 = partido.id_equipo_2
 
-#     # Filtrar jugadores por equipos, temporada, torneo y grupo del partido
-#     jugadores_equipo_1 = Jugador.objects.filter(
-#         id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
-#             id_temporada=temporada,
-#             id_torneo=partido.id_torneo,
-#             id_grupo=partido.id_grupo,
-#             id_equipo=equipo_1
-#         ).values('id_jugador')
-#     ).order_by('nombre_jugador')
+def traspasos(request):
+    traspasos = Traspaso.objects.all()
+    return render(request, 'administracion/traspasos.html', {'traspasos': traspasos})
 
-#     jugadores_equipo_2 = Jugador.objects.filter(
-#         id__in=TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
-#             id_temporada=temporada,
-#             id_torneo=partido.id_torneo,
-#             id_grupo=partido.id_grupo,
-#             id_equipo=equipo_2
-#         ).values('id_jugador')
-#     ).order_by('nombre_jugador')
 
-#     # Formularios
-#     resultado_form = ResultadoForm(request.POST or None)
-#     jugadores_formularios = {}
+def traspasos_crear(request):
+    if request.method == 'GET':
+        return render(request, 'administracion/traspasos_crear.html', {
+            'form': CrearTraspasoForm()
+        })
+    else:
+        form = CrearTraspasoForm(request.POST)
+        if form.is_valid():
+            equipo_actual = form.cleaned_data.get('id_equipo_actual')
+            equipo_nuevo = form.cleaned_data.get('id_equipo_nuevo')
+            
+            if equipo_actual == equipo_nuevo:
+                messages.error(request, 'No puedes crear un traspaso con el mismo equipo')
+                return render(request, 'administracion/traspasos_crear.html', {
+                    'form': form
+                })
+                
+                
+            traspaso = Traspaso(
+                id_jugador=form.cleaned_data.get('id_jugador'),
+                id_equipo_actual=equipo_actual,
+                id_equipo_nuevo=equipo_nuevo,
+                fecha_transferencia=form.cleaned_data['fecha_transferencia']
+            )
+            traspaso.save()
+            
+            return redirect('traspasos')
+        
+        else:
+            return render(request, 'administracion/traspasos_crear.html', {
+                'form': form,
+                'error': 'Por favor introduce datos validos'
+            })
+            
+def traspasos_editar(request, id_traspaso):
+    traspaso = get_object_or_404(Traspaso, pk=id_traspaso)
+    if request.method == 'GET':
+        form = CrearTraspasoForm(initial={
+            'id_jugador': traspaso.id_jugador,
+            'id_equipo_actual': traspaso.id_equipo_actual,
+            'id_equipo_nuevo': traspaso.id_equipo_nuevo,
+            'fecha_transferencia': traspaso.fecha_transferencia.strftime('%Y-%m-%d')
+        })
+        return render(request, 'administracion/traspasos_editar.html', {'form': form, 'traspaso': traspaso})
+    else: 
+        form = CrearTraspasoForm(request.POST)
+        if form.is_valid():
+            equipo_actual = form.cleaned_data.get('id_equipo_actual')
+            equipo_nuevo = form.cleaned_data.get('id_equipo_nuevo')
+            
+            if equipo_actual == equipo_nuevo:
+                messages.error(request, 'No se permite un traspaso de mismos equipos')
+                return render(request, 'administracion/traspasos_editar.html', {
+                    'form': form,
+                    'traspaso': traspaso
+                })
+                
+            traspaso.id_jugador = form.cleaned_data.get('id_jugador')
+            traspaso.id_equipo_actual = form.cleaned_data.get('id_equipo_actual')
+            traspaso.id_equipo_nuevo = form.cleaned_data.get('id_equipo_nuevo')
+            traspaso.fecha_transferencia = form.cleaned_data.get('fecha_transferencia')
+            
+            traspaso.save()
+            return redirect('traspasos')
+        
+        else:
+            return render(request, 'administracion/traspasos_editar.html', {
+                'form': form,
+                'traspaso': traspaso
+            })
+            
+            
+def traspasos_eliminar(request, id_traspaso):
+    traspaso = get_object_or_404(Traspaso, pk=id_traspaso)
+    if request.method == 'POST':
+        traspaso.delete()
+        return redirect('traspasos')
 
-#     # Crear formularios de planilla para cada jugador
-#     for jugador in jugadores_equipo_1 | jugadores_equipo_2:
-#         form = PlanillaForm(request.POST or None, prefix=f'jugador_{jugador.id}')
-#         jugadores_formularios[jugador] = form
 
-#     if request.method == 'POST':
-#         # Procesar el formulario de resultado manualmente
-#         if 'resultado_submit' in request.POST and resultado_form.is_valid():
-#             # Obtener los datos del formulario
-#             goles_equipo_1 = resultado_form.cleaned_data.get('goles_equipo_1', 0)
-#             goles_equipo_2 = resultado_form.cleaned_data.get('goles_equipo_2', 0)
-#             penales = resultado_form.cleaned_data.get('penales', False)
-#             penales_equipo_1 = resultado_form.cleaned_data.get('penales_equipo_1', 0)
-#             penales_equipo_2 = resultado_form.cleaned_data.get('penales_equipo_2', 0)
+def mostrar_torneos(request):
+    # Obtener todos los torneos
+    torneos = Torneo.objects.all()
 
-#             # Actualizar o crear el resultado
-#             resultado.goles_equipo_1 = goles_equipo_1
-#             resultado.goles_equipo_2 = goles_equipo_2
-#             resultado.penales = penales
-#             resultado.penales_equipo_1 = penales_equipo_1
-#             resultado.penales_equipo_2 = penales_equipo_2
-#             resultado.save()
+    # Crear una lista para almacenar los datos formateados de los torneos
+    torneos_datos = []
 
-#         # Procesar las planillas
-#         if 'planilla_submit' in request.POST:
-#             for jugador, form in jugadores_formularios.items():
-#                 if form.is_valid():
-#                     participo = form.cleaned_data.get('participo', False)
+    for torneo in torneos:
+        # Obtener la categoría y el tipo de torneo
+        categoria = torneo.id_categoria.nombre_categoria if torneo.id_categoria else 'Sin categoría'
+        tipo_torneo = torneo.id_tipo_torneo.nombre_tipo_torneo if torneo.id_tipo_torneo else 'Sin tipo'
+        
+        # Contar el número de ediciones
+        ediciones = Temporada.objects.filter(id_torneo=torneo).count()
 
-#                     if participo:
-#                         # Solo guardamos la planilla si el jugador participó
-#                         Planilla.objects.create(
-#                             id_partido=partido,
-#                             id_equipo=equipo_1 if jugador in jugadores_equipo_1 else equipo_2,
-#                             id_jugador=jugador,
-#                             goles=form.cleaned_data['goles'] or 0,
-#                             num_camiseta=form.cleaned_data['num_camiseta'] or 0,
-#                             participo=participo,
-#                             tarjeta_amarilla=form.cleaned_data['tarjeta_amarilla'],
-#                             tarjeta_roja=form.cleaned_data['tarjeta_roja'],
-#                             figura=form.cleaned_data['figura']
-#                         )
-#                     else:
-#                         # Si el jugador no participó, no se guarda nada
-#                         pass
+        # Contar el número de equipos únicos participantes en cualquier temporada del torneo
+        equipos = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+            id_temporada__id_torneo=torneo
+        ).values_list('id_equipo', flat=True).distinct().count()
 
-#             # Redirigir a la vista de fechas
-#             return redirect('fechas', id_temporada=temporada.id)
+        # Contar el número de partidos
+        partidos = Partido.objects.filter(
+            id_temporada__id_torneo=torneo
+        ).count()  # Ajusta el filtro según tu modelo de Partidos
 
-#     return render(request, 'administracion/gestionar_partido.html', {
-#         'temporada': temporada,
-#         'fecha': fecha,
-#         'partido': partido,
-#         'equipo_1': equipo_1,
-#         'equipo_2': equipo_2,
-#         'resultado_form': resultado_form,
-#         'jugadores_formularios': jugadores_formularios,
-#         'jugadores_equipo_1': jugadores_equipo_1,
-#         'jugadores_equipo_2': jugadores_equipo_2,
-#     })
+        # Añadir los datos del torneo a la lista
+        torneos_datos.append({
+            'id_torneo': torneo.id,
+            'nombre_torneo': torneo.nombre_torneo,
+            'categoria': categoria,
+            'tipo_torneo': tipo_torneo,
+            'año': torneo.año,
+            'ediciones': ediciones,
+            'partidos': partidos,
+            'equipos': equipos,
+            'logo_url': '/static/images/Logo_Liga.png'  # Ajusta el camino al logo según tu estructura
+        })
+    
+    # Pasar los datos a la plantilla
+    return render(request, 'torneos.html', {'torneos': torneos_datos})
+
+
+def lista_temporadas(request, id_torneo):
+    # Obtén el objeto del torneo basado en el id
+    torneo = get_object_or_404(Torneo, id=id_torneo)
+    
+    # Obtén las temporadas relacionadas con el torneo utilizando el campo id_torneo
+    temporadas = Temporada.objects.filter(id_torneo=torneo).order_by('-fecha_inicio')
+    
+    # Renderiza la plantilla con los datos del torneo y las temporadas ordenadas
+    return render(request, 'lista_temporadas.html', {'torneo': torneo, 'temporadas': temporadas})
+
+
+
+def temporada_detalles(request, id_temporada, id_torneo):
+    # Obtener la temporada actual
+    temporada = get_object_or_404(Temporada, id=id_temporada, id_torneo=id_torneo)
+    torneo = temporada.id_torneo
+    
+    # Obtener la temporada anterior y siguiente en relación a la temporada actual
+    temporadas = Temporada.objects.filter(id_torneo=torneo).order_by('fecha_inicio')
+    temporada_anterior = temporadas.filter(fecha_inicio__lt=temporada.fecha_inicio).last()
+    temporada_siguiente = temporadas.filter(fecha_inicio__gt=temporada.fecha_inicio).first()
+    
+    # Obtener los grupos de la temporada
+    grupos = Grupo.objects.filter(id_temporada=temporada)
+
+    # Para cada grupo, obtener su tabla de posiciones
+    grupos_y_tablas = []
+    for grupo in grupos:
+        tabla_posiciones = TablaDePosicion.objects.filter(
+            id_temporada=temporada,
+            id_grupo=grupo
+        ).order_by('-puntos', '-diferencia_goles')
+        
+        # Actualizar los partidos jugados de cada equipo en la tabla de posiciones
+        for tabla in tabla_posiciones:
+            equipo = tabla.id_equipo
+            
+            # Calcular partidos jugados
+            partidos_jugados = Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_1=equipo
+            ).exclude(resultado__isnull=True).count() + Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_2=equipo
+            ).exclude(resultado__isnull=True).count()
+            
+            # Calcular partidos ganados
+            partidos_ganados = Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_1=equipo,
+                resultado__goles_equipo_1__gt=F('resultado__goles_equipo_2')
+            ).exclude(resultado__isnull=True).count() + Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_2=equipo,
+                resultado__goles_equipo_2__gt=F('resultado__goles_equipo_1')
+            ).exclude(resultado__isnull=True).count()
+            
+            # Calcular partidos empatados
+            partidos_empatados = Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_1=equipo,
+                resultado__goles_equipo_1=F('resultado__goles_equipo_2')
+            ).exclude(resultado__isnull=True).count() + Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_2=equipo,
+                resultado__goles_equipo_2=F('resultado__goles_equipo_1')
+            ).exclude(resultado__isnull=True).count()
+
+            # Calcular partidos perdidos
+            partidos_perdidos = Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_1=equipo,
+                resultado__goles_equipo_1__lt=F('resultado__goles_equipo_2')
+            ).exclude(resultado__isnull=True).count() + Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_2=equipo,
+                resultado__goles_equipo_2__lt=F('resultado__goles_equipo_1')
+            ).exclude(resultado__isnull=True).count()
+            
+            # Calcular goles a favor (goles anotados por el equipo)
+            goles_a_favor = Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_1=equipo
+            ).exclude(resultado__isnull=True).aggregate(Sum('resultado__goles_equipo_1'))['resultado__goles_equipo_1__sum'] or 0
+
+            goles_a_favor += Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_2=equipo
+            ).exclude(resultado__isnull=True).aggregate(Sum('resultado__goles_equipo_2'))['resultado__goles_equipo_2__sum'] or 0
+
+            # Calcular goles en contra (goles recibidos por el equipo)
+            goles_en_contra = Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_1=equipo
+            ).exclude(resultado__isnull=True).aggregate(Sum('resultado__goles_equipo_2'))['resultado__goles_equipo_2__sum'] or 0
+
+            goles_en_contra += Partido.objects.filter(
+                id_temporada=temporada,
+                id_grupo=grupo,
+                id_equipo_2=equipo
+            ).exclude(resultado__isnull=True).aggregate(Sum('resultado__goles_equipo_1'))['resultado__goles_equipo_1__sum'] or 0
+
+            # Calcular diferencia de goles
+            diferencia_goles = goles_a_favor - goles_en_contra
+            
+            # Calcular tarjetas amarillas
+            tarjetas_amarillas = Planilla.objects.filter(
+                id_partido__id_temporada=temporada,
+                id_partido__id_grupo=grupo,
+                id_equipo=equipo,
+                tarjeta_amarilla=True
+            ).count()
+
+            # Calcular tarjetas rojas
+            tarjetas_rojas = Planilla.objects.filter(
+                id_partido__id_temporada=temporada,
+                id_partido__id_grupo=grupo,
+                id_equipo=equipo,
+                tarjeta_roja=True
+            ).count()
+            
+            puntos = (partidos_ganados * 3) + (partidos_empatados * 1)
+            
+            # Actualizamos la tabla de posiciones con el número de partidos jugados
+            tabla.partidos_jugados = partidos_jugados
+            tabla.partidos_ganados = partidos_ganados
+            tabla.partidos_empatados = partidos_empatados
+            tabla.partidos_perdidos = partidos_perdidos
+            tabla.goles_a_favor = goles_a_favor
+            tabla.goles_en_contra = goles_en_contra
+            tabla.diferencia_goles = diferencia_goles
+            tabla.tarjetas_amarillas = tarjetas_amarillas
+            tabla.tarjetas_rojas = tarjetas_rojas
+            tabla.puntos = puntos
+            tabla.save()
+            
+
+        # Agregar el grupo y su tabla de posiciones a la lista
+        grupos_y_tablas.append({
+            'grupo': grupo,
+            'tabla_posiciones': tabla_posiciones
+        })
+
+    # Obtener las fechas y los partidos de la temporada
+    fechas_partidos = Fecha.objects.filter(id_temporada=temporada).order_by('-id')  # Fechas en orden descendente
+    fechas_y_partidos = []
+    fecha_mas_proxima = None
+    diferencia_mas_cercana = timedelta.max
+    now = datetime.now().date()
+    partidos = []  # Inicializamos partidos como una lista vacía
+
+    for fecha in fechas_partidos:
+        partidos = Partido.objects.filter(id_fecha=fecha).select_related('id_equipo_1', 'id_equipo_2').order_by('hora_partido')
+
+        partidos_con_resultados = []
+        for partido in partidos:
+            resultado = Resultado.objects.filter(id_partido=partido).first()
+            partidos_con_resultados.append({
+                'id': partido.id,
+                'fecha': partido.fecha_partido,
+                'hora': partido.hora_partido,
+                'equipo_1': partido.id_equipo_1,
+                'equipo_2': partido.id_equipo_2,
+                'resultado': f"{resultado.goles_equipo_1} - {resultado.goles_equipo_2}" if resultado else "VS"
+            })
+
+            # Determinar la fecha más próxima
+            diferencia = abs(partido.fecha_partido - now)
+            if diferencia < diferencia_mas_cercana:
+                diferencia_mas_cercana = diferencia
+                fecha_mas_proxima = fecha
+
+        fechas_y_partidos.append((fecha, partidos_con_resultados))
+    
+    # Obtener el partido destacado que no tiene resultado
+    partido_destacado = Partido.objects.filter(
+        id_temporada=temporada,
+        destacado=True,
+        resultado__isnull=True  # Asegura que el resultado sea nulo
+    ).first()
+    
+    # Obtener los jugadores con goles en la temporada actual (Top 5)
+    ranking_jugadores = (
+        Planilla.objects.filter(id_partido__id_temporada=temporada)  # Filtrar por temporada
+        .values('id_jugador')  # Obtener los IDs de los jugadores
+        .annotate(total_goles=Sum('goles'))  # Calcular el total de goles
+        .filter(total_goles__gt=0)  # Filtrar jugadores con más de 0 goles
+        .order_by('-total_goles')[:5]  # Ordenar por goles (de mayor a menor) y limitar al top 5
+    )
+
+    # Obtener los objetos completos de los jugadores en el ranking
+    jugadores = Jugador.objects.filter(id__in=[item['id_jugador'] for item in ranking_jugadores])
+
+    # Crear el ranking con los datos completos de jugadores y sus goles
+    ranking_goleadores = [
+        {
+            'jugador': jugador,
+            'total_goles': next(item['total_goles'] for item in ranking_jugadores if item['id_jugador'] == jugador.id)
+        }
+        for jugador in jugadores
+    ]
+    
+    
+    # Obtener los jugadores marcados como figura en la temporada actual
+    planillas_con_figuras = (
+        Planilla.objects.filter(
+            id_partido__id_temporada=temporada,  # Filtrar por la temporada actual
+            figura=True  # Filtrar únicamente los jugadores marcados como figura
+        )
+        .values('id_jugador')  # Obtener los IDs de los jugadores
+        .annotate(total_figuras=Count('figura'))  # Contar las veces que fueron figura
+        .order_by('-total_figuras')[:5]  # Ordenar por cantidad de figuras y limitar a los 5 primeros
+    )
+    
+    # Crear un diccionario con las figuras por jugador
+    figuras_por_jugador = {item['id_jugador']: item['total_figuras'] for item in planillas_con_figuras}
+    
+    # Obtener los objetos completos de los jugadores en el ranking
+    jugadores = Jugador.objects.filter(id__in=figuras_por_jugador.keys())
+    
+    # Preparar el ranking con los datos completos de jugadores y sus figuras
+    ranking_figuras = [
+        {
+            'jugador': jugador,
+            'total_figuras': figuras_por_jugador[jugador.id]
+        }
+        for jugador in jugadores
+    ]
+    
+    # Obtener los jugadores con tarjetas amarillas en la temporada actual (Top 5)
+    planillas_con_amarillas = (
+        Planilla.objects.filter(
+            id_partido__id_temporada=temporada,  # Filtrar por la temporada actual
+            tarjeta_amarilla=True  # Filtrar únicamente los jugadores con tarjeta amarilla
+        )
+        .values('id_jugador')  # Obtener los IDs de los jugadores
+        .annotate(total_amarillas=Count('tarjeta_amarilla'))  # Contar las veces que recibieron tarjeta amarilla
+        .order_by('-total_amarillas')[:5]  # Ordenar por cantidad de tarjetas amarillas y limitar a los 5 primeros
+    )
+
+    # Crear un diccionario con las tarjetas amarillas por jugador
+    tarjetas_amarillas_por_jugador = {item['id_jugador']: item['total_amarillas'] for item in planillas_con_amarillas}
+
+    # Obtener los objetos completos de los jugadores en el ranking
+    jugadores_amarillas = Jugador.objects.filter(id__in=tarjetas_amarillas_por_jugador.keys())
+
+    # Preparar el ranking con los datos completos de jugadores y sus tarjetas amarillas
+    ranking_amarillas = [
+        {
+            'jugador': jugador,
+            'total_amarillas': tarjetas_amarillas_por_jugador[jugador.id]
+        }
+        for jugador in jugadores_amarillas
+    ]
+
+    
+    # Obtener los jugadores con tarjetas rojas en la temporada actual (Top 5)
+    planillas_con_rojas = (
+        Planilla.objects.filter(
+            id_partido__id_temporada=temporada,  # Filtrar por la temporada actual
+            tarjeta_roja=True  # Filtrar únicamente los jugadores con tarjeta roja
+        )
+        .values('id_jugador')  # Obtener los IDs de los jugadores
+        .annotate(total_rojas=Count('tarjeta_roja'))  # Contar las veces que recibieron tarjeta roja
+        .order_by('-total_rojas')[:5]  # Ordenar por cantidad de tarjetas rojas y limitar a los 5 primeros
+    )
+
+    # Crear un diccionario con las tarjetas rojas por jugador
+    tarjetas_rojas_por_jugador = {item['id_jugador']: item['total_rojas'] for item in planillas_con_rojas}
+
+    # Obtener los objetos completos de los jugadores en el ranking
+    jugadores_rojas = Jugador.objects.filter(id__in=tarjetas_rojas_por_jugador.keys())
+
+    # Preparar el ranking con los datos completos de jugadores y sus tarjetas rojas
+    ranking_rojas = [
+        {
+            'jugador': jugador,
+            'total_rojas': tarjetas_rojas_por_jugador[jugador.id]
+        }
+        for jugador in jugadores_rojas
+    ]
+    
+    # Obtener los goles recibidos por cada equipo cuando juegan como locales
+    goles_recibidos_local = (
+        Partido.objects.filter(id_temporada=temporada)  # Filtrar por temporada
+        .values('id_equipo_1')  # Equipos que juegan como locales
+        .annotate(total_goles_recibidos=Sum('resultado__goles_equipo_2'))  # Goles recibidos por el equipo local (de equipo 2)
+    )
+    
+    # Obtener los goles recibidos por cada equipo cuando juegan como visitantes
+    goles_recibidos_visitante = (
+        Partido.objects.filter(id_temporada=temporada)  # Filtrar por temporada
+        .values('id_equipo_2')  # Equipos que juegan como visitantes
+        .annotate(total_goles_recibidos=Sum('resultado__goles_equipo_1'))  # Goles recibidos por el equipo visitante (de equipo 1)
+    )
+    
+    # Combinar los resultados en un diccionario
+    goles_recibidos = defaultdict(int)
+    
+    # Sumar goles recibidos como local
+    for item in goles_recibidos_local:
+        goles_recibidos[item['id_equipo_1']] += item['total_goles_recibidos'] or 0  # Usar or 0 para manejar None
+    
+    # Sumar goles recibidos como visitante
+    for item in goles_recibidos_visitante:
+        goles_recibidos[item['id_equipo_2']] += item['total_goles_recibidos'] or 0  # Usar or 0 para manejar None
+    
+    # Convertir el diccionario a una lista de tuplas y ordenar por goles recibidos (menor a mayor)
+    ranking_equipos_menos_goles = sorted(goles_recibidos.items(), key=lambda x: x[1])
+    
+    # Obtener los equipos completos, incluyendo el logo
+    equipos = Equipo.objects.filter(id__in=[equipo[0] for equipo in ranking_equipos_menos_goles])
+    equipos_dict = {equipo.id: equipo for equipo in equipos}  # Cambiar a almacenar el objeto completo
+    
+    # Preparar los datos para la plantilla
+    ranking_equipos_menos_goles = [(equipos_dict[equipo_id], goles) for equipo_id, goles in ranking_equipos_menos_goles]
+    
+    # Filtrar por la temporada específica y contar los equipos únicos
+    equipos_en_temporada = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(id_temporada=temporada) \
+        .values('id_equipo') \
+        .distinct() \
+        .count()
+
+    total_partidos_jugados = Partido.objects.filter(
+        id_temporada=temporada
+    ).filter(
+        resultado__isnull=False  # Verifica si hay un resultado asociado (no nulo)
+    ).count()
+
+    # Si no hay partidos jugados, ponerlo en 0
+    total_partidos_jugados = total_partidos_jugados if total_partidos_jugados else 0
+    
+    # Calcular el total de partidos ganados en la temporada
+    total_partidos_ganados = Partido.objects.filter(
+        id_temporada=temporada
+    ).annotate(
+        equipo_1_ganador=Case(
+            When(resultado__goles_equipo_1__gt=F('resultado__goles_equipo_2'), then=1),
+            default=0,
+            output_field=IntegerField()
+        ),
+        equipo_2_ganador=Case(
+            When(resultado__goles_equipo_2__gt=F('resultado__goles_equipo_1'), then=1),
+            default=0,
+            output_field=IntegerField()
+        )
+    ).aggregate(
+        total_ganados=Sum('equipo_1_ganador') + Sum('equipo_2_ganador')
+    )['total_ganados']
+
+    # Si no hay partidos ganados, ponerlo en 0
+    total_partidos_ganados = total_partidos_ganados if total_partidos_ganados else 0
+    
+    # Calcular el total de partidos empatados en la temporada
+    total_partidos_empatados = Partido.objects.filter(
+        id_temporada=temporada
+    ).annotate(
+        empate=Case(
+            When(resultado__goles_equipo_1=F('resultado__goles_equipo_2'), then=1),
+            default=0,
+            output_field=IntegerField()
+        )
+    ).aggregate(
+        total_empatados=Sum('empate')
+    )['total_empatados']
+
+    # Si no hay partidos empatados, ponerlo en 0
+    total_partidos_empatados = total_partidos_empatados if total_partidos_empatados else 0
+    
+    # Calcular el total de partidos perdidos por ambos equipos en la temporada
+    total_partidos_perdidos = Partido.objects.filter(
+        id_temporada=temporada
+    ).annotate(
+        equipo_1_perdido=Case(
+            When(resultado__goles_equipo_1__lt=F('resultado__goles_equipo_2'), then=1),
+            default=0,
+            output_field=IntegerField()
+        ),
+        equipo_2_perdido=Case(
+            When(resultado__goles_equipo_2__lt=F('resultado__goles_equipo_1'), then=1),
+            default=0,
+            output_field=IntegerField()
+        )
+    ).aggregate(
+        total_perdidos=Sum('equipo_1_perdido') + Sum('equipo_2_perdido')
+    )['total_perdidos']
+
+    # Si no hay partidos perdidos, ponerlo en 0
+    total_partidos_perdidos = total_partidos_perdidos if total_partidos_perdidos else 0
+    
+    # Calcular el total de goles en la temporada
+    total_goles = Resultado.objects.filter(
+        id_partido__id_temporada=temporada
+    ).aggregate(
+        total_goles=Sum('goles_equipo_1') + Sum('goles_equipo_2')
+    )['total_goles']
+
+    # Manejo de valores nulos
+    total_goles = total_goles if total_goles else 0
+    
+    # Calcular el total de tarjetas amarillas en la temporada
+    total_tarjetas_amarillas = Planilla.objects.filter(
+        id_partido__id_temporada=temporada,  # Filtrar por la temporada actual
+        tarjeta_amarilla=True  # Solo contar las planillas con tarjetas amarillas
+    ).count()
+
+    # Manejo de valores nulos o sin resultados
+    total_tarjetas_amarillas = total_tarjetas_amarillas if total_tarjetas_amarillas else 0
+    
+    # Calcular el total de tarjetas rojas en la temporada
+    total_tarjetas_rojas = Planilla.objects.filter(
+        id_partido__id_temporada=temporada,  # Filtrar por la temporada actual
+        tarjeta_roja=True  # Solo contar las planillas con tarjetas rojas
+    ).count()
+
+    # Manejo de valores nulos o sin resultados
+    total_tarjetas_rojas = total_tarjetas_rojas if total_tarjetas_rojas else 0
+    
+    # Renderizar la plantilla con los datos necesarios
+    return render(request, 'temporada_detalles.html', {
+        'temporada': temporada,
+        'torneo': torneo,
+        'temporada_anterior': temporada_anterior,
+        'temporada_siguiente': temporada_siguiente,
+        'grupos_y_tablas': grupos_y_tablas,
+        'fechas_y_partidos': fechas_y_partidos,
+        'fecha_a_mostrar': fecha_mas_proxima,
+        'partido_destacado': partido_destacado,
+        'ranking_jugadores': ranking_goleadores,
+        'ranking_figuras': ranking_figuras, 
+        'ranking_amarillas': ranking_amarillas,
+        'ranking_rojas': ranking_rojas,
+        'ranking_equipos_menos_goles': ranking_equipos_menos_goles,
+        'equipos_en_temporada': equipos_en_temporada,
+        'total_partidos_jugados': total_partidos_jugados,
+        'total_partidos_ganados': total_partidos_ganados,
+        'total_partidos_empatados': total_partidos_empatados,
+        'total_partidos_perdidos': total_partidos_perdidos,
+        'total_goles': total_goles,
+        'total_tarjetas_amarillas': total_tarjetas_amarillas,
+        'total_tarjetas_rojas': total_tarjetas_rojas,
+        'partidos': partidos,
+        'id_torneo': id_torneo,
+        'id_temporada': id_temporada,
+
+    })
+
+
+def equipo_perfil(request, equipo_id, temporada_id):
+    # Traemos el equipo usando el id proporcionado
+    equipo = get_object_or_404(Equipo, id=equipo_id)
+    
+    # Traemos la temporada usando el id proporcionado
+    temporada = get_object_or_404(Temporada, id=temporada_id)
+    
+    # Obtener el entrenador del equipo, si tiene uno asignado
+    entrenador = Entrenador.objects.filter(id_equipo=equipo).first()  # Usamos .first() para obtener el primer entrenador si existe
+    
+    # Obtenemos los jugadores que pertenecen a este equipo en esta temporada y excluimos id_jugador=NULL
+    jugadores_relacionados = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_equipo=equipo,
+        id_temporada=temporada
+    ).exclude(
+        id_jugador__isnull=True  # Excluir los registros donde id_jugador es NULL
+    ).select_related('id_jugador')  # Traemos los jugadores completos asociados a la relación
+    
+    # Obtenemos solo los jugadores válidos (no NULL)
+    jugadores = [jugador.id_jugador for jugador in jugadores_relacionados]
+    
+    # Calculamos el total de jugadores
+    total_jugadores = len(jugadores)
+    
+    # Cálculo de edad promedio
+    if total_jugadores > 0:
+        total_edad = sum(jugador.calcular_edad() for jugador in jugadores)
+        edad_promedio = round(total_edad / total_jugadores, 2)
+    else:
+        edad_promedio = 0.0
+        
+    # Calcular el total de torneos en los que participó este equipo
+    total_torneos = TemporadaXTorneoXGrupoXEquipoXJugador.objects.filter(
+        id_equipo=equipo
+    ).values('id_torneo').distinct().count()
+    
+    # Obtener las bajas (jugadores que han dejado el equipo y se han ido a otro equipo)
+    bajas = Traspaso.objects.filter(
+        id_equipo_actual=equipo  # Filtrar por el equipo que tiene al jugador actualmente
+    ).order_by('-fecha_transferencia')[:10]  # Limitar a los 10 traspasos más recientes
+
+    # Obtener las altas (jugadores que se han unido al equipo)
+    altas = Traspaso.objects.filter(
+        id_equipo_nuevo=equipo  # Filtrar por el equipo al que ha llegado el jugador
+    ).order_by('-fecha_transferencia')[:10]  # Limitar a los 10 traspasos más recientes
+    
+    # Obtenemos el siguiente partido del equipo en la temporada
+    siguiente_partido = Partido.objects.filter(
+        id_temporada=temporada,
+        fecha_partido__gte=now().date()  # Filtrar partidos a partir de hoy
+    ).filter(
+        id_equipo_1=equipo  # Equipo como local
+    ) | Partido.objects.filter(
+        id_temporada=temporada,
+        fecha_partido__gte=now().date(),  # Filtrar partidos a partir de hoy
+        id_equipo_2=equipo  # Equipo como visitante
+    )
+    
+    # Ordenamos por fecha y tomamos el primero (el próximo partido)
+    siguiente_partido = siguiente_partido.order_by('fecha_partido', 'hora_partido').first()
+    
+    
+    # Buscar partidos donde el equipo haya participado en esta temporada
+    partidos_equipo = Partido.objects.filter(
+        id_temporada=temporada,
+        id_equipo_1__isnull=False,
+        id_equipo_2__isnull=False
+    ).filter(
+        Q(id_equipo_1=equipo) | Q(id_equipo_2=equipo)
+    )
+
+    # Construir el historial incluyendo los resultados y logos
+    historial_partidos = []
+    for partido in partidos_equipo:
+        try:
+            # Acceder al resultado relacionado
+            resultado = Resultado.objects.get(id_partido=partido)
+            historial_partidos.append({
+                'equipo_1': partido.id_equipo_1.nombre_equipo,
+                'equipo_2': partido.id_equipo_2.nombre_equipo,
+                'equipo_1_logo': partido.id_equipo_1.logo_equipo,
+                'equipo_2_logo': partido.id_equipo_2.logo_equipo,
+                'goles_equipo_1': resultado.goles_equipo_1,
+                'goles_equipo_2': resultado.goles_equipo_2,
+                'penales': resultado.penales,
+                'penales_equipo_1': resultado.penales_equipo_1,
+                'penales_equipo_2': resultado.penales_equipo_2,
+            })
+        except Resultado.DoesNotExist:
+            # Si no hay un resultado asociado, puedes decidir ignorarlo o manejarlo
+            pass
+
+    # Inicializar variables de estadísticas
+    partidos_jugados = 0
+    partidos_ganados = 0
+    partidos_empatados = 0
+    partidos_perdidos = 0
+    goles_a_favor = 0
+    goles_en_contra = 0
+    tarjetas_amarillas_equipo = 0
+    tarjetas_rojas_equipo = 0
+
+    # Obtener las estadísticas del equipo desde la tabla de posiciones
+    estadisticas = TablaDePosicion.objects.filter(
+        id_equipo=equipo_id,
+        id_temporada=temporada_id
+    ).first()
+    
+    
+
+    # Si no se encuentran estadísticas, se inicializan en 0 para evitar errores
+    partidos_jugados = estadisticas.partidos_jugados if estadisticas else 0
+    partidos_ganados = estadisticas.partidos_ganados if estadisticas else 0
+    partidos_empatados = estadisticas.partidos_empatados if estadisticas else 0
+    partidos_perdidos = estadisticas.partidos_perdidos if estadisticas else 0
+    goles_a_favor = estadisticas.goles_a_favor if estadisticas else 0
+    goles_en_contra = estadisticas.goles_en_contra if estadisticas else 0
+    tarjetas_amarillas_equipo = estadisticas.tarjetas_amarillas if estadisticas else 0
+    tarjetas_rojas_equipo = estadisticas.tarjetas_rojas if estadisticas else 0
+    
+    # Obtener el ranking de goleadores del equipo para la temporada
+    ranking_jugadores = (
+        Planilla.objects.filter(
+            id_partido__in=partidos_equipo,  # Solo los partidos del equipo
+            id_equipo=equipo  # Solo los jugadores de este equipo
+        )
+        .values('id_jugador')  # Obtener los IDs de los jugadores
+        .annotate(total_goles=Sum('goles'))  # Calcular el total de goles
+        .filter(total_goles__gt=0)  # Filtrar jugadores con goles > 0
+        .order_by('-total_goles')  # Ordenar por goles de mayor a menor
+    )
+
+    # Obtener los objetos completos de los jugadores en el ranking
+    jugadores_ranking_goleadores = Jugador.objects.filter(id__in=[item['id_jugador'] for item in ranking_jugadores])
+
+    # Crear el ranking con los datos completos de jugadores y sus goles
+    ranking_goleadores = [
+        {
+            'jugador': jugador,
+            'total_goles': next(item['total_goles'] for item in ranking_jugadores if item['id_jugador'] == jugador.id)
+        }
+        for jugador in jugadores_ranking_goleadores
+    ]
+
+    # Obtener los jugadores marcados como figura en la temporada actual
+    planillas_con_figuras = (
+        Planilla.objects.filter(
+            id_partido__in=partidos_equipo,  # Solo los partidos del equipo
+            id_equipo=equipo,  # Solo los jugadores de este equipo
+            figura=True  # Solo los jugadores marcados como figura
+        )
+        .values('id_jugador')  # Obtener los IDs de los jugadores
+        .annotate(total_figuras=Count('figura'))  # Contar las veces que fueron figura
+        .order_by('-total_figuras')[:5]  # Ordenar por cantidad de figuras y limitar a los 5 primeros
+    )
+
+    # Crear un diccionario con las figuras por jugador
+    figuras_por_jugador = {item['id_jugador']: item['total_figuras'] for item in planillas_con_figuras}
+
+    # Obtener los objetos completos de los jugadores en el ranking
+    jugadores_ranking_figuras = Jugador.objects.filter(id__in=figuras_por_jugador.keys())
+
+    # Preparar el ranking con los datos completos de jugadores y sus figuras
+    ranking_figuras = [
+        {
+            'jugador': jugador,
+            'total_figuras': figuras_por_jugador[jugador.id]
+        }
+        for jugador in jugadores_ranking_figuras
+    ]
+
+    # Obtener los jugadores con tarjetas amarillas en los partidos del equipo para la temporada actual
+    planillas_con_tarjetas_amarillas = (
+        Planilla.objects.filter(
+            id_partido__in=partidos_equipo,  # Filtra los partidos del equipo
+            id_equipo=equipo,  # Solo los jugadores de este equipo
+            tarjeta_amarilla=True  # Solo los jugadores con tarjetas amarillas
+        )
+        .values('id_jugador')  # Obtener los IDs de los jugadores
+        .annotate(total_tarjetas_amarillas=Count('tarjeta_amarilla'))  # Contar las veces que tuvieron tarjeta amarilla
+        .order_by('-total_tarjetas_amarillas')  # Ordenar por la cantidad de tarjetas amarillas de mayor a menor
+    )
+
+    # Crear un diccionario con las tarjetas amarillas por jugador
+    tarjetas_amarillas_por_jugador = {item['id_jugador']: item['total_tarjetas_amarillas'] for item in planillas_con_tarjetas_amarillas}
+
+    # Obtener los objetos completos de los jugadores en el ranking
+    jugadores_ranking_tarjetas_amarillas = Jugador.objects.filter(id__in=tarjetas_amarillas_por_jugador.keys())
+
+    # Preparar el ranking con los datos completos de jugadores y sus tarjetas amarillas
+    ranking_tarjetas_amarillas = [
+        {
+            'jugador': jugador,
+            'total_tarjetas_amarillas': tarjetas_amarillas_por_jugador[jugador.id]  # Asociamos las tarjetas amarillas a cada jugador
+        }
+        for jugador in jugadores_ranking_tarjetas_amarillas
+    ]
+
+    # Obtener los jugadores con tarjetas rojas en los partidos del equipo para la temporada actual
+    planillas_con_tarjetas_rojas = (
+        Planilla.objects.filter(
+            id_partido__in=partidos_equipo,  # Solo los partidos del equipo
+            id_equipo=equipo,  # Solo los jugadores de este equipo
+            tarjeta_roja=True  # Solo los jugadores marcados con tarjeta roja
+        )
+        .values('id_jugador')  # Obtener los IDs de los jugadores
+        .annotate(total_tarjetas_rojas=Count('tarjeta_roja'))  # Contar las veces que tuvieron tarjeta roja
+        .order_by('-total_tarjetas_rojas')[:5]  # Ordenar por cantidad de tarjetas rojas y limitar a los 5 primeros
+    )
+
+    # Crear un diccionario con las tarjetas rojas por jugador
+    tarjetas_rojas_por_jugador = {item['id_jugador']: item['total_tarjetas_rojas'] for item in planillas_con_tarjetas_rojas}
+
+    # Obtener los objetos completos de los jugadores en el ranking
+    jugadores_ranking_tarjetas_rojas = Jugador.objects.filter(id__in=tarjetas_rojas_por_jugador.keys())
+
+    # Preparar el ranking con los datos completos de jugadores y sus tarjetas rojas
+    ranking_tarjetas_rojas = [
+        {
+            'jugador': jugador,
+            'total_tarjetas_rojas': tarjetas_rojas_por_jugador[jugador.id]
+        }
+        for jugador in jugadores_ranking_tarjetas_rojas
+    ]
+
+    # Recuperamos los premios del equipo, sin usar values()
+    premios_equipos = PremioEquipo.objects.filter(
+        id_equipo=equipo  # Reemplazar 'equipo' con el equipo específico que se desea consultar
+    ).select_related(
+        'id_premio_grupal', 'id_temporada', 'id_torneo'
+    ).annotate(
+        total_premios=Count('id_premio_grupal')  # Cuenta cuántas veces el equipo ha recibido un premio
+    ).order_by('-total_premios')
+
+    # Contexto para pasar a la plantilla
+    contexto = {
+        'nombre_equipo': equipo.nombre_equipo,
+        'entrenador': entrenador,
+        'logo_equipo': equipo.logo_equipo,  # El logo del equipo
+        'jugadores': jugadores,  # Lista de jugadores asociados al equipo en la temporada
+        'temporada_id': temporada.id,  # Asegurarte de incluir la temporada_id
+        'equipo_id': equipo.id,        # Asegurarte de incluir el equipo_id
+        'total_jugadores': total_jugadores,  # Total de jugadores del equipo
+        'edad_promedio': edad_promedio,  # Edad promedio redondeada a 1 decimal
+        'total_torneos': total_torneos,  # Total de torneos en los que participó el equipo
+        'partido_destacado': siguiente_partido,  # El próximo partido si existe
+        'historial_partidos': historial_partidos,  # Lista con el historial
+        'partidos_jugados': partidos_jugados,
+        'partidos_ganados': partidos_ganados,
+        'partidos_empatados': partidos_empatados,
+        'partidos_perdidos': partidos_perdidos,
+        'goles_a_favor': goles_a_favor,
+        'goles_en_contra': goles_en_contra,
+        'tarjetas_amarillas_equipo': tarjetas_amarillas_equipo,
+        'tarjetas_rojas_equipo': tarjetas_rojas_equipo,
+        'ranking_goleadores': ranking_goleadores,
+        'ranking_figuras': ranking_figuras,
+        'ranking_tarjetas_amarillas': ranking_tarjetas_amarillas,
+        'ranking_tarjetas_rojas': ranking_tarjetas_rojas,
+        'altas': altas,
+        'bajas': bajas,
+        'premios_equipos': premios_equipos,
+    }
+
+    return render(request, 'equipo_detalles.html', contexto)
+
+
+def jugador_detalles(request, jugador_id, temporada_id, equipo_id):
+    # Obtener el jugador, equipo y temporada
+    jugador = get_object_or_404(Jugador, id=jugador_id)
+    equipo = get_object_or_404(Equipo, id=equipo_id)
+    temporada = get_object_or_404(Temporada, id=temporada_id)
+    
+    # Filtrar los partidos jugados por el jugador en la temporada y el equipo
+    total_jugados = Planilla.objects.filter(
+        id_jugador=jugador_id,
+        id_equipo=equipo_id,
+        id_partido__id_temporada=temporada_id
+    ).extra(where=["participo = 1"]).count()  # Condición específica para "participo"
+    
+    # Obtener el total de goles marcados por el jugador en la temporada y equipo
+    total_goles = Planilla.objects.filter(
+        id_jugador=jugador_id,
+        id_equipo=equipo_id,
+        id_partido__id_temporada=temporada_id
+    ).aggregate(Sum('goles'))['goles__sum'] or 0  # Si no hay goles, devolvemos 0
+
+    # Calcular el promedio de goles
+    if total_jugados > 0:
+        promedio_goles = total_goles / total_jugados
+    else:
+        promedio_goles = 0  # Si no ha jugado ningún partido, el promedio es 0
+        
+    # Obtener el total de tarjetas amarillas para el jugador en la temporada
+    total_tarjetas_amarillas = Planilla.objects.filter(
+        id_jugador=jugador_id,
+        id_equipo=equipo_id,
+        id_partido__id_temporada=temporada_id,
+        tarjeta_amarilla=True
+    ).count()  # Contamos las entradas con tarjeta_amarilla=True
+    
+    # Obtener el total de tarjetas rojas para el jugador en la temporada
+    total_tarjetas_rojas = Planilla.objects.filter(
+        id_jugador=jugador_id,
+        id_equipo=equipo_id,
+        id_partido__id_temporada=temporada_id,
+        tarjeta_roja=True
+    ).count()  # Contamos las entradas con tarjeta_roja=True
+    
+    traspasos = Traspaso.objects.filter(id_jugador=jugador_id).order_by('-fecha_transferencia')
+    
+    # Filtrar los partidos en los que el jugador ha participado
+    partidos_equipo = Partido.objects.filter(
+        planilla__id_jugador=jugador,
+        planilla__id_equipo=equipo,
+        id_temporada=temporada,
+        planilla__participo=True  # Solo aquellos partidos en los que participó
+    )
+
+    # Inicializar el historial de partidos
+    historial_partidos = []
+
+    # Para cada partido en los que el jugador participó, obtenemos los resultados
+    for partido in partidos_equipo:
+        try:
+            # Acceder al resultado del partido
+            resultado = Resultado.objects.get(id_partido=partido)
+            
+            # Guardar los detalles del partido junto con el resultado
+            historial_partidos.append({
+                'equipo_1': partido.id_equipo_1.nombre_equipo,
+                'equipo_2': partido.id_equipo_2.nombre_equipo,
+                'equipo_1_logo': partido.id_equipo_1.logo_equipo,
+                'equipo_2_logo': partido.id_equipo_2.logo_equipo,
+                'goles_equipo_1': resultado.goles_equipo_1,
+                'goles_equipo_2': resultado.goles_equipo_2,
+                'penales': resultado.penales,
+                'penales_equipo_1': resultado.penales_equipo_1,
+                'penales_equipo_2': resultado.penales_equipo_2,
+                'fecha_partido': partido.fecha_partido,  # Fecha del partido
+                'hora_partido': partido.hora_partido,    # Hora del partido
+            })
+        except Resultado.DoesNotExist:
+            # Si no hay resultado, ignoramos este partido (o puedes manejarlo de otra forma)
+            pass
+        
+    # Estadísticas Generales (sin tener en cuenta equipo o temporada)
+    total_jugados_generales = Planilla.objects.filter(id_jugador=jugador_id, participo=True).count()
+
+    # Obtener el total de goles marcados por el jugador en cualquier temporada y equipo
+    total_goles_generales = Planilla.objects.filter(id_jugador=jugador_id, participo=True).aggregate(Sum('goles'))['goles__sum'] or 0
+
+    # Obtener el total de tarjetas amarillas
+    total_tarjetas_amarillas_generales = Planilla.objects.filter(id_jugador=jugador_id, tarjeta_amarilla=True).count()
+
+    # Obtener el total de tarjetas rojas
+    total_tarjetas_rojas_generales = Planilla.objects.filter(id_jugador=jugador_id, tarjeta_roja=True).count()
+    
+    # Recuperamos los premios del jugador, sin usar values()
+    premios_individuales = PremioJugador.objects.filter(
+        id_jugador=jugador
+    ).select_related(
+        'id_premio_individual', 'id_torneo', 'id_temporada'
+    ).annotate(
+        total_premios=Count('id_premio_individual')  # Cuenta cuántas veces se ha ganado el premio
+    ).order_by('-total_premios')
+
+    # Contexto para la plantilla de detalles
+    context = {
+        'jugador': jugador,
+        'equipo': equipo,
+        'temporada': temporada,
+        'total_jugados': total_jugados,
+        'total_goles': total_goles,
+        'promedio_goles': promedio_goles,
+        'total_tarjetas_amarillas': total_tarjetas_amarillas,
+        'total_tarjetas_rojas': total_tarjetas_rojas,
+        'traspasos': traspasos,
+        'historial_partidos': historial_partidos,
+        'total_jugados_generales': total_jugados_generales,
+        'total_goles_generales': total_goles_generales,
+        'total_tarjetas_amarillas_generales': total_tarjetas_amarillas_generales,
+        'total_tarjetas_rojas_generales': total_tarjetas_rojas_generales,
+        'premios_individuales': premios_individuales,
+    }
+    return render(request, 'jugador_detalles.html', context)
+
+
+def partido_detalles(request, id_torneo, temporada_id, partido_id):
+    # Recuperar el torneo (si necesario)
+    torneo = get_object_or_404(Torneo, id=id_torneo)
+    
+    # Recuperar la temporada
+    temporada = get_object_or_404(Temporada, id=temporada_id)
+
+    # Recuperar el partido específico relacionado con el torneo y la temporada
+    partido = get_object_or_404(Partido, id=partido_id, id_temporada=temporada, id_torneo=torneo)
+    
+    # Intentar obtener el resultado asociado directamente al partido
+    resultado = Resultado.objects.filter(id_partido=partido).first()  # Usamos filter().first() en lugar de get_object_or_404
+    
+    # Si no existe un resultado, asignamos None
+    if not resultado:
+        resultado = None
+    
+    # Obtener las planillas de los equipos 1 y 2 para ese partido
+    planilla_equipo_1 = Planilla.objects.filter(id_partido=partido, id_equipo=partido.id_equipo_1)
+    planilla_equipo_2 = Planilla.objects.filter(id_partido=partido, id_equipo=partido.id_equipo_2)
+    
+    # Buscar la figura del partido (si existe)
+    figura_equipo_1 = planilla_equipo_1.filter(figura=True).first()
+    figura_equipo_2 = planilla_equipo_2.filter(figura=True).first()
+    
+    # Si la figura del equipo 1 existe, asignamos el jugador
+    if figura_equipo_1:
+        figura_equipo_1_jugador = figura_equipo_1.id_jugador
+    else:
+        figura_equipo_1_jugador = None
+    
+    # Si la figura del equipo 2 existe, asignamos el jugador
+    if figura_equipo_2:
+        figura_equipo_2_jugador = figura_equipo_2.id_jugador
+    else:
+        figura_equipo_2_jugador = None
+    
+    # Contar la cantidad de enfrentamientos entre los dos equipos
+    enfrentamientos = Partido.objects.filter(
+        Q(id_equipo_1=partido.id_equipo_1, id_equipo_2=partido.id_equipo_2) |
+        Q(id_equipo_1=partido.id_equipo_2, id_equipo_2=partido.id_equipo_1)
+    ).count()
+
+    # Contar las victorias del equipo 1
+    victorias_equipo_1 = Resultado.objects.filter(
+    Q(id_partido__id_equipo_1=partido.id_equipo_1, goles_equipo_1__gt=F('goles_equipo_2')) |
+    Q(id_partido__id_equipo_2=partido.id_equipo_1, goles_equipo_2__gt=F('goles_equipo_1')),
+    Q(id_partido__id_equipo_1=partido.id_equipo_1, id_partido__id_equipo_2=partido.id_equipo_2) |
+    Q(id_partido__id_equipo_1=partido.id_equipo_2, id_partido__id_equipo_2=partido.id_equipo_1)  # Filtramos solo los partidos entre Barcelona y Boca
+    ).count()
+
+    # Contar las victorias del equipo 2
+    victorias_equipo_2 = Resultado.objects.filter(
+    Q(id_partido__id_equipo_1=partido.id_equipo_2, goles_equipo_1__gt=F('goles_equipo_2')) |
+    Q(id_partido__id_equipo_2=partido.id_equipo_2, goles_equipo_2__gt=F('goles_equipo_1')),
+    Q(id_partido__id_equipo_1=partido.id_equipo_1, id_partido__id_equipo_2=partido.id_equipo_2) |
+    Q(id_partido__id_equipo_1=partido.id_equipo_2, id_partido__id_equipo_2=partido.id_equipo_1)  # Filtramos solo los partidos entre Barcelona y Boca
+    ).count()
+    
+    # Historial de enfrentamientos entre los dos equipos, limitando a los últimos 5 partidos
+    enfrentamientos_partidos = Partido.objects.filter(
+        Q(id_equipo_1=partido.id_equipo_1, id_equipo_2=partido.id_equipo_2) |
+        Q(id_equipo_1=partido.id_equipo_2, id_equipo_2=partido.id_equipo_1)
+    ).filter(resultado__isnull=False).order_by('-fecha_partido')[:5]  # Últimos 5 partidos, ordenados por fecha descendente
+
+    # Historial de los enfrentamientos con los resultados
+    historial = []
+    for enfrentamiento in enfrentamientos_partidos:
+        # Usar filter().first() para obtener el resultado sin generar un error 404
+        resultado_partido = Resultado.objects.filter(id_partido=enfrentamiento).first()
+    
+        # Si no hay resultado, asignamos una cadena vacía
+        historial.append({
+            'equipo_1': enfrentamiento.id_equipo_1.nombre_equipo,
+            'equipo_1_logo': enfrentamiento.id_equipo_1.logo_equipo.url if enfrentamiento.id_equipo_1.logo_equipo else None,
+            'equipo_2': enfrentamiento.id_equipo_2.nombre_equipo,
+            'equipo_2_logo': enfrentamiento.id_equipo_2.logo_equipo.url if enfrentamiento.id_equipo_2.logo_equipo else None,
+            'goles_equipo_1': resultado_partido.goles_equipo_1 if resultado_partido else '',
+            'goles_equipo_2': resultado_partido.goles_equipo_2 if resultado_partido else '',
+            'penales': resultado_partido.penales if resultado_partido else '',
+            'penales_equipo_1': resultado_partido.penales_equipo_1 if resultado_partido else '',
+            'penales_equipo_2': resultado_partido.penales_equipo_2 if resultado_partido else '',
+        })
+        
+    # Historial de los últimos 5 partidos del equipo 1 con resultado en la temporada
+    partidos_equipo_1 = Partido.objects.filter(
+        Q(id_equipo_1=partido.id_equipo_1) | Q(id_equipo_2=partido.id_equipo_1),
+        id_temporada=temporada
+    ).filter(resultado__isnull=False).order_by('-fecha_partido')[:5]
+
+    # Historial de los últimos 5 partidos del equipo 2 con resultado en la temporada
+    partidos_equipo_2 = Partido.objects.filter(
+        Q(id_equipo_1=partido.id_equipo_2) | Q(id_equipo_2=partido.id_equipo_2),
+        id_temporada=temporada
+    ).filter(resultado__isnull=False).order_by('-fecha_partido')[:5]
+
+    # Historial de partidos con los resultados para el equipo 1
+    historial_equipo_1 = []
+    for enfrentamiento in partidos_equipo_1:
+        resultado_partido = Resultado.objects.filter(id_partido=enfrentamiento).first()
+        historial_equipo_1.append({
+            'equipo_1': enfrentamiento.id_equipo_1.nombre_equipo,
+            'equipo_1_logo': enfrentamiento.id_equipo_1.logo_equipo.url if enfrentamiento.id_equipo_1.logo_equipo else None,
+            'equipo_2': enfrentamiento.id_equipo_2.nombre_equipo,
+            'equipo_2_logo': enfrentamiento.id_equipo_2.logo_equipo.url if enfrentamiento.id_equipo_2.logo_equipo else None,
+            'goles_equipo_1': resultado_partido.goles_equipo_1 if resultado_partido else '',
+            'goles_equipo_2': resultado_partido.goles_equipo_2 if resultado_partido else '',
+            'penales': resultado_partido.penales if resultado_partido else '',
+            'penales_equipo_1': resultado_partido.penales_equipo_1 if resultado_partido else '',
+            'penales_equipo_2': resultado_partido.penales_equipo_2 if resultado_partido else '',
+        })
+
+    # Historial de partidos con los resultados para el equipo 2
+    historial_equipo_2 = []
+    for enfrentamiento in partidos_equipo_2:
+        resultado_partido = Resultado.objects.filter(id_partido=enfrentamiento).first()
+        historial_equipo_2.append({
+            'equipo_1': enfrentamiento.id_equipo_1.nombre_equipo,
+            'equipo_1_logo': enfrentamiento.id_equipo_1.logo_equipo.url if enfrentamiento.id_equipo_1.logo_equipo else None,
+            'equipo_2': enfrentamiento.id_equipo_2.nombre_equipo,
+            'equipo_2_logo': enfrentamiento.id_equipo_2.logo_equipo.url if enfrentamiento.id_equipo_2.logo_equipo else None,
+            'goles_equipo_1': resultado_partido.goles_equipo_1 if resultado_partido else '',
+            'goles_equipo_2': resultado_partido.goles_equipo_2 if resultado_partido else '',
+            'penales': resultado_partido.penales if resultado_partido else '',
+            'penales_equipo_1': resultado_partido.penales_equipo_1 if resultado_partido else '',
+            'penales_equipo_2': resultado_partido.penales_equipo_2 if resultado_partido else '',
+        })
+    
+    # Contexto para la plantilla
+    context = {
+        'torneo': torneo,
+        'partido': partido,
+        'temporada': temporada,
+        'resultado': resultado,
+        'planilla_equipo_1': planilla_equipo_1,
+        'planilla_equipo_2': planilla_equipo_2,
+        'figura_equipo_1_jugador': figura_equipo_1_jugador,
+        'figura_equipo_2_jugador': figura_equipo_2_jugador,
+        'enfrentamientos': enfrentamientos,
+        'victorias_equipo_1': victorias_equipo_1,
+        'victorias_equipo_2': victorias_equipo_2,
+        'enfrentamientos_partidos': historial,
+        'historial_equipo_1': historial_equipo_1,
+        'historial_equipo_2': historial_equipo_2,
+    }
+    
+    return render(request, 'partido_detalles.html', context)
+

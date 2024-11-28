@@ -2,16 +2,108 @@
 
 {% block content %}
 
-<h1>Editar Partido</h1>
+<div class="container mt-5">
+    <div class="p-4 mx-auto" style="background-color: black; color: white; max-width: 95%; border: 2px solid white; border-radius: 10px;">
+        <div class="text-center mb-4">
+            <h4>EDITAR PARTIDO</h4>
+        </div>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar cambios</button>
-</form>
-<form action="{% url 'fechas' temporada.id %}" method="get" style="display:inline;">
-    
-    <button type="submit" >Volver atrás</button>
-</form>
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+                <!-- Primer campo: Equipo 1 -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_equipo_1" style="color: white; text-align: center; display: block;">Equipo 1:</label>
+                        <select name="id_equipo_1" class="form-control" id="id_equipo_1" style="background-color: black; color: white; border: 1px solid white;">
+                            {% for equipo in form.id_equipo_1.field.queryset %}
+                                <option value="{{ equipo.id }}" {% if form.id_equipo_1.value == equipo.id %}selected{% endif %}>{{ equipo.nombre_equipo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Segundo campo: Equipo 2 -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_equipo_2" style="color: white; text-align: center; display: block;">Equipo 2:</label>
+                        <select name="id_equipo_2" class="form-control" id="id_equipo_2" style="background-color: black; color: white; border: 1px solid white;">
+                            {% for equipo in form.id_equipo_2.field.queryset %}
+                                <option value="{{ equipo.id }}" {% if form.id_equipo_2.value == equipo.id %}selected{% endif %}>{{ equipo.nombre_equipo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Primer campo: Grupo -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_grupo" style="color: white; text-align: center; display: block;">Grupo:</label>
+                        <select name="id_grupo" class="form-control" id="id_grupo" style="background-color: black; color: white; border: 1px solid white;">
+                            {% for grupo in form.id_grupo.field.queryset %}
+                                <option value="{{ grupo.id }}" {% if form.id_grupo.value == grupo.id %}selected{% endif %}>{{ grupo.nombre_grupo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Segundo campo: Predio -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_predio" style="color: white; text-align: center; display: block;">Predio:</label>
+                        <select name="id_predio" class="form-control" id="id_predio" style="background-color: black; color: white; border: 1px solid white;">
+                            {% for predio in form.id_predio.field.queryset %}
+                                <option value="{{ predio.id }}" {% if form.id_predio.value == predio.id %}selected{% endif %}>{{ predio.nombre_predio }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Primer campo: Fecha del Partido -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_fecha_partido" style="color: white; text-align: center; display: block;">Fecha del Partido:</label>
+                        <input type="date" name="fecha_partido" class="form-control" id="id_fecha_partido" value="{{ form.fecha_partido.value }}" style="background-color: black; color: white; border: 1px solid white;">
+                    </div>
+                </div>
+
+                <!-- Segundo campo: Hora del Partido -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_hora_partido" style="color: white; text-align: center; display: block;">Hora del Partido:</label>
+                        <input type="time" name="hora_partido" class="form-control" id="id_hora_partido" value="{{ form.hora_partido.value }}" style="background-color: black; color: white; border: 1px solid white;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Campo: Destacado -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_destacado" style="color: white; text-align: center; display: block;">Destacado:</label>
+                        <select id="id_destacado" name="destacado" class="form-control" style="background-color: black; color: white; border: 1px solid white;">
+                            <option value="False" {% if form.destacado.value == 'False' %}selected{% endif %}>No</option>
+                            <option value="True" {% if form.destacado.value == 'True' %}selected{% endif %}>Sí</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                    Guardar
+                </button>
+                <a href="{% url 'fechas' temporada.id %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                    Volver atrás
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
 
 {% endblock %}

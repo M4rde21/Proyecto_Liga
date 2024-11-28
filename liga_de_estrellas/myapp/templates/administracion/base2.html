@@ -1,67 +1,288 @@
+{% load static %}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADMINISTRACION</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            background-image: url("{% static 'images/fondo.jpg' %}"); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .custom-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 20%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px;
+            transition: 0.3s;
+        }
+
+        .custom-nav img {
+            max-width: 100%; 
+            height: 100px;
+        }
+
+        .custom-nav h3 {
+            color: white;
+            margin-top: 10px;
+        }
+
+        .custom-nav a {
+            color: white;
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .custom-nav a .fas {
+            margin-right: 10px;
+        }
+
+        .flex-grow-1 {
+            flex-grow: 1;
+        }
+
+        .logout {
+            margin-top: auto;
+            width: 100%;
+            padding-top: 20px;
+        }
+
+        .content {
+            margin-left: 20%;
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        ul.list-unstyled {
+            padding-left: 0;
+            font-size: 0.85rem;
+        }
+
+        ul.list-unstyled li a:hover {
+            color: #f8f9fa;
+        }
+
+        .modal-content {
+            background-color: black;
+            border: 2px solid white;
+            color: white;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid white;
+        }
+
+        .modal-footer {
+            border-top: 1px solid white;
+        }
+
+        .btn-confirm {
+            background-color: rgb(172, 21, 21);
+            color: white;
+            border: 1px solid white;
+        }
+
+        .btn-cancel {
+            background-color: gray;
+            color: white;
+            border: 1px solid white;
+        }
+
     
+        .navbar-toggler {
+            background-color: rgba(0, 0, 0, 0.8);
+            border: none;
+        }
+
+    
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            display: none; /* Inicialmente oculta */
+        }
+
+        @media (max-width: 768px) {
+            .custom-nav {
+                width: 100%;
+                height: auto;
+                position: absolute;
+                top: 0;
+                left: -100%;
+                transition: 0.3s;
+            }
+
+            .custom-nav.show {
+                left: 0;
+            }
+
+            /* Muestra la X solo cuando el menú esté abierto */
+            .custom-nav.show .close-btn {
+                display: block;
+            }
+
+            .custom-nav .logout {
+                margin-top: auto;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .navbar-toggler {
+                display: block;
+            }
+
+            .navbar-toggler-icon {
+                color: white;
+            }
+
+            ul.list-unstyled {
+                margin-top: 20px;
+                padding-left: 0;
+            }
+
+            ul.list-unstyled li a {
+                margin-bottom: 10px; /* Espaciado mejorado entre los elementos */
+            }
+        }
+    </style>
 </head>
 <body>
-    <nav>
-        <div>
 
-        
-            <ul>
-                
-                <li class="nav-item">
-                        <a href="{% url 'logout' %}" >LOGOUT</a>
-                </li>
+    <div class="d-flex">
+        <!-- Barra de navegación -->
+        <nav class="custom-nav" id="navbarMenu">
+            <!-- Botón para cerrar (X) -->
+            <span class="close-btn" onclick="toggleNav()">×</span>
 
-                <li>
-                    <a href="{% url 'resumen' %}">Resumen</a>
-                </li>
-                <li>
-                    <a href="{% url 'jugadores' %}">Jugadores</a>
-                </li>
-                <li>
-                    <a href="{% url 'equipos' %}">Equipos</a>
-                </li>
-                <li>
-                    <a href="{% url 'entrenadores' %}">Entrenadores/Delegados</a>
-                </li>
+            <a class="navbar-brand" href="{% url 'inicio' %}">
+                <img src="{% static 'images/Logo_Liga_B.png' %}" alt="Imagen del Logo" class="img-fluid">
+            </a>
 
-                <li>
-                    <a href="{% url 'temporadas_adm' %}">Temporadas</a>
-                </li>
+            <h3>Menú</h3>
 
-                
+            <div class="flex-grow-1 p-3">
+                <ul class="list-unstyled">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'resumen_adm' %}">
+                            <i class="fas fa-info-circle"></i> Resumen
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'torneos_adm' %}">
+                            <i class="fas fa-trophy"></i> Liga / Copa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'temporadas_adm' %}">
+                            <i class="fas fa-calendar-alt"></i> Temporadas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'entrenadores' %}">
+                            <i class="fas fa-chalkboard-teacher"></i> Entrenadores / Delegados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'equipos' %}">
+                            <i class="fas fa-users"></i> Equipos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'jugadores' %}">
+                            <i class="fas fa-user"></i> Jugadores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'traspasos' %}">
+                            <i class="fas fa-exchange-alt"></i> Traspasos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'reglamentos_lista' %}">
+                            <i class="fas fa-file-pdf"></i> Reglamentos
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
-                <li>
-                    <a href="{% url 'torneos_adm' %}">Torneos</a>
-                </li>
+            <div class="logout p-3">
+                <a class="nav-link" href="#" data-toggle="modal" data-target="#logoutModal">
+                    <i class="fas fa-sign-out-alt"></i> CERRAR SESION
+                </a>
+            </div>
+        </nav>
 
-        
-                <li>
-                    <a href="{% url 'categorias_adm' %}">Categorias</a>
-                </li>
+        <!-- Botón hamburguesa en móviles -->
+        <button class="navbar-toggler" type="button" onclick="toggleNav()">
+            <span class="navbar-toggler-icon">&#9776;</span>
+        </button>
 
-                <li>
-                    <a href="{% url 'tipotorneos_adm' %}">Tipo de Torneo</a>
-                </li>
-
-                
-
-
-
-
-            </ul>
+        <!-- Contenido principal -->
+        <div class="content flex-grow-1">
+            {% block content %}
+            {% endblock %}
         </div>
-    </nav>
+    </div>
 
-    {% block content %}
-        
-    {% endblock %}
-    
+    <!-- Modal de cierre de sesión -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Confirmar Cierre de Sesión</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro que deseas cerrar sesión?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-dismiss="modal">Cancelar</button>
+                    <a href="{% url 'logout' %}" class="btn btn-confirm">Cerrar Sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        function toggleNav() {
+            document.getElementById("navbarMenu").classList.toggle("show");
+        }
+    </script>
 </body>
 </html>

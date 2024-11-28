@@ -1,0 +1,83 @@
+{% extends 'administracion/base2.html' %}
+
+{% block content %}
+<style>
+    body {
+        overflow-x: hidden;
+    }
+    select, select option {
+        color: white !important;
+        background-color: black !important;
+    }
+</style>
+
+<!-- Formulario para crear el traspaso -->
+<div class="container">
+    <form method="post" action="{% url 'traspasos_crear' %}" class="w-100" style="max-width: 100%; margin: 20px auto; background-color: black; border: 2px solid white; border-radius: 5px; padding: 20px;">
+        {% csrf_token %}
+        <h1 style="color: white; text-transform: uppercase; text-align: center; margin-bottom: 50px;">CREAR TRASPASO</h1>
+        
+        <div class="row">
+            <!-- Campo Jugador -->
+            <div class="form-group col-md-6">
+                <label for="id_jugador" style="color: white; text-align: center; display: block;">Jugador:</label>
+                <select id="id_jugador" name="id_jugador" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                    <option value="" disabled selected>Selecciona un jugador</option>
+                    {% for jugador in form.id_jugador.field.queryset %}
+                        <option value="{{ jugador.id }}" style="color: white; background-color: black;">
+                            {{ jugador.nombre_jugador }} {{ jugador.apellido_jugador }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Campo Equipo Actual -->
+            <div class="form-group col-md-6">
+                <label for="id_equipo_actual" style="color: white; text-align: center; display: block;">Equipo Actual:</label>
+                <select id="id_equipo_actual" name="id_equipo_actual" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                    <option value="" disabled selected>Selecciona el equipo actual</option>
+                    {% for equipo in form.id_equipo_actual.field.queryset %}
+                        <option value="{{ equipo.id }}" style="color: white; background-color: black;">
+                            {{ equipo.nombre_equipo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Campo Equipo Nuevo -->
+            <div class="form-group col-md-6">
+                <label for="id_equipo_nuevo" style="color: white; text-align: center; display: block;">Equipo Nuevo:</label>
+                <select id="id_equipo_nuevo" name="id_equipo_nuevo" class="form-control" required style="background-color: black; color: white; border: 1px solid white;">
+                    <option value="" disabled selected>Selecciona el nuevo equipo</option>
+                    {% for equipo in form.id_equipo_nuevo.field.queryset %}
+                        <option value="{{ equipo.id }}" style="color: white; background-color: black;">
+                            {{ equipo.nombre_equipo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Campo Fecha de Transferencia -->
+            <div class="form-group col-md-6">
+                <label for="fecha_transferencia" style="color: white; text-align: center; display: block;">Fecha de Transferencia:</label>
+                <input type="date" id="fecha_transferencia" name="fecha_transferencia" 
+                       value="{{ form.fecha_transferencia.value }}" 
+                       class="form-control" required 
+                       style="background-color: black; color: white; border: 1px solid white;">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-success" style="margin: 10px; width: 150px;">
+                Confirmar
+            </button>
+            <a href="{% url 'traspasos' %}" class="btn btn-danger" style="margin: 10px; width: 150px;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
